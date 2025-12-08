@@ -18,7 +18,6 @@ class ForgotPasswordController extends Controller
     public function forgotPassword(Request $request)
     {
         try {
-            // Validate the email
             $validator = Validator::make($request->all(), [
                 'email' => 'required|email|exists:users,email'
             ]);
@@ -26,23 +25,18 @@ class ForgotPasswordController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'status' => false,
-                    'message' => $validator->errors()->first(),
+                    'message' => $validator->errors(),
                 ], 422);
             }
 
-            // Get the user
             $user = User::where('email', $request->email)->first();
 
-            // Generate a 4-digit OTP
             $otp = rand(1000, 9999);
 
-            // Set expiration time (10 minutes from now)
             $expireAt = Carbon::now()->addMinutes(10);
 
-            // Delete any existing password reset records for this user
             PasswordReset::where('user_id', $user->id)->delete();
 
-            // Create a new password reset record
             $passwordReset = PasswordReset::create([
                 'user_id' => $user->id,
                 'email' => $user->email,
@@ -50,7 +44,6 @@ class ForgotPasswordController extends Controller
                 'expire_at' => $expireAt,
             ]);
 
-            // Send the OTP via email
             Mail::to($request->email)->send(new SendOtpMail($otp, $request->email));
 
             return response()->json([
@@ -76,7 +69,7 @@ class ForgotPasswordController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'status' => false,
-                    'message' => $validator->errors()->first(),
+                    'message' => $validator->errors(),
                 ], 422);
             }
 
@@ -126,7 +119,7 @@ class ForgotPasswordController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'status' => false,
-                    'message' => $validator->errors()->first(),
+                    'message' => $validator->errors(),
                 ], 422);
             }
 

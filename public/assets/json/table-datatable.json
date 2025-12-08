@@ -1,0 +1,25 @@
+{
+  "data": [
+    {
+      "id": 1,
+      "title": "Sample Post 1",
+      "description": "This is the description for Sample Post 1.",
+      "category": "Category 1",
+      "thumbnail_image": "image1.jpg"
+    },
+    {
+      "id": 2,
+      "title": "Sample Post 2",
+      "description": "This is the description for Sample Post 2.",
+      "category": "Category 2",
+      "thumbnail_image": "image2.jpg"
+    },
+    {
+      "id": 3,
+      "title": "Sample Post 3",
+      "description": "This is the description for Sample Post 3.",
+      "category": "Category 3",
+      "thumbnail_image": "image3.jpg"
+    }
+  ]
+}
