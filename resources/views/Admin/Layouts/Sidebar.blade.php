@@ -15,7 +15,7 @@
                         fill="#0C4CA3" />
                 </svg>
             </span>
-            <span class="app-brand-text demo menu-text fw-bold">RB</span>
+            <span class="app-brand-text demo menu-text fw-bold">RB Equipment</span>
         </a>
 
         <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
@@ -32,6 +32,13 @@
             <a href="{{ route('dashboard') }}" class="menu-link">
                 <i class="menu-icon tf-icons ti ti-dashboard"></i>
                 <div data-i18n="Dashboard">Dashboard</div>
+            </a>
+        </li>
+
+        <li class="menu-item {{ Route::is('admin.user.management') ? 'active' : '' }}">
+            <a href="{{ route('admin.user.management') }}" class="menu-link">
+                <i class="menu-icon tf-icons ti ti-users"></i>
+                <div data-i18n="Users">Users</div>
             </a>
         </li>
     </ul>

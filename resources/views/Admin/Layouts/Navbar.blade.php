@@ -39,7 +39,7 @@
                                  <div class="flex-grow-1">
                                      <span class="fw-semibold d-block">{{ Auth::guard('admin')->user()->name }}</span>
                                      <small
-                                         class="text-muted">{{ \App\Models\Admin\Role::where('id', Auth::guard('admin')->user()->role_id)->first()->role_name }}</small>
+                                         class="text-muted">Admin</small>
                                  </div>
                              </div>
                          </a>
@@ -47,8 +47,8 @@
                      <li>
                          <div class="dropdown-divider"></div>
                      </li>
-                     <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="offcanvas"
-                         data-bs-target="#changePasswordPanel">
+                     <a class="dropdown-item" href="javascript:void(0);" data-bs-toggle="modal"
+                         data-bs-target="#changePasswordModal">
                          <i class="ti ti-lock me-2 ti-sm"></i>
                          <span class="align-middle">Change Password</span>
                      </a>
@@ -71,104 +71,145 @@
          <i class="ti ti-x ti-sm search-toggler cursor-pointer"></i>
      </div>
  </nav>
- <div class="offcanvas offcanvas-end" tabindex="-1" id="changePasswordPanel" aria-labelledby="changePasswordLabel">
-     <div class="offcanvas-header">
-         <h5 id="changePasswordLabel" class="offcanvas-title">Change Password</h5>
-         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+
+ <!-- Change Password Modal -->
+ <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+     <div class="modal-dialog modal-lg modal-dialog-centered">
+         <div class="modal-content">
+             <div class="modal-header">
+                 <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+             </div>
+             <form method="POST" id="change-password-form">
+                 @csrf
+                 <div class="modal-body">
+                     <div class="mb-3">
+                         <label for="old_password" class="form-label">Current Password</label>
+                         <div class="input-group input-group-merge">
+                             <input type="password" name="old_password" class="form-control" id="old_password"
+                                 placeholder="Enter Old Password">
+                             <span class="input-group-text cursor-pointer toggle-password">
+                                 <i class="ti ti-eye-off"></i>
+                             </span>
+                         </div>
+                         <div class="invalid-feedback d-block" id="old_password-error"></div>
+                     </div>
+                     <div class="mb-3">
+                         <label for="new_password" class="form-label">New Password</label>
+                         <div class="input-group input-group-merge">
+                             <input type="password" name="new_password" class="form-control" id="new_password"
+                                 placeholder="Enter New Password">
+                             <span class="input-group-text cursor-pointer toggle-password">
+                                 <i class="ti ti-eye-off"></i>
+                             </span>
+                         </div>
+                         <div class="invalid-feedback d-block" id="new_password-error"></div>
+                     </div>
+                     <div class="mb-3">
+                         <label for="new_password_confirmation" class="form-label">Confirm New Password</label>
+                         <div class="input-group input-group-merge">
+                             <input type="password" name="new_password_confirmation" class="form-control"
+                                 placeholder="Enter Confirm Password" id="new_password_confirmation">
+                             <span class="input-group-text cursor-pointer toggle-password">
+                                 <i class="ti ti-eye-off"></i>
+                             </span>
+                         </div>
+                         <div class="invalid-feedback d-block" id="new_password_confirmation-error"></div>
+                     </div>
+                 </div>
+                 <div class="modal-footer">
+                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                     <button type="submit" class="btn btn-primary">Update Password</button>
+                 </div>
+             </form>
+         </div>
      </div>
+ </div>
 
-     <form method="POST" class="d-flex flex-column h-100" id="change-password-form">
-         @csrf
-         <div class="offcanvas-body flex-grow-1">
-             <div class="mb-3">
-                 <label for="old_password" class="form-label">Current Password</label>
-                 <input type="password" name="old_password" class="form-control" id="old_password"
-                     placeholder="Enter Old Password">
-                 <div class="invalid-feedback" id="old_password-error"></div>
-             </div>
-             <div class="mb-3">
-                 <label for="new_password" class="form-label">New Password</label>
-                 <input type="password" name="new_password" class="form-control" id="new_password"
-                     placeholder="Enter New Password">
-                 <div class="invalid-feedback" id="new_password-error"></div>
-             </div>
-             <div class="mb-3">
-                 <label for="new_password_confirmation" class="form-label">Confirm New Password</label>
-                 <input type="text" name="new_password_confirmation" class="form-control"
-                     placeholder="Enter Confirm Password" id="new_password_confirmation">
-                 <div class="invalid-feedback" id="new_password_confirmation-error"></div>
-             </div>
-         </div>
+ <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ <script>
+     $(document).ready(function() {
+         // Toggle password visibility
+         $('.toggle-password').on('click', function() {
+             var input = $(this).closest('.input-group').find('input');
+             var icon = $(this).find('i');
+             
+             if (input.attr('type') === 'password') {
+                 input.attr('type', 'text');
+                 icon.removeClass('ti-eye-off').addClass('ti-eye');
+             } else {
+                 input.attr('type', 'password');
+                 icon.removeClass('ti-eye').addClass('ti-eye-off');
+             }
+         });
 
-         <div class="offcanvas-footer p-3 border-top">
-             <button type="submit" class="btn btn-primary w-100">Update Password</button>
-         </div>
-     </form>
+         $('input, select, textarea').on('input', function() {
+             $(this).removeClass('is-invalid');
+             $('#' + $(this).attr('id') + '-error').text('');
+         });
 
-     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-     <script>
-         $(document).ready(function() {
-             $('input, select, textarea').on('input', function() {
-                 $(this).removeClass('is-invalid');
-                 $('#' + $(this).attr('id') + '-error').text('');
-             });
+         $('#change-password-form').on('submit', function(e) {
+             e.preventDefault();
 
-             $('#change-password-form').on('submit', function(e) {
-                 e.preventDefault();
+             var formData = new FormData(this);
 
-                 var formData = new FormData(this);
+             $.ajax({
+                 url: '{{ route('change.password') }}',
+                 type: 'POST',
+                 data: formData,
+                 processData: false,
+                 contentType: false,
+                 success: function(response) {
+                     // Hide the modal
+                     $('#changePasswordModal').modal('hide');
+                     
+                     // Reset the form
+                     $('#change-password-form')[0].reset();
+                     
+                     Swal.fire({
+                         icon: 'success',
+                         title: 'Password Changed',
+                         text: 'Your password has been updated successfully.',
+                         confirmButtonText: 'OK'
+                     });
+                 },
+                 error: function(xhr) {
+                     var errors = xhr.responseJSON.errors;
 
-                 $.ajax({
-                     url: '{{ route('change.password') }}',
-                     type: 'POST',
-                     data: formData,
-                     processData: false,
-                     contentType: false,
-                     success: function(response) {
-                         const offcanvasEl = document.getElementById(
-                             'changePasswordPanel');
-                         const offcanvas = bootstrap.Offcanvas.getInstance(
-                             offcanvasEl);
-                         if (offcanvas) {
-                             offcanvas.hide();
-                         }
-                         $('#change-password-form')[0].reset();
+                     if (xhr.status === 422) {
+                         // Validation errors
+                         $('.is-invalid').removeClass('is-invalid');
+                         $('.invalid-feedback').text('');
+
+                         $.each(errors, function(key, value) {
+                             $('#' + key).addClass('is-invalid');
+                             $('#' + key + '-error').text(value[0]);
+                         });
+                     } else if (xhr.status === 400) {
+                         // Business logic error (like incorrect old password)
+                         $('.is-invalid').removeClass('is-invalid');
+                         $('.invalid-feedback').text('');
+                         
+                         // Show error on old password field
+                         $('#old_password').addClass('is-invalid');
+                         $('#old_password-error').text(xhr.responseJSON.message);
+                     } else {
+                         // Other errors
+                         var errorMessage = xhr.responseJSON.message ||
+                             "An unknown error occurred";
+
                          Swal.fire({
-                             icon: 'success',
-                             title: 'Password Changed',
-                             text: 'Your password has been updated successfully.',
+                             icon: 'error',
+                             title: 'Error',
+                             text: errorMessage,
                              confirmButtonText: 'OK'
                          });
-                     },
-                     error: function(xhr) {
-                         var errors = xhr.responseJSON.errors;
-
-                         if (xhr.status === 422) {
-                             $('.is-invalid').removeClass('is-invalid');
-                             $('.invalid-feedback').text('');
-
-                             $.each(errors, function(key, value) {
-                                 $('#' + key).addClass('is-invalid');
-                                 $('#' + key + '-error').text(value[0]);
-                             });
-                         } else {
-                             var errorMessage = xhr.responseJSON.message ||
-                                 "An unknown error occurred";
-
-                             Swal.fire({
-                                 icon: 'error',
-                                 title: 'Error',
-                                 text: errorMessage,
-                                 confirmButtonText: 'OK'
-                             });
-                         }
-                     },
-                 });
+                     }
+                 },
              });
          });
-     </script>
-
- </div>
+     });
+ </script>
 
  <!-- / Navbar -->

@@ -25,7 +25,7 @@ class ForgotPasswordController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'status' => false,
-                    'message' => $validator->errors(),
+                    'message' => $validator->errors()->first(),
                 ], 422);
             }
 
@@ -86,7 +86,7 @@ class ForgotPasswordController extends Controller
 
             if (Carbon::now()->greaterThan($passwordReset->expire_at)) {
                 $passwordReset->delete();
-                
+
                 return response()->json([
                     'status' => false,
                     'message' => 'OTP has expired',
@@ -136,7 +136,7 @@ class ForgotPasswordController extends Controller
 
             if (Carbon::now()->greaterThan($passwordReset->expire_at)) {
                 $passwordReset->delete();
-                
+
                 return response()->json([
                     'status' => false,
                     'message' => 'OTP has expired',
