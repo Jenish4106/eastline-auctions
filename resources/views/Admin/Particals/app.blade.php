@@ -11,6 +11,7 @@
     <title>@yield('title', 'Project App')</title>
 
     <meta name="description" content="" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
 
     <!-- Favicon -->
 

@@ -17,21 +17,20 @@
                 <div class="content-wrapper">
                     <!-- Content -->
                     <div class="container-fluid flex-grow-1 container-p-y">
-                        <!-- Welcome Section -->
+                        <!-- Stats Section -->
                         <div class="row mb-4">
-                            <div class="col-12">
+                            <div class="col-md-4">
                                 <div class="card">
                                     <div class="card-body">
                                         <div class="d-flex align-items-center">
-                                            <div class="flex-grow-1">
-                                                <h4 class="mb-1">Welcome back</h4>
-                                                <p class="mb-0 text-muted">Here's what's happening with your Test Craft
-                                                    platform today.</p>
+                                            <div class="avatar flex-shrink-0 me-3">
+                                                <span class="avatar-initial rounded bg-label-primary">
+                                                    <i class="fas fa-users"></i>
+                                                </span>
                                             </div>
-                                            <div class="text-end">
-                                                <div class="current-date-display">
-                                                    <div class="full-date">{{ now()->format('l, F j, Y') }}</div>
-                                                </div>
+                                            <div class="card-info">
+                                                <h4 class="mb-0">{{ $totalUsers ?? 0 }}</h4>
+                                                <small>Total Users</small>
                                             </div>
                                         </div>
                                     </div>

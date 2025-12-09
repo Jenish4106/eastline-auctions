@@ -41,5 +41,12 @@
                 <div data-i18n="Users">Users</div>
             </a>
         </li>
+        
+        <li class="menu-item {{ Route::is('admin.categories') ? 'active' : '' }}">
+            <a href="{{ route('admin.categories') }}" class="menu-link">
+                <i class="menu-icon tf-icons ti ti-category"></i>
+                <div data-i18n="Categories">Categories</div>
+            </a>
+        </li>
     </ul>
 </aside>

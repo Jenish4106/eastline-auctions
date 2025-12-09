@@ -21,6 +21,7 @@ class User extends Authenticatable implements JWTSubject
         'state',
         'zip_code',
         'password',
+        'status',
     ];
 
     protected $hidden = [
@@ -31,6 +32,7 @@ class User extends Authenticatable implements JWTSubject
     {
         return [
             'password' => 'hashed',
+            'status' => 'integer',
         ];
     }
 
@@ -48,5 +50,17 @@ class User extends Authenticatable implements JWTSubject
     public function getFullNameAttribute()
     {
         return $this->first_name . ' ' . $this->last_name;
+    }
+    
+    // Accessor to get status text
+    public function getStatusTextAttribute()
+    {
+        return $this->status == 1 ? 'Active' : 'Blocked';
+    }
+    
+    // Accessor to get status badge class
+    public function getStatusBadgeClassAttribute()
+    {
+        return $this->status == 1 ? 'bg-success' : 'bg-danger';
     }
 }

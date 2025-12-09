@@ -1,0 +1,195 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Category;
+use Illuminate\Http\Request;
+use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+
+class CategoryController extends Controller
+{
+    public function index()
+    {
+        return view('Admin.Pages.Category.index');
+    }
+
+    public function fetchCategories()
+    {
+        $categories = Category::select([
+                'id', 
+                'image',
+                'category_name',
+                'total_machinery',
+                'created_at'
+            ])
+            ->orderBy('id', 'DESC');
+
+        return DataTables::of($categories)
+            ->addIndexColumn()
+            ->addColumn('image', function ($category) {
+                if ($category->image) {
+                    return '<img src="' . asset('categories/' . $category->image) . '" alt="Category Image" width="50" class="clickable-image" data-src="' . asset('categories/' . $category->image) . '" data-name="' . $category->category_name . '">';
+                }
+                return '<span class="badge bg-label-secondary">No Image</span>';
+            })
+            ->addColumn('created_date', function ($category) {
+                return $category->created_date;
+            })
+            ->addColumn('actions', function ($category) {
+                $actions = '
+                    <a href="javascript:void(0);" class="edit-category text-info me-2" data-id="'.$category->id.'" data-name="'.$category->category_name.'">
+                        <i class="fa-regular fa-edit"></i>
+                    </a>
+                    <a href="javascript:void(0);" class="delete-category text-danger" data-id="'.$category->id.'" data-name="'.$category->category_name.'">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </a>';
+                
+                return $actions;
+            })
+            ->rawColumns(['image', 'actions'])
+            ->make(true);
+    }
+    
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'category_name' => 'required|string|max:255|unique:categories,category_name',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'total_machinery' => 'required|integer|min:0',
+        ], [
+            'category_name.required' => 'The category name field is required.',
+            'category_name.unique' => 'This category name already exists.',
+            'image.image' => 'The file must be an image.',
+            'image.mimes' => 'The image must be a file of type: jpeg, png, jpg, gif, svg.',
+            'image.max' => 'The image may not be greater than 2MB.',
+            'total_machinery.required' => 'The total machinery field is required.',
+            'total_machinery.integer' => 'The total machinery must be an integer.',
+            'total_machinery.min' => 'The total machinery must be at least 0.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $category = new Category();
+        $category->category_name = $request->category_name;
+        $category->total_machinery = $request->total_machinery;
+        
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            // Create categories directory if it doesn't exist
+            $destinationPath = public_path('categories');
+            if (!File::exists($destinationPath)) {
+                File::makeDirectory($destinationPath, 0755, true);
+            }
+            
+            // Generate unique filename
+            $imageName = time() . '_' . Str::random(10) . '.' . $request->file('image')->getClientOriginalExtension();
+            
+            // Move image to categories directory
+            $request->file('image')->move($destinationPath, $imageName);
+            
+            $category->image = $imageName;
+        }
+        
+        $category->save();
+
+        return response()->json(['message' => 'Category created successfully'], 200);
+    }
+    
+    public function update(Request $request, $id)
+    {
+        $category = Category::find($id);
+        
+        if (!$category) {
+            return response()->json(['error' => 'Category not found'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'category_name' => 'required|string|max:255|unique:categories,category_name,'.$category->id,
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'total_machinery' => 'required|integer|min:0',
+        ], [
+            'category_name.required' => 'The category name field is required.',
+            'category_name.unique' => 'This category name already exists.',
+            'image.image' => 'The file must be an image.',
+            'image.mimes' => 'The image must be a file of type: jpeg, png, jpg, gif, svg.',
+            'image.max' => 'The image may not be greater than 2MB.',
+            'total_machinery.required' => 'The total machinery field is required.',
+            'total_machinery.integer' => 'The total machinery must be an integer.',
+            'total_machinery.min' => 'The total machinery must be at least 0.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $category->category_name = $request->category_name;
+        $category->total_machinery = $request->total_machinery;
+        
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($category->image) {
+                $oldImagePath = public_path('categories/' . $category->image);
+                if (File::exists($oldImagePath)) {
+                    File::delete($oldImagePath);
+                }
+            }
+            
+            // Create categories directory if it doesn't exist
+            $destinationPath = public_path('categories');
+            if (!File::exists($destinationPath)) {
+                File::makeDirectory($destinationPath, 0755, true);
+            }
+            
+            // Generate unique filename
+            $imageName = time() . '_' . Str::random(10) . '.' . $request->file('image')->getClientOriginalExtension();
+            
+            // Move image to categories directory
+            $request->file('image')->move($destinationPath, $imageName);
+            
+            $category->image = $imageName;
+        }
+        
+        $category->save();
+
+        return response()->json(['message' => 'Category updated successfully'], 200);
+    }
+    
+    public function destroy(Request $request)
+    {
+        $category = Category::find($request->id);
+        
+        if (!$category) {
+            return response()->json(['error' => 'Category not found'], 404);
+        }
+        
+        // Delete image if exists
+        if ($category->image) {
+            $imagePath = public_path('categories/' . $category->image);
+            if (File::exists($imagePath)) {
+                File::delete($imagePath);
+            }
+        }
+        
+        $category->delete();
+        
+        return response()->json(['success' => 'Category deleted successfully']);
+    }
+    
+    public function getCategory(Request $request)
+    {
+        $category = Category::find($request->id);
+        
+        if (!$category) {
+            return response()->json(['error' => 'Category not found'], 404);
+        }
+        
+        return response()->json(['category' => $category], 200);
+    }
+}
