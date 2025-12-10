@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,6 +10,10 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     use HasFactory, Notifiable;
+
+    const LICENSE_PENDING = 0;
+    const LICENSE_APPROVED = 1;
+    const LICENSE_DECLINED = 2;
 
     protected $fillable = [
         'first_name',
@@ -22,6 +27,12 @@ class User extends Authenticatable implements JWTSubject
         'zip_code',
         'password',
         'status',
+        'is_license',
+    ];
+    
+    protected $appends = [
+        'license_status_text',
+        'license_status_badge_class'
     ];
 
     protected $hidden = [
@@ -33,6 +44,7 @@ class User extends Authenticatable implements JWTSubject
         return [
             'password' => 'hashed',
             'status' => 'integer',
+            'is_license' => 'integer',
         ];
     }
 
@@ -46,21 +58,51 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
     
-    // Accessor to get full name
     public function getFullNameAttribute()
     {
         return $this->first_name . ' ' . $this->last_name;
     }
     
-    // Accessor to get status text
     public function getStatusTextAttribute()
     {
         return $this->status == 1 ? 'Active' : 'Blocked';
     }
     
-    // Accessor to get status badge class
     public function getStatusBadgeClassAttribute()
     {
         return $this->status == 1 ? 'bg-success' : 'bg-danger';
+    }
+    
+    public function getLicenseStatusTextAttribute()
+    {
+        switch ($this->is_license) {
+            case self::LICENSE_PENDING:
+                return 'Pending';
+            case self::LICENSE_APPROVED:
+                return 'Approved';
+            case self::LICENSE_DECLINED:
+                return 'Declined';
+            default:
+                return 'Unknown';
+        }
+    }
+    
+    public function getLicenseStatusBadgeClassAttribute()
+    {
+        switch ($this->is_license) {
+            case self::LICENSE_PENDING:
+                return 'bg-warning';
+            case self::LICENSE_APPROVED:
+                return 'bg-success';
+            case self::LICENSE_DECLINED:
+                return 'bg-danger';
+            default:
+                return 'bg-secondary';
+        }
+    }
+    
+    public function license()
+    {
+        return $this->hasOne(License::class);
     }
 }

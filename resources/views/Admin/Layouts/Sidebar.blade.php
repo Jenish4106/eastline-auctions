@@ -35,8 +35,8 @@
             </a>
         </li>
 
-        <li class="menu-item {{ Route::is('admin.user.management') ? 'active' : '' }}">
-            <a href="{{ route('admin.user.management') }}" class="menu-link">
+        <li class="menu-item {{ Route::is('admin.users.management') ? 'active' : '' }}">
+            <a href="{{ route('admin.users.management') }}" class="menu-link">
                 <i class="menu-icon tf-icons ti ti-users"></i>
                 <div data-i18n="Users">Users</div>
             </a>
@@ -46,6 +46,13 @@
             <a href="{{ route('admin.categories') }}" class="menu-link">
                 <i class="menu-icon tf-icons ti ti-category"></i>
                 <div data-i18n="Categories">Categories</div>
+            </a>
+        </li>
+        
+        <li class="menu-item {{ Route::is('admin.machinery') ? 'active' : '' }}">
+            <a href="{{ route('admin.machinery') }}" class="menu-link">
+                <i class="menu-icon tf-icons ti ti-truck"></i>
+                <div data-i18n="Machinery">Machinery</div>
             </a>
         </li>
     </ul>

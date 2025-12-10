@@ -4,6 +4,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\ClearCacheMiddleware;
+use App\Http\Middleware\ApiTokenCheck;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,7 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'auth.admin' => Authenticate::class,
+            'auth.api' => ApiTokenCheck::class,
         ]);
+        
+        $middleware->append(ClearCacheMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

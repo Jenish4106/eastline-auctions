@@ -19,9 +19,13 @@ class Category extends Model
         'total_machinery' => 'integer'
     ];
 
-    // Accessor to get formatted created date
     public function getCreatedDateAttribute()
     {
         return $this->created_at->format('F d, Y');
+    }
+    
+    public function getUpdatedDateAttribute()
+    {
+        return $this->updated_at->format('F d, Y');
     }
 }

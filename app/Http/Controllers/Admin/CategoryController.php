@@ -24,20 +24,23 @@ class CategoryController extends Controller
                 'image',
                 'category_name',
                 'total_machinery',
-                'created_at'
-            ])
-            ->orderBy('id', 'DESC');
+                'created_at',
+                'updated_at'
+            ]);
 
         return DataTables::of($categories)
             ->addIndexColumn()
             ->addColumn('image', function ($category) {
                 if ($category->image) {
-                    return '<img src="' . asset('categories/' . $category->image) . '" alt="Category Image" width="50" class="clickable-image" data-src="' . asset('categories/' . $category->image) . '" data-name="' . $category->category_name . '">';
+                    return '<img src="' . asset('categories/' . $category->image) . '" alt="Category Image" width="50" class="clickable-image cursor-pointer rounded" data-src="' . asset('categories/' . $category->image) . '" data-name="' . $category->category_name . '">';
                 }
                 return '<span class="badge bg-label-secondary">No Image</span>';
             })
             ->addColumn('created_date', function ($category) {
                 return $category->created_date;
+            })
+            ->addColumn('updated_date', function ($category) {
+                return $category->updated_date;
             })
             ->addColumn('actions', function ($category) {
                 $actions = '
@@ -51,6 +54,16 @@ class CategoryController extends Controller
                 return $actions;
             })
             ->rawColumns(['image', 'actions'])
+            ->orderColumn('DT_RowIndex', 'id $1')
+            ->filterColumn('DT_RowIndex', function($query, $keyword) {
+            })
+            ->filterColumn('category_name', function($query, $keyword) {
+                $keyword = addslashes($keyword);
+                $query->where('category_name', 'LIKE', "%{$keyword}%");
+            })
+            ->filterColumn('total_machinery', function($query, $keyword) {
+                $query->where('total_machinery', 'LIKE', "%{$keyword}%");
+            })
             ->make(true);
     }
     
@@ -58,11 +71,12 @@ class CategoryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'category_name' => 'required|string|max:255|unique:categories,category_name',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:20480',
             'total_machinery' => 'required|integer|min:0',
         ], [
             'category_name.required' => 'The category name field is required.',
             'category_name.unique' => 'This category name already exists.',
+            'image.required' => 'The category image field is required.',
             'image.image' => 'The file must be an image.',
             'image.mimes' => 'The image must be a file of type: jpeg, png, jpg, gif, svg.',
             'image.max' => 'The image may not be greater than 2MB.',
@@ -79,18 +93,14 @@ class CategoryController extends Controller
         $category->category_name = $request->category_name;
         $category->total_machinery = $request->total_machinery;
         
-        // Handle image upload
         if ($request->hasFile('image')) {
-            // Create categories directory if it doesn't exist
             $destinationPath = public_path('categories');
             if (!File::exists($destinationPath)) {
                 File::makeDirectory($destinationPath, 0755, true);
             }
             
-            // Generate unique filename
             $imageName = time() . '_' . Str::random(10) . '.' . $request->file('image')->getClientOriginalExtension();
             
-            // Move image to categories directory
             $request->file('image')->move($destinationPath, $imageName);
             
             $category->image = $imageName;
@@ -111,7 +121,7 @@ class CategoryController extends Controller
 
         $validator = Validator::make($request->all(), [
             'category_name' => 'required|string|max:255|unique:categories,category_name,'.$category->id,
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:20480',
             'total_machinery' => 'required|integer|min:0',
         ], [
             'category_name.required' => 'The category name field is required.',
@@ -131,9 +141,7 @@ class CategoryController extends Controller
         $category->category_name = $request->category_name;
         $category->total_machinery = $request->total_machinery;
         
-        // Handle image upload
         if ($request->hasFile('image')) {
-            // Delete old image if exists
             if ($category->image) {
                 $oldImagePath = public_path('categories/' . $category->image);
                 if (File::exists($oldImagePath)) {
@@ -141,16 +149,13 @@ class CategoryController extends Controller
                 }
             }
             
-            // Create categories directory if it doesn't exist
             $destinationPath = public_path('categories');
             if (!File::exists($destinationPath)) {
                 File::makeDirectory($destinationPath, 0755, true);
             }
             
-            // Generate unique filename
             $imageName = time() . '_' . Str::random(10) . '.' . $request->file('image')->getClientOriginalExtension();
             
-            // Move image to categories directory
             $request->file('image')->move($destinationPath, $imageName);
             
             $category->image = $imageName;
@@ -169,7 +174,6 @@ class CategoryController extends Controller
             return response()->json(['error' => 'Category not found'], 404);
         }
         
-        // Delete image if exists
         if ($category->image) {
             $imagePath = public_path('categories/' . $category->image);
             if (File::exists($imagePath)) {

@@ -34,6 +34,7 @@
                                             <th class="text-center">Phone No</th>
                                             <th class="text-center">Registration Date</th>
                                             <th class="text-center">Status</th>
+                                            <th class="text-center">License Status</th>
                                             <th class="text-center">Actions</th>
                                         </tr>
                                     </thead>
@@ -53,7 +54,6 @@
         </div>
     </div>
     
-    <!-- Add User Modal -->
     <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -130,7 +130,6 @@
         </div>
     </div>
     
-    <!-- User Details Modal -->
     <div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -154,6 +153,17 @@
                             <p><strong>Zip Code:</strong> <span id="modalZipCode"></span></p>
                             <p><strong>Registration Date:</strong> <span id="modalRegistrationDate"></span></p>
                             <p><strong>Status:</strong> <span id="modalStatus"></span></p>
+                            <p><strong>License Status:</strong> <span id="modalLicenseStatus"></span></p>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>License Document:</h6>
+                            <div id="licenseContainer">
+                            </div>
+                            <div id="licenseActions" class="mt-2">
+                                <!-- License approval actions will be added here dynamically -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -174,18 +184,19 @@
                 } else {
                     table = $('#usersTable').DataTable({
                         processing: true,
-                        serverSide: false,
+                        serverSide: true,
                         ajax: {
                             url: "{{ route('admin.users.fetch') }}",
-                            dataSrc: 'data'
+                            type: 'GET'
                         },
                         columns: [
-                            { data: 'DT_RowIndex' },
+                            { data: 'DT_RowIndex', orderable: false },
                             { data: 'name' },
                             { data: 'email' },
                             { data: 'phone_no' },
                             { data: 'registration_date' },
                             { data: 'status' },
+                            { data: 'license_status' },
                             { data: 'actions', orderable: false }
                         ],
                         responsive: false,
@@ -207,27 +218,7 @@
             
             $(document).on('click', '.view-details', function() {
                 const userId = $(this).data('id');
-                
-                const rowData = table.rows().data().toArray().find(user => user.id == userId);
-                
-                if (rowData) {
-                    $('#modalUserId').text(rowData.id);
-                    $('#modalFirstName').text(rowData.first_name);
-                    $('#modalLastName').text(rowData.last_name);
-                    $('#modalEmail').text(rowData.email);
-                    $('#modalPhone').text(rowData.phone_no);
-                    $('#modalCompanyName').text(rowData.company_name);
-                    $('#modalCity').text(rowData.city);
-                    $('#modalState').text(rowData.state);
-                    $('#modalZipCode').text(rowData.zip_code);
-                    $('#modalRegistrationDate').text(rowData.registration_date);
-                    
-                    // Set status with badge
-                    const statusBadge = $(rowData.status);
-                    $('#modalStatus').html(statusBadge);
-                    
-                    $('#userDetailsModal').modal('show');
-                }
+                window.location.href = "{{ route('admin.users.show', ['id' => '__ID__']) }}".replace('__ID__', userId);
             });
             
             $(document).on('click', '.delete-user', function() {
@@ -279,7 +270,6 @@
                 });
             });
             
-            // Handle Block User
             $(document).on('click', '.block-user', function() {
                 const userId = $(this).data('id');
                 const userName = $(this).data('name');
@@ -329,7 +319,6 @@
                 });
             });
             
-            // Handle Unblock User
             $(document).on('click', '.unblock-user', function() {
                 const userId = $(this).data('id');
                 const userName = $(this).data('name');
@@ -379,19 +368,15 @@
                 });
             });
             
-            // Handle Add User Form Submission
             $('#addUserForm').on('submit', function(e) {
                 e.preventDefault();
                 
-                // Clear previous errors
                 $('.is-invalid').removeClass('is-invalid');
                 $('.invalid-feedback').remove();
                 
-                // Client-side validation
                 let isValid = true;
                 const errors = {};
                 
-                // Validate all fields
                 const firstName = $('#firstName').val().trim();
                 const lastName = $('#lastName').val().trim();
                 const email = $('#email').val().trim();
@@ -468,12 +453,9 @@
                     errors.zip_code = ['The zip code field is required.'];
                 }
                 
-                // If client-side validation fails, show errors
                 if (!isValid) {
                     $.each(errors, function(key, value) {
-                        // Convert snake_case to camelCase for field matching
                         let fieldName = key.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase(); });
-                        // Handle special cases
                         if (key === 'password_confirmation') {
                             fieldName = 'confirmPassword';
                         } else if (key === 'phone_no') {
@@ -491,13 +473,10 @@
                     return;
                 }
                 
-                // Get form data
                 const formData = new FormData(this);
                 
-                // Disable submit button and show loading
                 $('#saveUserBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...');
                 
-                // Submit form via AJAX
                 $.ajax({
                     url: "{{ route('admin.users.store') }}",
                     type: 'POST',
@@ -508,7 +487,6 @@
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function(response) {
-                        // Show success message
                         const alertHtml = `
                             <div class="alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
                                 <strong>Success!</strong> ${response.message}
@@ -517,17 +495,13 @@
                         `;
                         $('body').append(alertHtml);
                         
-                        // Reset form and close modal
                         $('#addUserForm')[0].reset();
                         $('#addUserModal').modal('hide');
                         
-                        // Reload table
                         table.ajax.reload();
                         
-                        // Re-enable submit button
                         $('#saveUserBtn').prop('disabled', false).html('<i class="fas fa-save me-1"></i>Save User');
                         
-                        // Auto-dismiss alert after 3 seconds
                         setTimeout(() => {
                             $('.alert').fadeOut('slow', function() {
                                 $(this).remove();
@@ -535,12 +509,9 @@
                         }, 3000);
                     },
                     error: function(xhr) {
-                        // Show field-wise errors
                         if (xhr.responseJSON && xhr.responseJSON.errors) {
                             $.each(xhr.responseJSON.errors, function(key, value) {
-                                // Convert snake_case to camelCase for field matching
                                 let fieldName = key.replace(/_([a-z])/g, function (g) { return g[1].toUpperCase(); });
-                                // Handle special cases
                                 if (key === 'password_confirmation') {
                                     fieldName = 'confirmPassword';
                                 } else if (key === 'phone_no') {
@@ -556,7 +527,6 @@
                                 fieldElement.after(`<div class="invalid-feedback">${value[0]}</div>`);
                             });
                         } else {
-                            // Show general error message
                             let errorMessage = 'An error occurred while saving the user.';
                             const alertHtml = `
                                 <div class="alert alert-danger alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
@@ -566,7 +536,6 @@
                             `;
                             $('body').append(alertHtml);
                             
-                            // Auto-dismiss alert after 5 seconds
                             setTimeout(() => {
                                 $('.alert').fadeOut('slow', function() {
                                     $(this).remove();
@@ -574,13 +543,11 @@
                             }, 5000);
                         }
                         
-                        // Re-enable submit button
                         $('#saveUserBtn').prop('disabled', false).html('<i class="fas fa-save me-1"></i>Save User');
                     }
                 });
             });
             
-            // Password confirmation validation
             $('#addUserForm').on('input', function() {
                 const password = $('#password').val();
                 const confirmPassword = $('#confirmPassword').val();
@@ -598,6 +565,126 @@
                     $('#confirmPassword').removeClass('is-valid is-invalid');
                     $('#confirmPassword').siblings('.invalid-feedback').remove();
                 }
+            });
+            
+            $(document).on('click', '.approve-license', function() {
+                const userId = $(this).data('user-id');
+                const licenseId = $(this).data('license-id');
+                
+                $('#userDetailsModal').modal('hide');
+                
+                Swal.fire({
+                    title: 'Approve License?',
+                    text: 'Are you sure you want to approve this license?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, approve it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: "{{ route('admin.license.approve') }}",
+                            type: 'POST',
+                            data: {
+                                user_id: userId,
+                                license_id: licenseId,
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(response) {
+                                const alertHtml = `
+                                    <div class="alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
+                                        <strong>Success!</strong> License approved successfully
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                `;
+                                $('body').append(alertHtml);
+                                setTimeout(() => {
+                                    $('.alert').fadeOut('slow', function() {
+                                        $(this).remove();
+                                    });
+                                }, 3000);
+                                // Reload the users table to reflect changes
+                                table.ajax.reload();
+                            },
+                            error: function(xhr) {
+                                const alertHtml = `
+                                    <div class="alert alert-danger alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
+                                        <strong>Error!</strong> There was an error approving the license.
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                `;
+                                $('body').append(alertHtml);
+                                setTimeout(() => {
+                                    $('.alert').fadeOut('slow', function() {
+                                        $(this).remove();
+                                    });
+                                }, 5000);
+                            }
+                        });
+                    }
+                });
+            });
+            
+            // Handle license decline
+            $(document).on('click', '.decline-license', function() {
+                const userId = $(this).data('user-id');
+                const licenseId = $(this).data('license-id');
+                
+                // Close the user details modal
+                $('#userDetailsModal').modal('hide');
+                
+                Swal.fire({
+                    title: 'Decline License?',
+                    text: 'Are you sure you want to decline this license?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, decline it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: "{{ route('admin.license.decline') }}",
+                            type: 'POST',
+                            data: {
+                                user_id: userId,
+                                license_id: licenseId,
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(response) {
+                                const alertHtml = `
+                                    <div class="alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
+                                        <strong>Success!</strong> License declined successfully
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                `;
+                                $('body').append(alertHtml);
+                                setTimeout(() => {
+                                    $('.alert').fadeOut('slow', function() {
+                                        $(this).remove();
+                                    });
+                                }, 3000);
+                                // Reload the users table to reflect changes
+                                table.ajax.reload();
+                            },
+                            error: function(xhr) {
+                                const alertHtml = `
+                                    <div class="alert alert-danger alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
+                                        <strong>Error!</strong> There was an error declining the license.
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                `;
+                                $('body').append(alertHtml);
+                                setTimeout(() => {
+                                    $('.alert').fadeOut('slow', function() {
+                                        $(this).remove();
+                                    });
+                                }, 5000);
+                            }
+                        });
+                    }
+                });
             });
         });
     </script>

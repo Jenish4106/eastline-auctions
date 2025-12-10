@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\License;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -20,18 +21,19 @@ class UserController extends Controller
     {
         $users = User::select([
                 'id', 
-                'first_name', 
-                'last_name', 
-                'email', 
-                'phone_no', 
-                'company_name', 
-                'city', 
-                'state', 
+                'first_name',
+                'last_name',
+                'email',
+                'phone_no',
+                'company_name',
+                'address',
+                'city',
+                'state',
                 'zip_code',
                 'status',
+                'is_license',
                 'created_at'
-            ])
-            ->orderBy('id', 'DESC');
+            ])->with('license:id,user_id,file,status');
 
         return DataTables::of($users)
             ->addIndexColumn()
@@ -47,6 +49,11 @@ class UserController extends Controller
             ->addColumn('status', function ($user) {
                 $badgeClass = $user->status == 1 ? 'bg-label-success' : 'bg-label-danger';
                 $statusText = $user->status_text;
+                return '<span class="badge '.$badgeClass.'">'.$statusText.'</span>';
+            })
+            ->addColumn('license_status', function ($user) {
+                $badgeClass = $user->is_license == 0 ? 'bg-label-warning' : ($user->is_license == 2 ? 'bg-label-danger' : 'bg-label-success');
+                $statusText = $user->license_status_text;
                 return '<span class="badge '.$badgeClass.'">'.$statusText.'</span>';
             })
             ->addColumn('actions', function ($user) {
@@ -71,88 +78,158 @@ class UserController extends Controller
                 
                 return $actions;
             })
-            ->rawColumns(['status', 'actions'])
+            ->rawColumns(['status', 'license_status', 'actions'])
+            ->orderColumn('DT_RowIndex', 'id $1')
+            ->filterColumn('DT_RowIndex', function ($query, $keyword) {
+            })
+            ->filterColumn('name', function ($query, $keyword) {
+                $keyword = addslashes($keyword);
+                $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$keyword}%"]);
+            })
+            ->filterColumn('email', function ($query, $keyword) {
+                $query->where('email', 'LIKE', "%{$keyword}%");
+            })
+            ->filterColumn('phone_no', function ($query, $keyword) {
+                $query->where('phone_no', 'LIKE', "%{$keyword}%");
+            })
             ->make(true);
     }
-    
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email|max:255',
-            'phone_no' => 'required|string|max:20',
+            'first_name'   => 'required|string|max:255',
+            'last_name'    => 'required|string|max:255',
+            'email'        => 'required|email|unique:users,email|max:255',
+            'phone_no'     => 'required|string|max:20',
             'company_name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
-            'city' => 'required|string|max:100',
-            'state' => 'required|string|max:100',
-            'zip_code' => 'required|string|max:20',
-            'password' => 'required|string|min:8|confirmed',
+            'address'      => 'required|string|max:255',
+            'city'         => 'required|string|max:100',
+            'state'        => 'required|string|max:100',
+            'zip_code'     => 'required|string|max:20',
+            'password'     => 'required|string|min:8|confirmed',
         ], [
-            'first_name.required' => 'The first name field is required.',
-            'last_name.required' => 'The last name field is required.',
-            'email.required' => 'The email field is required.',
-            'email.email' => 'The email must be a valid email address.',
-            'email.unique' => 'The email has already been taken.',
-            'phone_no.required' => 'The phone number field is required.',
+            'first_name.required'   => 'The first name field is required.',
+            'last_name.required'    => 'The last name field is required.',
+            'email.required'        => 'The email field is required.',
+            'email.email'           => 'The email must be a valid email address.',
+            'email.unique'          => 'The email has already been taken.',
+            'phone_no.required'     => 'The phone number field is required.',
             'company_name.required' => 'The company name field is required.',
-            'address.required' => 'The address field is required.',
-            'city.required' => 'The city field is required.',
-            'state.required' => 'The state field is required.',
-            'zip_code.required' => 'The zip code field is required.',
-            'password.required' => 'The password field is required.',
-            'password.min' => 'The password must be at least 8 characters.',
-            'password.confirmed' => 'The password confirmation does not match.',
+            'address.required'      => 'The address field is required.',
+            'city.required'         => 'The city field is required.',
+            'state.required'        => 'The state field is required.',
+            'zip_code.required'     => 'The zip code field is required.',
+            'password.required'     => 'The password field is required.',
+            'password.min'          => 'The password must be at least 8 characters.',
+            'password.confirmed'    => 'The password confirmation does not match.',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $user = new User();
-        $user->first_name = $request->first_name;
-        $user->last_name = $request->last_name;
-        $user->email = $request->email;
-        $user->phone_no = $request->phone_no;
+        $user               = new User();
+        $user->first_name   = $request->first_name;
+        $user->last_name    = $request->last_name;
+        $user->email        = $request->email;
+        $user->phone_no     = $request->phone_no;
         $user->company_name = $request->company_name;
-        $user->address = $request->address;
-        $user->city = $request->city;
-        $user->state = $request->state;
-        $user->zip_code = $request->zip_code;
-        $user->password = Hash::make($request->password);
-        $user->status = 1; // Default to active
+        $user->address      = $request->address;
+        $user->city         = $request->city;
+        $user->state        = $request->state;
+        $user->zip_code     = $request->zip_code;
+        $user->password     = Hash::make($request->password);
+        $user->status       = 1;
         $user->save();
 
         return response()->json(['message' => 'User created successfully'], 200);
     }
-    
+
     public function changeStatus(Request $request)
     {
         $user = User::find($request->id);
-        
-        if (!$user) {
+
+        if (! $user) {
             return response()->json(['error' => 'User not found'], 404);
         }
-        
-        // Toggle status: if active (1) make blocked (0), if blocked (0) make active (1)
+
         $user->status = $user->status == 1 ? 0 : 1;
         $user->save();
-        
+
         $statusText = $user->status == 1 ? 'activated' : 'blocked';
-        
+
         return response()->json(['success' => "User {$statusText} successfully"]);
     }
-    
+
     public function deleteUser(Request $request)
     {
         $user = User::find($request->id);
-        
-        if (!$user) {
+
+        if (! $user) {
             return response()->json(['error' => 'User not found'], 404);
         }
-        
+
         $user->delete();
-        
+
         return response()->json(['success' => 'User deleted successfully']);
+    }
+    
+    public function approveLicense(Request $request)
+    {
+        try {
+            $userId = $request->user_id;
+            $licenseId = $request->license_id;
+            
+            $license = License::find($licenseId);
+            if (!$license || $license->user_id != $userId) {
+                return response()->json(['error' => 'License not found'], 404);
+            }
+            
+            $license->status = 1;
+            $license->save();
+            
+            $user = User::find($userId);
+            if ($user) {
+                $user->is_license = 1;
+                $user->save();
+            }
+            
+            return response()->json(['success' => 'License approved successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'An error occurred while approving the license'], 500);
+        }
+    }
+    
+    public function declineLicense(Request $request)
+    {
+        try {
+            $userId = $request->user_id;
+            $licenseId = $request->license_id;
+            
+            $license = License::find($licenseId);
+            if (!$license || $license->user_id != $userId) {
+                return response()->json(['error' => 'License not found'], 404);
+            }
+            
+            $license->status = 2;
+            $license->save();
+            
+            $user = User::find($userId);
+            if ($user) {
+                $user->is_license = 2;
+                $user->save();
+            }
+            
+            return response()->json(['success' => 'License declined successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'An error occurred while declining the license'], 500);
+        }
+    }
+    
+    public function show($id)
+    {
+        $user = User::with('license')->findOrFail($id);
+        return view('Admin.Pages.UserManagement.details', compact('user'));
     }
 }
