@@ -13,17 +13,27 @@ return new class extends Migration
     {
         Schema::create('machinery', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
             $table->integer('category_id');
+            $table->string('name');
+
             $table->string('year');
             $table->string('weight');
-            $table->string('fuel_type');
+            $table->string('working_hours');
+            $table->string('condition');
+            $table->string('fuel');
+
             $table->string('buy_now_price');
             $table->string('bid_start_price');
             $table->string('bid_end_time');
+
             $table->text('description');
-            $table->string('images');
-            $table->boolean('status')->default(1)->comment('1: active, 2: Sold, 3: Closed');
+
+            $table->json('specification');
+            $table->json('offer');
+
+            $table->boolean('status')->default(1)
+                ->comment('1: Active, 2: Sold, 3: Closed');
+
             $table->timestamps();
         });
     }

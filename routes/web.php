@@ -18,8 +18,8 @@ Route::middleware(['auth.admin'])->group(function () {
     
     Route::prefix('user-management')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('admin.users.management');
-        Route::get('/{id}', [UserController::class, 'show'])->name('admin.users.show');
         Route::get('/fetch', [UserController::class, 'fetchUsers'])->name('admin.users.fetch');
+        Route::get('/{id}', [UserController::class, 'show'])->name('admin.users.show');
         Route::post('/store', [UserController::class, 'store'])->name('admin.users.store');
         Route::post('/delete', [UserController::class, 'deleteUser'])->name('admin.users.delete');
         Route::post('/change-status', [UserController::class, 'changeStatus'])->name('admin.users.change.status');
@@ -41,6 +41,7 @@ Route::middleware(['auth.admin'])->group(function () {
         Route::get('/fetch', [MachineryController::class, 'fetchMachinery'])->name('admin.machinery.fetch');
         Route::post('/store', [MachineryController::class, 'store'])->name('admin.machinery.store');
         Route::get('/get', [MachineryController::class, 'getMachinery'])->name('admin.machinery.get');
+        Route::get('/view/{id}', [MachineryController::class, 'view'])->name('admin.machinery.view');
         Route::post('/update/{id}', [MachineryController::class, 'update'])->name('admin.machinery.update');
         Route::post('/delete', [MachineryController::class, 'destroy'])->name('admin.machinery.delete');
     });

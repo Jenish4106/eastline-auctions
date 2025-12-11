@@ -16,17 +16,22 @@ class Machinery extends Model
         'category_id',
         'year',
         'weight',
-        'fuel_type',
+        'working_hours',
+        'condition',
+        'fuel',
         'buy_now_price',
         'bid_start_price',
         'bid_end_time',
         'description',
-        'images',
+        'specification',
+        'offer',
         'status'
     ];
 
     protected $casts = [
         'category_id' => 'integer',
+        'specification' => 'array',
+        'offer' => 'array',
         'status' => 'integer'
     ];
 
@@ -34,17 +39,22 @@ class Machinery extends Model
     {
         return $this->belongsTo(Category::class);
     }
+    
+    public function images()
+    {
+        return $this->hasMany(MachineryImage::class);
+    }
 
     public function getCreatedDateAttribute()
     {
         return $this->created_at->format('F d, Y');
     }
-    
+
     public function getUpdatedDateAttribute()
     {
         return $this->updated_at->format('F d, Y');
     }
-    
+
     public function getStatusBadgeAttribute()
     {
         switch ($this->status) {

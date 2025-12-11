@@ -17,7 +17,7 @@
                                 <div class="card mb-4">
                                     <div class="card-header d-flex align-items-center justify-content-between">
                                         <h5 class="mb-0">User Details</h5>
-                                        <a href="{{ route('admin.users.index') }}" class="btn btn-primary">
+                                        <a href="{{ route('admin.users.management') }}" class="btn btn-primary">
                                             <i class="fas fa-arrow-left me-1"></i>Back to Users
                                         </a>
                                     </div>
@@ -28,137 +28,153 @@
                                                     <div class="card-body">
                                                         <div class="user-avatar-section">
                                                             <div class="d-flex align-items-center flex-column">
-                                                                <div class="avatar avatar-xl bg-primary rounded-circle mb-3">
-                                                                    <span class="avatar-initial rounded-circle fs-2">{{ substr($user->first_name, 0, 1) }}{{ substr($user->last_name, 0, 1) }}</span>
+                                                                <div class="avatar avatar-xl bg-primary rounded-circle mb-3"
+                                                                    style="display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; width:64px; height:64px;">
+                                                                    <span class="avatar-initial fs-2"
+                                                                        style="display:inline-flex; align-items:center; justify-content:center; width:100%; height:100%; margin:0; padding:0; line-height:1; position:static; transform:none;">
+                                                                        {{ substr($user->first_name, 0, 1) }}{{ substr($user->last_name, 0, 1) }}
+                                                                    </span>
                                                                 </div>
+
                                                                 <div class="user-info text-center">
                                                                     <h5>{{ $user->first_name }} {{ $user->last_name }}</h5>
-                                                                    <span class="badge bg-label-secondary">{{ $user->company_name ?? 'N/A' }}</span>
+                                                                    <span
+                                                                        class="badge bg-label-secondary">{{ $user->company_name ?? 'N/A' }}</span>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        
-                                                        <div class="d-flex justify-content-around flex-wrap my-4 py-3">
+
+                                                        <div class="d-flex justify-content-around flex-wrap my-4">
                                                             <div class="d-flex align-items-start me-4 mt-3 gap-3">
-                                                                <span class="badge bg-label-primary p-2 rounded"><i class="fas fa-calendar-alt"></i></span>
+                                                                <span class="badge bg-label-primary p-2 rounded"><i
+                                                                        class="fas fa-calendar-alt"></i></span>
                                                                 <div>
-                                                                    <h5 class="mb-0">{{ \Carbon\Carbon::parse($user->created_at)->format('M d, Y') }}</h5>
+                                                                    <h5 class="mb-0">
+                                                                        {{ \Carbon\Carbon::parse($user->created_at)->format('M d, Y') }}
+                                                                    </h5>
                                                                     <span>Registration Date</span>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        
+
                                                         <h5 class="pb-2 border-bottom mb-3">Details</h5>
                                                         <div class="info-container">
                                                             <ul class="list-unstyled">
-                                                                <li class="mb-3">
-                                                                    <span class="me-2">ID:</span>
-                                                                    <span class="fw-medium">#{{ $user->id }}</span>
-                                                                </li>
                                                                 <li class="mb-3">
                                                                     <span class="me-2">Email:</span>
                                                                     <span class="fw-medium">{{ $user->email }}</span>
                                                                 </li>
                                                                 <li class="mb-3">
                                                                     <span class="me-2">Phone:</span>
-                                                                    <span class="fw-medium">{{ $user->phone_no ?? 'N/A' }}</span>
+                                                                    <span
+                                                                        class="fw-medium">{{ $user->phone_no ?? 'N/A' }}</span>
                                                                 </li>
                                                                 <li class="mb-3">
                                                                     <span class="me-2">Status:</span>
-                                                                    <span class="badge {{ $user->status == 1 ? 'bg-label-success' : 'bg-label-danger' }}">
+                                                                    <span
+                                                                        class="badge {{ $user->status == 1 ? 'bg-label-success' : 'bg-label-danger' }}">
                                                                         {{ $user->status == 1 ? 'Active' : 'Blocked' }}
                                                                     </span>
                                                                 </li>
                                                                 <li class="mb-3">
-                                                                    <span class="me-2">License Status:</span>
-                                                                    @if($user->license)
-                                                                        <span class="badge {{ $user->license->status == 1 ? 'bg-label-success' : ($user->license->status == 2 ? 'bg-label-danger' : 'bg-label-warning') }}">
-                                                                            {{ $user->license->status == 1 ? 'Approved' : ($user->license->status == 2 ? 'Declined' : 'Pending') }}
-                                                                        </span>
-                                                                    @else
-                                                                        <span class="badge bg-label-secondary">Not Uploaded</span>
-                                                                    @endif
-                                                                </li>
-                                                                <li class="mb-3">
                                                                     <span class="me-2">Address:</span>
-                                                                    <span class="fw-medium">{{ $user->address ?? 'N/A' }}</span>
+                                                                    <span
+                                                                        class="fw-medium">{{ $user->address ?? 'N/A' }}</span>
                                                                 </li>
                                                                 <li class="mb-3">
                                                                     <span class="me-2">City:</span>
-                                                                    <span class="fw-medium">{{ $user->city ?? 'N/A' }}</span>
+                                                                    <span
+                                                                        class="fw-medium">{{ $user->city ?? 'N/A' }}</span>
                                                                 </li>
                                                                 <li class="mb-3">
                                                                     <span class="me-2">State:</span>
-                                                                    <span class="fw-medium">{{ $user->state ?? 'N/A' }}</span>
+                                                                    <span
+                                                                        class="fw-medium">{{ $user->state ?? 'N/A' }}</span>
                                                                 </li>
                                                                 <li class="mb-3">
                                                                     <span class="me-2">Zip Code:</span>
-                                                                    <span class="fw-medium">{{ $user->zip_code ?? 'N/A' }}</span>
+                                                                    <span
+                                                                        class="fw-medium">{{ $user->zip_code ?? 'N/A' }}</span>
                                                                 </li>
                                                             </ul>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            
+
                                             <div class="col-xl-8 col-lg-7 col-md-7">
                                                 <div class="card mb-4">
                                                     <div class="card-header">
                                                         <h5 class="card-title mb-0">License Information</h5>
                                                     </div>
                                                     <div class="card-body">
-                                                        @if($user->license)
+                                                        @if ($user->license)
                                                             <div class="row">
                                                                 <div class="col-md-6 mb-3">
-                                                                    <label class="form-label">License ID</label>
-                                                                    <div class="form-control-plaintext fw-medium">#{{ $user->license->id }}</div>
-                                                                </div>
-                                                                <div class="col-md-6 mb-3">
                                                                     <label class="form-label">Upload Date</label>
-                                                                    <div class="form-control-plaintext fw-medium">{{ \Carbon\Carbon::parse($user->license->created_at)->format('M d, Y h:i A') }}</div>
+                                                                    <div class="form-control-plaintext fw-medium">
+                                                                        {{ \Carbon\Carbon::parse($user->license->created_at)->format('M d, Y h:i A') }}
+                                                                    </div>
                                                                 </div>
                                                                 <div class="col-md-6 mb-3">
                                                                     <label class="form-label">Status</label>
                                                                     <div>
-                                                                        @if($user->license->status == 1)
-                                                                            <span class="badge bg-success">Approved</span>
+                                                                        @if ($user->license->status == 1)
+                                                                            <span class="badge bg-label-success">Approved</span>
                                                                         @elseif($user->license->status == 2)
-                                                                            <span class="badge bg-danger">Declined</span>
+                                                                            <span class="badge bg-label-danger">Declined</span>
                                                                         @else
-                                                                            <span class="badge bg-warning">Pending</span>
+                                                                            <span class="badge bg-label-warning">Pending</span>
                                                                         @endif
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-md-6 mb-3">
+                                                                <div class="col-md-12 mb-3">
                                                                     <label class="form-label">Document</label>
                                                                     <div>
                                                                         @php
                                                                             $fileName = basename($user->license->file);
-                                                                            $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                                                                            $fileExtension = strtolower(
+                                                                                pathinfo($fileName, PATHINFO_EXTENSION),
+                                                                            );
                                                                         @endphp
-                                                                        
-                                                                        @if(in_array($fileExtension, ['jpg', 'jpeg', 'png']))
-                                                                            <a href="/{{ $user->license->file }}" target="_blank">
-                                                                                <img src="/{{ $user->license->file }}" alt="License Document" class="img-fluid rounded" style="max-height: 200px;">
+
+                                                                        @if (in_array($fileExtension, ['jpg', 'jpeg', 'png']))
+                                                                            <a href="/{{ $user->license->file }}"
+                                                                                target="_blank">
+                                                                                <img src="/{{ $user->license->file }}"
+                                                                                    alt="License Document"
+                                                                                    class="img-fluid rounded"
+                                                                                    style="max-height: 200px;">
                                                                             </a>
                                                                         @elseif($fileExtension === 'pdf')
-                                                                            <a href="/{{ $user->license->file }}" target="_blank" class="btn btn-outline-primary">
-                                                                                <i class="fas fa-file-pdf me-1"></i>View PDF Document
+                                                                            <a href="/{{ $user->license->file }}"
+                                                                                target="_blank"
+                                                                                class="btn btn-label-primary">
+                                                                                <i class="fas fa-file-pdf me-1"></i>View PDF
+                                                                                Document
                                                                             </a>
                                                                         @else
-                                                                            <a href="/{{ $user->license->file }}" target="_blank" class="btn btn-outline-secondary">
-                                                                                <i class="fas fa-file me-1"></i>Download Document
+                                                                            <a href="/{{ $user->license->file }}"
+                                                                                target="_blank"
+                                                                                class="btn btn-label-secondary">
+                                                                                <i class="fas fa-file me-1"></i>Download
+                                                                                Document
                                                                             </a>
                                                                         @endif
                                                                     </div>
                                                                 </div>
-                                                                @if($user->license->status == 0)
+                                                                @if ($user->license->status == 0)
                                                                     <div class="col-12 mt-3">
                                                                         <div class="d-flex gap-2">
-                                                                            <button class="btn btn-success approve-license" data-user-id="{{ $user->id }}" data-license-id="{{ $user->license->id }}">
+                                                                            <button class="btn btn-success approve-license"
+                                                                                data-user-id="{{ $user->id }}"
+                                                                                data-license-id="{{ $user->license->id }}">
                                                                                 <i class="fas fa-check me-1"></i>Approve
                                                                             </button>
-                                                                            <button class="btn btn-danger decline-license ms-2" data-user-id="{{ $user->id }}" data-license-id="{{ $user->license->id }}">
+                                                                            <button
+                                                                                class="btn btn-danger decline-license ms-2"
+                                                                                data-user-id="{{ $user->id }}"
+                                                                                data-license-id="{{ $user->license->id }}">
                                                                                 <i class="fas fa-times me-1"></i>Decline
                                                                             </button>
                                                                         </div>
@@ -169,29 +185,34 @@
                                                             <div class="text-center py-5">
                                                                 <i class="fas fa-file-upload fa-3x mb-3 text-muted"></i>
                                                                 <h6>No license document uploaded</h6>
-                                                                <p class="text-muted">This user hasn't uploaded any license document yet.</p>
+                                                                <p class="text-muted">This user hasn't uploaded any license
+                                                                    document yet.</p>
                                                             </div>
                                                         @endif
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div class="card mb-4">
                                                     <div class="card-header">
                                                         <h5 class="card-title mb-0">Account Actions</h5>
                                                     </div>
                                                     <div class="card-body">
                                                         <div class="d-flex gap-3">
-                                                            @if($user->status == 1)
-                                                                <button class="btn btn-warning block-user" data-id="{{ $user->id }}">
+                                                            @if ($user->status == 1)
+                                                                <button class="btn btn-warning block-user"
+                                                                    data-id="{{ $user->id }}">
                                                                     <i class="fas fa-ban me-1"></i>Block User
                                                                 </button>
                                                             @else
-                                                                <button class="btn btn-success unblock-user" data-id="{{ $user->id }}">
+                                                                <button class="btn btn-success unblock-user"
+                                                                    data-id="{{ $user->id }}">
                                                                     <i class="fas fa-check-circle me-1"></i>Unblock User
                                                                 </button>
                                                             @endif
-                                                            
-                                                            <button class="btn btn-danger delete-user" data-id="{{ $user->id }}" data-name="{{ $user->first_name }} {{ $user->last_name }}">
+
+                                                            <button class="btn btn-danger delete-user"
+                                                                data-id="{{ $user->id }}"
+                                                                data-name="{{ $user->first_name }} {{ $user->last_name }}">
                                                                 <i class="fas fa-trash-alt me-1"></i>Delete User
                                                             </button>
                                                         </div>
@@ -220,7 +241,7 @@
             // Handle user blocking
             $(document).on('click', '.block-user', function() {
                 const userId = $(this).data('id');
-                
+
                 Swal.fire({
                     title: 'Block User?',
                     text: 'Are you sure you want to block this user? They will no longer be able to access the system.',
@@ -266,11 +287,10 @@
                     }
                 });
             });
-            
-            // Handle user unblocking
+
             $(document).on('click', '.unblock-user', function() {
                 const userId = $(this).data('id');
-                
+
                 Swal.fire({
                     title: 'Unblock User?',
                     text: 'Are you sure you want to unblock this user? They will regain access to the system.',
@@ -316,12 +336,12 @@
                     }
                 });
             });
-            
+
             // Handle user deletion
             $(document).on('click', '.delete-user', function() {
                 const userId = $(this).data('id');
                 const userName = $(this).data('name');
-                
+
                 Swal.fire({
                     title: 'Are you sure?',
                     text: `You are about to delete user: ${userName}. This action cannot be undone!`,
@@ -354,7 +374,8 @@
                                     });
                                 }, 3000);
                                 // Redirect to users list
-                                window.location.href = "{{ route('admin.users.index') }}";
+                                window.location.href =
+                                    "{{ route('admin.users.management') }}";
                             },
                             error: function(xhr) {
                                 Swal.fire(
@@ -367,12 +388,12 @@
                     }
                 });
             });
-            
+
             // Handle license approval
             $(document).on('click', '.approve-license', function() {
                 const userId = $(this).data('user-id');
                 const licenseId = $(this).data('license-id');
-                
+
                 Swal.fire({
                     title: 'Approve License?',
                     text: 'Are you sure you want to approve this license?',
@@ -425,12 +446,12 @@
                     }
                 });
             });
-            
+
             // Handle license decline
             $(document).on('click', '.decline-license', function() {
                 const userId = $(this).data('user-id');
                 const licenseId = $(this).data('license-id');
-                
+
                 Swal.fire({
                     title: 'Decline License?',
                     text: 'Are you sure you want to decline this license?',

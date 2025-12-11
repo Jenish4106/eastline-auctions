@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\UsersController;
+use App\Http\Controllers\Api\InventoryController;
 
 Route::post('/register',[RegisterController::class,'register']);
 Route::post('/login',[LoginController::class,'login']);
@@ -15,4 +16,11 @@ Route::post('/reset-password',[ForgotPasswordController::class,'resetPassword'])
 
 Route::middleware(['auth.api'])->group(function () {
     Route::post('/user/upload-license',[UsersController::class,'uploadLicense']);
+
+    Route::get('/get-categories',[UsersController::class,'getCategories']);
+
+    // Inventory routes
+    Route::get('/inventory/categories',[InventoryController::class,'getCategoryList']);
+    Route::post('/inventory/machinery/category',[InventoryController::class,'getMachineryByCategory']);
+    Route::post('/inventory/machinery',[InventoryController::class,'getMachineryDetails']);
 });
