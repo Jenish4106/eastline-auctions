@@ -18,10 +18,9 @@
                                     <h4>Category Management</h4>
                                 </div>
                                 <div class="w-50 text-end">
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                        data-bs-target="#addCategoryModal">
+                                    <a href="{{ route('admin.categories.create') }}" class="btn btn-primary">
                                         <i class="fa-solid fa-plus me-1"></i>Add Category
-                                    </button>
+                                    </a>
                                 </div>
                             </div>
 
@@ -51,98 +50,6 @@
 
             <div class="layout-overlay layout-menu-toggle"></div>
             <div class="drag-target"></div>
-        </div>
-    </div>
-
-    <!-- Add Category Modal -->
-    <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addCategoryModalLabel">Add New Category</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="addCategoryForm" enctype="multipart/form-data">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="categoryName" class="form-label">Category Name <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="categoryName" name="category_name"
-                                    placeholder="Enter category name">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="totalMachinery" class="form-label">Total Machinery <span
-                                        class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="totalMachinery" name="total_machinery"
-                                    placeholder="Enter total machinery" min="0">
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label for="categoryImage" class="form-label">Category Image <span
-                                        class="text-danger">*</span></label>
-                                <input type="file" class="form-control" id="categoryImage" name="image"
-                                    accept="image/*">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary" id="saveCategoryBtn">
-                            <i class="fas fa-save me-1"></i>Save Category
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Category Modal -->
-    <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editCategoryModalLabel">Edit Category</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="editCategoryForm" enctype="multipart/form-data">
-                    @csrf
-                    <input type="hidden" id="editCategoryId" name="id">
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="editCategoryName" class="form-label">Category Name <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="editCategoryName" name="category_name"
-                                    placeholder="Enter category name">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="editTotalMachinery" class="form-label">Total Machinery <span
-                                        class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="editTotalMachinery"
-                                    name="total_machinery" placeholder="Enter total machinery" min="0">
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label for="editCategoryImage" class="form-label">Category Image</label>
-                                <input type="file" class="form-control" id="editCategoryImage" name="image"
-                                    accept="image/*">
-                                <div id="currentImageContainer" class="mt-2"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary" id="updateCategoryBtn">
-                            <i class="fas fa-save me-1"></i>Update Category
-                        </button>
-                    </div>
-                </form>
-            </div>
         </div>
     </div>
 
@@ -215,6 +122,12 @@
                 $('#imagePopupModal').modal('show');
             });
 
+            $(document).on('click', '.edit-category', function() {
+                const categoryId = $(this).data('id');
+                // Redirect to edit page instead of opening modal
+                window.location.href = "{{ route('admin.categories.edit', '__ID__') }}".replace('__ID__', categoryId);
+            });
+
             $(document).on('click', '.delete-category', function() {
                 const categoryId = $(this).data('id');
                 const categoryName = $(this).data('name');
@@ -260,239 +173,6 @@
                                 );
                             }
                         });
-                    }
-                });
-            });
-
-            $(document).on('click', '.edit-category', function() {
-                const categoryId = $(this).data('id');
-
-                $.ajax({
-                    url: "{{ route('admin.categories.get') }}",
-                    type: 'GET',
-                    data: {
-                        id: categoryId,
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        const category = response.category;
-
-                        $('#editCategoryId').val(category.id);
-                        $('#editCategoryName').val(category.category_name);
-                        $('#editTotalMachinery').val(category.total_machinery);
-
-                        if (category.image) {
-                            $('#currentImageContainer').html(`
-                                <div class="mt-2">
-                                    <label class="form-label">Current Image:</label>
-                                    <br>
-                                    <img src="{{ asset('categories') }}/${category.image}" alt="Category Image" width="100" class="img-thumbnail">
-                                </div>
-                            `);
-                        } else {
-                            $('#currentImageContainer').html('');
-                        }
-
-                        $('#editCategoryModal').modal('show');
-                    },
-                    error: function(xhr) {
-                        Swal.fire(
-                            'Error!',
-                            'There was an error fetching the category details.',
-                            'error'
-                        );
-                    }
-                });
-            });
-
-            $('#addCategoryForm').on('submit', function(e) {
-                e.preventDefault();
-
-                $('.is-invalid').removeClass('is-invalid');
-                $('.invalid-feedback').remove();
-                $('#categoryImageError').text('').hide();
-
-                const formData = new FormData(this);
-
-                $('#saveCategoryBtn').prop('disabled', true).html(
-                    '<i class="fas fa-spinner fa-spin me-1"></i>Saving...');
-
-                $.ajax({
-                    url: "{{ route('admin.categories.store') }}",
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        const alertHtml = `
-                            <div class="alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
-                                <strong>Success!</strong> ${response.message}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        `;
-                        $('body').append(alertHtml);
-
-                        $('#addCategoryForm')[0].reset();
-                        $('#addCategoryModal').modal('hide');
-
-                        table.ajax.reload();
-
-                        $('#saveCategoryBtn').prop('disabled', false).html(
-                            '<i class="fas fa-save me-1"></i>Save Category');
-
-                        setTimeout(() => {
-                            $('.alert').fadeOut('slow', function() {
-                                $(this).remove();
-                            });
-                        }, 3000);
-                    },
-                    error: function(xhr) {
-                        if (xhr.responseJSON && xhr.responseJSON.errors) {
-                            $.each(xhr.responseJSON.errors, function(key, value) {
-                                let fieldName = key.replace(/_([a-z])/g, function(g) {
-                                    return g[1].toUpperCase();
-                                });
-                
-                                if (key === 'total_machinery') {
-                                    fieldName = 'totalMachinery';
-                                }
-                                if (key === 'image') {
-                                    fieldName = 'categoryImage';
-                                }
-
-                                if (key === 'image') {
-                                    const imageFieldElement = $('#categoryImage');
-                                    imageFieldElement.addClass('is-invalid');
-                                    
-                                    $('#categoryImage').siblings('.invalid-feedback').remove();
-                                    
-                                    imageFieldElement.after(`<div class="invalid-feedback">${value[0]}</div>`);
-                                } else {
-                                    const fieldElement = $('#' + fieldName);
-                                    fieldElement.addClass('is-invalid');
-                                    fieldElement.after(
-                                        `<div class="invalid-feedback">${value[0]}</div>`
-                                        );
-                                }
-                            });
-                        } else {
-                            let errorMessage = 'An error occurred while saving the category.';
-                            const alertHtml = `
-                                <div class="alert alert-danger alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
-                                    <strong>Error!</strong> ${errorMessage}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                            `;
-                            $('body').append(alertHtml);
-
-                            setTimeout(() => {
-                                $('.alert').fadeOut('slow', function() {
-                                    $(this).remove();
-                                });
-                            }, 5000);
-                        }
-
-                        $('#saveCategoryBtn').prop('disabled', false).html(
-                            '<i class="fas fa-save me-1"></i>Save Category');
-                    }
-                });
-            });
-
-            $('#editCategoryForm').on('submit', function(e) {
-                e.preventDefault();
-
-                $('.is-invalid').removeClass('is-invalid');
-                $('.invalid-feedback').remove();
-                $('#editCategoryImageError').text('').hide();
-
-                const formData = new FormData(this);
-                const categoryId = $('#editCategoryId').val();
-
-                $('#updateCategoryBtn').prop('disabled', true).html(
-                    '<i class="fas fa-spinner fa-spin me-1"></i>Updating...');
-
-                $.ajax({
-                    url: `{{ route('admin.categories.update', ['id' => '__ID__']) }}`.replace(
-                        '__ID__', categoryId),
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        const alertHtml = `
-                            <div class="alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
-                                <strong>Success!</strong> ${response.message}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        `;
-                        $('body').append(alertHtml);
-
-                        $('#editCategoryModal').modal('hide');
-
-                        table.ajax.reload();
-
-                        $('#updateCategoryBtn').prop('disabled', false).html(
-                            '<i class="fas fa-save me-1"></i>Update Category');
-
-                        setTimeout(() => {
-                            $('.alert').fadeOut('slow', function() {
-                                $(this).remove();
-                            });
-                        }, 3000);
-                    },
-                    error: function(xhr) {
-                        if (xhr.responseJSON && xhr.responseJSON.errors) {
-                            $.each(xhr.responseJSON.errors, function(key, value) {
-                                let fieldName = key.replace(/_([a-z])/g, function(g) {
-                                    return g[1].toUpperCase();
-                                });
-                                if (key === 'total_machinery') {
-                                    fieldName = 'editTotalMachinery';
-                                }
-                                if (key === 'image') {
-                                    fieldName = 'editCategoryImage';
-                                }
-
-                                if (key === 'image') {
-                                    const imageFieldElement = $('#editCategoryImage');
-                                    imageFieldElement.addClass('is-invalid');
-                                    // Remove any existing error message
-                                    $('#editCategoryImage').siblings('.invalid-feedback').remove();
-                                    // Add the error message
-                                    imageFieldElement.after(`<div class="invalid-feedback">${value[0]}</div>`);
-                                } else {
-                                    const fieldElement = $('#' + fieldName);
-                                    fieldElement.addClass('is-invalid');
-                                    fieldElement.after(
-                                        `<div class="invalid-feedback">${value[0]}</div>`
-                                        );
-                                }
-                            });
-                        } else {
-                            let errorMessage = 'An error occurred while updating the category.';
-                            const alertHtml = `
-                                <div class="alert alert-danger alert-dismissible fade show position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
-                                    <strong>Error!</strong> ${errorMessage}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                            `;
-                            $('body').append(alertHtml);
-
-                            setTimeout(() => {
-                                $('.alert').fadeOut('slow', function() {
-                                    $(this).remove();
-                                });
-                            }, 5000);
-                        }
-
-                        $('#updateCategoryBtn').prop('disabled', false).html(
-                            '<i class="fas fa-save me-1"></i>Update Category');
                     }
                 });
             });

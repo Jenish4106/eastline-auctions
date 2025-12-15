@@ -17,6 +17,13 @@ class UserController extends Controller
         return view('Admin.Pages.UserManagement.index');
     }
 
+    public function create()
+    {
+        return view('Admin.Pages.UserManagement.create');
+    }
+
+    // Remove the edit method to disable user editing
+    
     public function fetchUsers()
     {
         $users = User::select([
@@ -61,6 +68,7 @@ class UserController extends Controller
                     <a href="javascript:void(0);" class="view-details text-info me-2" data-id="'.$user->id.'">
                         <i class="fa-regular fa-eye"></i>
                     </a>';
+                // Remove the edit button to disable user editing from index page
                 
                 if ($user->status == 1) {
                     $actions .= '<a href="javascript:void(0);" class="block-user text-warning me-2" data-id="'.$user->id.'" data-name="'.($user->first_name . ' ' . $user->last_name).'">
@@ -97,6 +105,11 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        // Check if we're updating an existing user
+        if ($request->has('id') && $request->id) {
+            return $this->update($request, $request->id);
+        }
+
         $validator = Validator::make($request->all(), [
             'first_name'   => 'required|string|max:255',
             'last_name'    => 'required|string|max:255',
@@ -144,6 +157,66 @@ class UserController extends Controller
         $user->save();
 
         return response()->json(['message' => 'User created successfully'], 200);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $rules = [
+            'first_name'   => 'required|string|max:255',
+            'last_name'    => 'required|string|max:255',
+            'email'        => 'required|email|unique:users,email,'.$user->id.'|max:255',
+            'phone_no'     => 'required|string|max:20',
+            'company_name' => 'required|string|max:255',
+            'address'      => 'required|string|max:255',
+            'city'         => 'required|string|max:100',
+            'state'        => 'required|string|max:100',
+            'zip_code'     => 'required|string|max:20',
+        ];
+
+        if ($request->filled('password')) {
+            $rules['password'] = 'required|string|min:8|confirmed';
+        }
+
+        $validator = Validator::make($request->all(), $rules, [
+            'first_name.required'   => 'The first name field is required.',
+            'last_name.required'    => 'The last name field is required.',
+            'email.required'        => 'The email field is required.',
+            'email.email'           => 'The email must be a valid email address.',
+            'email.unique'          => 'The email has already been taken.',
+            'phone_no.required'     => 'The phone number field is required.',
+            'company_name.required' => 'The company name field is required.',
+            'address.required'      => 'The address field is required.',
+            'city.required'         => 'The city field is required.',
+            'state.required'        => 'The state field is required.',
+            'zip_code.required'     => 'The zip code field is required.',
+            'password.required'     => 'The password field is required.',
+            'password.min'          => 'The password must be at least 8 characters.',
+            'password.confirmed'    => 'The password confirmation does not match.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user->first_name   = $request->first_name;
+        $user->last_name    = $request->last_name;
+        $user->email        = $request->email;
+        $user->phone_no     = $request->phone_no;
+        $user->company_name = $request->company_name;
+        $user->address      = $request->address;
+        $user->city         = $request->city;
+        $user->state        = $request->state;
+        $user->zip_code     = $request->zip_code;
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return response()->json(['message' => 'User updated successfully'], 200);
     }
 
     public function changeStatus(Request $request)

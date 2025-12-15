@@ -18,9 +18,11 @@ Route::middleware(['auth.admin'])->group(function () {
     
     Route::prefix('user-management')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('admin.users.management');
+        Route::get('/create', [UserController::class, 'create'])->name('admin.users.create');
         Route::get('/fetch', [UserController::class, 'fetchUsers'])->name('admin.users.fetch');
         Route::get('/{id}', [UserController::class, 'show'])->name('admin.users.show');
         Route::post('/store', [UserController::class, 'store'])->name('admin.users.store');
+        Route::put('/update/{id}', [UserController::class, 'update'])->name('admin.users.update');
         Route::post('/delete', [UserController::class, 'deleteUser'])->name('admin.users.delete');
         Route::post('/change-status', [UserController::class, 'changeStatus'])->name('admin.users.change.status');
         Route::post('/license/approve', [UserController::class, 'approveLicense'])->name('admin.license.approve');
@@ -29,20 +31,24 @@ Route::middleware(['auth.admin'])->group(function () {
     
     Route::prefix('categories')->group(function () {
         Route::get('/', [CategoryController::class, 'index'])->name('admin.categories');
+        Route::get('/create', [CategoryController::class, 'create'])->name('admin.categories.create');
+        Route::get('/edit/{id}', [CategoryController::class, 'edit'])->name('admin.categories.edit');
         Route::get('/fetch', [CategoryController::class, 'fetchCategories'])->name('admin.categories.fetch');
         Route::post('/store', [CategoryController::class, 'store'])->name('admin.categories.store');
         Route::get('/get', [CategoryController::class, 'getCategory'])->name('admin.categories.get');
-        Route::post('/update/{id}', [CategoryController::class, 'update'])->name('admin.categories.update');
+        Route::match(['put', 'post'], '/update/{id}', [CategoryController::class, 'update'])->name('admin.categories.update');
         Route::post('/delete', [CategoryController::class, 'destroy'])->name('admin.categories.delete');
     });
     
     Route::prefix('machinery')->group(function () {
         Route::get('/', [MachineryController::class, 'index'])->name('admin.machinery');
+        Route::get('/create', [MachineryController::class, 'create'])->name('admin.machinery.create');
+        Route::get('/edit/{id}', [MachineryController::class, 'edit'])->name('admin.machinery.edit');
         Route::get('/fetch', [MachineryController::class, 'fetchMachinery'])->name('admin.machinery.fetch');
         Route::post('/store', [MachineryController::class, 'store'])->name('admin.machinery.store');
         Route::get('/get', [MachineryController::class, 'getMachinery'])->name('admin.machinery.get');
         Route::get('/view/{id}', [MachineryController::class, 'view'])->name('admin.machinery.view');
-        Route::post('/update/{id}', [MachineryController::class, 'update'])->name('admin.machinery.update');
+        Route::put('/update/{id}', [MachineryController::class, 'update'])->name('admin.machinery.update');
         Route::post('/delete', [MachineryController::class, 'destroy'])->name('admin.machinery.delete');
     });
 });

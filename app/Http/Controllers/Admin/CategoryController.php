@@ -17,10 +17,21 @@ class CategoryController extends Controller
         return view('Admin.Pages.Category.index');
     }
 
+    public function create()
+    {
+        return view('Admin.Pages.Category.create');
+    }
+
+    public function edit($id)
+    {
+        $category = Category::findOrFail($id);
+        return view('Admin.Pages.Category.edit', compact('category'));
+    }
+
     public function fetchCategories()
     {
         $categories = Category::select([
-                'id', 
+                'id',
                 'image',
                 'category_name',
                 'total_machinery',
@@ -50,7 +61,7 @@ class CategoryController extends Controller
                     <a href="javascript:void(0);" class="delete-category text-danger" data-id="'.$category->id.'" data-name="'.$category->category_name.'">
                         <i class="fa-solid fa-trash-can"></i>
                     </a>';
-                
+
                 return $actions;
             })
             ->rawColumns(['image', 'actions'])
@@ -66,9 +77,13 @@ class CategoryController extends Controller
             })
             ->make(true);
     }
-    
+
     public function store(Request $request)
     {
+        if ($request->has('id') && $request->id) {
+            return $this->update($request, $request->id);
+        }
+
         $validator = Validator::make($request->all(), [
             'category_name' => 'required|string|max:255|unique:categories,category_name',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:20480',
@@ -92,34 +107,42 @@ class CategoryController extends Controller
         $category = new Category();
         $category->category_name = $request->category_name;
         $category->total_machinery = $request->total_machinery;
-        
+
         if ($request->hasFile('image')) {
             $destinationPath = public_path('categories');
             if (!File::exists($destinationPath)) {
                 File::makeDirectory($destinationPath, 0755, true);
             }
-            
+
             $imageName = time() . '_' . Str::random(10) . '.' . $request->file('image')->getClientOriginalExtension();
-            
+
             $request->file('image')->move($destinationPath, $imageName);
-            
+
             $category->image = $imageName;
         }
-        
+
         $category->save();
 
         return response()->json(['message' => 'Category created successfully'], 200);
     }
-    
+
     public function update(Request $request, $id)
     {
-        $category = Category::find($id);
+        $category = Category::findOrFail($id);
+
+        // For PUT requests with file uploads, we need to merge the request data properly
+        $requestData = $request->all();
         
-        if (!$category) {
-            return response()->json(['error' => 'Category not found'], 404);
+        // Ensure required fields are present
+        if (!$request->has('category_name') && isset($category->category_name)) {
+            $requestData['category_name'] = $category->category_name;
+        }
+        
+        if (!$request->has('total_machinery') && isset($category->total_machinery)) {
+            $requestData['total_machinery'] = $category->total_machinery;
         }
 
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make($requestData, [
             'category_name' => 'required|string|max:255|unique:categories,category_name,'.$category->id,
             'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:20480',
             'total_machinery' => 'required|integer|min:0',
@@ -138,9 +161,9 @@ class CategoryController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $category->category_name = $request->category_name;
-        $category->total_machinery = $request->total_machinery;
-        
+        $category->category_name = $requestData['category_name'];
+        $category->total_machinery = $requestData['total_machinery'];
+
         if ($request->hasFile('image')) {
             if ($category->image) {
                 $oldImagePath = public_path('categories/' . $category->image);
@@ -148,52 +171,52 @@ class CategoryController extends Controller
                     File::delete($oldImagePath);
                 }
             }
-            
+
             $destinationPath = public_path('categories');
             if (!File::exists($destinationPath)) {
                 File::makeDirectory($destinationPath, 0755, true);
             }
-            
+
             $imageName = time() . '_' . Str::random(10) . '.' . $request->file('image')->getClientOriginalExtension();
-            
+
             $request->file('image')->move($destinationPath, $imageName);
-            
+
             $category->image = $imageName;
         }
-        
+
         $category->save();
 
         return response()->json(['message' => 'Category updated successfully'], 200);
     }
-    
+
     public function destroy(Request $request)
     {
         $category = Category::find($request->id);
-        
+
         if (!$category) {
             return response()->json(['error' => 'Category not found'], 404);
         }
-        
+
         if ($category->image) {
             $imagePath = public_path('categories/' . $category->image);
             if (File::exists($imagePath)) {
                 File::delete($imagePath);
             }
         }
-        
+
         $category->delete();
-        
+
         return response()->json(['success' => 'Category deleted successfully']);
     }
-    
+
     public function getCategory(Request $request)
     {
         $category = Category::find($request->id);
-        
+
         if (!$category) {
             return response()->json(['error' => 'Category not found'], 404);
         }
-        
+
         return response()->json(['category' => $category], 200);
     }
 }

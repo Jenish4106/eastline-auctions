@@ -30,6 +30,11 @@ class InventoryController extends Controller
     public function getMachineryByCategory(Request $request)
     {
         $categoryId = $request->input('categoryId');
+        $fromYear = $request->input('from_year');
+        $toYear = $request->input('to_year');
+        $sortBy = $request->input('sort_by', 'newest');
+        $page = $request->input('page', 1);
+        $perPage = $request->input('per_page', 10);
 
         $category = Category::find($categoryId);
         if (! $category) {
@@ -39,18 +44,61 @@ class InventoryController extends Controller
             ], 404);
         }
 
-        $machineryList = Machinery::with('images')
-            ->where('category_id', $categoryId)
-            ->select([
+        $machineryQuery = Machinery::with('images')
+            ->where('category_id', $categoryId);
+
+        if ($fromYear && $toYear) {
+            $machineryQuery->whereBetween('year', [$fromYear, $toYear]);
+        } elseif ($fromYear) {
+            $machineryQuery->where('year', '>=', $fromYear);
+        } elseif ($toYear) {
+            $machineryQuery->where('year', '<=', $toYear);
+        }
+
+        switch ($sortBy) {
+            case 'ending_soon':
+                // Ending Time: Sooner to Later
+                $machineryQuery->orderBy('bid_end_time', 'asc');
+                break;
+            case 'ending_late':
+                // Ending Time: Later to Sooner
+                $machineryQuery->orderBy('bid_end_time', 'desc');
+                break;
+            case 'price_low':
+                // Price: Low to High
+                $machineryQuery->orderBy('buy_now_price', 'asc');
+                break;
+            case 'price_high':
+                // Price: High to Low
+                $machineryQuery->orderBy('buy_now_price', 'desc');
+                break;
+            case 'newest':
+            default:
+                // Newest Added (default)
+                $machineryQuery->orderBy('created_at', 'desc');
+                break;
+        }
+
+        $machineryList = $machineryQuery->select([
                 'id',
                 'name',
                 'working_hours',
                 'buy_now_price',
                 'category_id',
+                'year',
+                'make',
+                'model',
+                'bid_end_time',
+                'created_at'
             ])
-            ->get();
+            ->paginate($perPage, ['*'], 'page', $page);
 
-        $machineryWithImages = $machineryList->map(function ($machinery) {
+        $machineryWithImages = $machineryList->getCollection()->map(function ($machinery) {
+            $year = $machinery->year ?? '';
+            $make = $machinery->make ?? '';
+            $model = $machinery->model ?? '';
+            $machinery->name = trim("$year $make $model");
+            
             if ($machinery->images && $machinery->images->count() > 0) {
                 $firstImage                 = $machinery->images->first()->image_path;
                 $machinery->first_image_url = asset('machinery/' . ltrim($firstImage, '/'));
@@ -73,6 +121,14 @@ class InventoryController extends Controller
         return response()->json([
             'success' => true,
             'data'    => $machineryWithImages,
+            'pagination' => [
+                'current_page' => $machineryList->currentPage(),
+                'last_page' => $machineryList->lastPage(),
+                'per_page' => $machineryList->perPage(),
+                'total' => $machineryList->total(),
+                'from' => $machineryList->firstItem(),
+                'to' => $machineryList->lastItem(),
+            ]
         ], 200);
     }
 
@@ -87,6 +143,11 @@ class InventoryController extends Controller
                 'message' => 'Machinery not found',
             ], 404);
         }
+
+        $year = $machinery->year ?? '';
+        $make = $machinery->make ?? '';
+        $model = $machinery->model ?? '';
+        $machinery->name = trim("$year $make $model");
 
         if ($machinery->images) {
             $machinery->images = $machinery->images->map(function ($image) {

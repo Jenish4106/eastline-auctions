@@ -35,21 +35,21 @@
             </a>
         </li>
 
-        <li class="menu-item {{ Route::is('admin.users.management') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('admin.users.management') || Route::is('admin.users.create') ? 'active' : '' }}">
             <a href="{{ route('admin.users.management') }}" class="menu-link">
                 <i class="menu-icon tf-icons ti ti-users"></i>
                 <div data-i18n="Users">Users</div>
             </a>
         </li>
         
-        <li class="menu-item {{ Route::is('admin.categories') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('admin.categories') || Route::is('admin.categories.create') || Route::is('admin.categories.edit') ? 'active' : '' }}">
             <a href="{{ route('admin.categories') }}" class="menu-link">
                 <i class="menu-icon tf-icons ti ti-category"></i>
                 <div data-i18n="Categories">Categories</div>
             </a>
         </li>
         
-        <li class="menu-item {{ Route::is('admin.machinery') ? 'active' : '' }}">
+        <li class="menu-item {{ Route::is('admin.machinery') || Route::is('admin.machinery.create') || Route::is('admin.machinery.edit') ? 'active' : '' }}">
             <a href="{{ route('admin.machinery') }}" class="menu-link">
                 <i class="menu-icon tf-icons ti ti-truck"></i>
                 <div data-i18n="Machinery">Machinery</div>

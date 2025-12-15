@@ -14,26 +14,23 @@ return new class extends Migration
         Schema::create('machinery', function (Blueprint $table) {
             $table->id();
             $table->integer('category_id');
-            $table->string('name');
-
+            $table->string('make');
+            $table->string('model');
             $table->string('year');
             $table->string('weight');
             $table->string('working_hours');
             $table->string('condition');
             $table->string('fuel');
-
-            $table->string('buy_now_price');
-            $table->string('bid_start_price');
+            $table->string('serial_number')->nullable();
+            $table->decimal('buy_now_price', 10, 2);
+            $table->decimal('bid_start_price', 10, 2);
             $table->string('bid_end_time');
-
             $table->text('description');
-
             $table->json('specification');
-            $table->json('offer');
-
+            $table->string('offer')->nullable();
+            $table->string('video_path')->nullable();
             $table->boolean('status')->default(1)
                 ->comment('1: Active, 2: Sold, 3: Closed');
-
             $table->timestamps();
         });
     }

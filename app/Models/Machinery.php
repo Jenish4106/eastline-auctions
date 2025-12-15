@@ -12,60 +12,39 @@ class Machinery extends Model
     protected $table = 'machinery';
 
     protected $fillable = [
-        'name',
         'category_id',
+        'make',
+        'model',
         'year',
         'weight',
         'working_hours',
         'condition',
         'fuel',
+        'serial_number',
         'buy_now_price',
         'bid_start_price',
         'bid_end_time',
         'description',
         'specification',
         'offer',
+        'video_path',
         'status'
     ];
 
     protected $casts = [
-        'category_id' => 'integer',
         'specification' => 'array',
-        'offer' => 'array',
-        'status' => 'integer'
+        'buy_now_price' => 'decimal:2',
+        'bid_start_price' => 'decimal:2',
+        'bid_end_time' => 'datetime'
     ];
 
     public function category()
     {
         return $this->belongsTo(Category::class);
     }
-    
+
     public function images()
     {
         return $this->hasMany(MachineryImage::class);
-    }
-
-    public function getCreatedDateAttribute()
-    {
-        return $this->created_at->format('F d, Y');
-    }
-
-    public function getUpdatedDateAttribute()
-    {
-        return $this->updated_at->format('F d, Y');
-    }
-
-    public function getStatusBadgeAttribute()
-    {
-        switch ($this->status) {
-            case 1:
-                return '<span class="badge bg-label-success">Active</span>';
-            case 2:
-                return '<span class="badge bg-label-danger">Sold</span>';
-            case 3:
-                return '<span class="badge bg-label-warning">Closed</span>';
-            default:
-                return '<span class="badge bg-label-secondary">Unknown</span>';
-        }
     }
 }
