@@ -16,7 +16,8 @@ class Category extends Model
     ];
 
     protected $casts = [
-        'total_machinery' => 'integer'
+        'total_machinery' => 'integer',
+        'image' => 'array'
     ];
 
     public function getCreatedDateAttribute()

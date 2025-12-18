@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\ClearCacheMiddleware;
 use App\Http\Middleware\ApiTokenCheck;
+use App\Http\Middleware\AdminApiTokenCheck;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.admin' => Authenticate::class,
             'auth.api' => ApiTokenCheck::class,
+            'auth.admin-api' => AdminApiTokenCheck::class,
         ]);
         
         $middleware->append(ClearCacheMiddleware::class);
