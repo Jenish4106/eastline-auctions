@@ -31,8 +31,7 @@ class User extends Authenticatable implements JWTSubject
     ];
     
     protected $appends = [
-        'license_status_text',
-        'license_status_badge_class'
+        
     ];
 
     protected $hidden = [
@@ -72,35 +71,7 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->status == 1 ? 'bg-success' : 'bg-danger';
     }
-    
-    public function getLicenseStatusTextAttribute()
-    {
-        switch ($this->is_license) {
-            case self::LICENSE_PENDING:
-                return 'Pending';
-            case self::LICENSE_APPROVED:
-                return 'Approved';
-            case self::LICENSE_DECLINED:
-                return 'Declined';
-            default:
-                return 'Unknown';
-        }
-    }
-    
-    public function getLicenseStatusBadgeClassAttribute()
-    {
-        switch ($this->is_license) {
-            case self::LICENSE_PENDING:
-                return 'bg-warning';
-            case self::LICENSE_APPROVED:
-                return 'bg-success';
-            case self::LICENSE_DECLINED:
-                return 'bg-danger';
-            default:
-                return 'bg-secondary';
-        }
-    }
-    
+
     public function license()
     {
         return $this->hasOne(License::class);

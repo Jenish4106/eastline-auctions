@@ -14,10 +14,29 @@ class InventoryController extends Controller
 
         $categoriesWithImages = $categories->map(function ($category) {
             if ($category->image) {
-                $category->image_url = asset('categories/' . $category->image);
+                $imageArray = json_decode($category->image, true);
+                if (is_array($imageArray)) {
+                    $imageUrls = [];
+                    foreach ($imageArray as $filename) {
+                        $categoryImagePath = public_path('uploads/category/images/' . $filename);
+                        if (file_exists($categoryImagePath)) {
+                            $imageUrls[] = asset('uploads/category/images/' . $filename);
+                        }
+                    }
+                    $category->image_url = !empty($imageUrls) ? $imageUrls[0] : null;
+                } else {
+                    $categoryImagePath = public_path('uploads/category/images/' . $category->image);
+                    if (file_exists($categoryImagePath)) {
+                        $category->image_url = asset('uploads/category/images/' . $category->image);
+                    } else {
+                        $category->image_url = null;
+                    }
+                }
             } else {
                 $category->image_url = null;
             }
+            
+            unset($category->image);
             return $category;
         });
 
@@ -33,19 +52,61 @@ class InventoryController extends Controller
         $fromYear = $request->input('from_year');
         $toYear = $request->input('to_year');
         $sortBy = $request->input('sort_by', 'newest');
+        $search = $request->input('search', '');
+        $make = $request->input('make', '');
+        $model = $request->input('model', '');
         $page = $request->input('page', 1);
         $perPage = $request->input('per_page', 10);
 
-        $category = Category::find($categoryId);
-        if (! $category) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Category not found',
-            ], 404);
+        if (is_array($categoryId)) {
+            $categories = Category::whereIn('id', $categoryId)->get();
+            if ($categories->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Categories not found',
+                ], 404);
+            }
+        } else {
+            $category = Category::find($categoryId);
+            if (! $category) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Category not found',
+                ], 404);
+            }
         }
 
-        $machineryQuery = Machinery::with('images')
-            ->where('category_id', $categoryId);
+        $machineryQuery = Machinery::with('images');
+        
+        if (is_array($categoryId)) {
+            $machineryQuery->whereIn('category_id', $categoryId);
+        } else {
+            $machineryQuery->where('category_id', $categoryId);
+        }
+
+        if (!empty($search)) {
+            $machineryQuery->where(function($query) use ($search) {
+                $query->where('make', 'LIKE', "%{$search}%")
+                      ->orWhere('model', 'LIKE', "%{$search}%")
+                      ->orWhere('year', 'LIKE', "%{$search}%")
+                      ->orWhere('working_hours', 'LIKE', "%{$search}%")
+                      ->orWhere('condition', 'LIKE', "%{$search}%")
+                      ->orWhere('fuel', 'LIKE', "%{$search}%")
+                      ->orWhere('serial_number', 'LIKE', "%{$search}%")
+                      ->orWhere('description', 'LIKE', "%{$search}%")
+                      ->orWhereHas('category', function($q) use ($search) {
+                          $q->where('category_name', 'LIKE', "%{$search}%");
+                      });
+            });
+        }
+
+        if (!empty($make)) {
+            $machineryQuery->where('make', 'LIKE', "%{$make}%");
+        }
+
+        if (!empty($model)) {
+            $machineryQuery->where('model', 'LIKE', "%{$model}%");
+        }
 
         if ($fromYear && $toYear) {
             $machineryQuery->whereBetween('year', [$fromYear, $toYear]);
@@ -81,9 +142,9 @@ class InventoryController extends Controller
 
         $machineryList = $machineryQuery->select([
                 'id',
-                'name',
                 'working_hours',
                 'buy_now_price',
+                'bid_start_price',
                 'category_id',
                 'year',
                 'make',
@@ -98,10 +159,15 @@ class InventoryController extends Controller
             $make = $machinery->make ?? '';
             $model = $machinery->model ?? '';
             $machinery->name = trim("$year $make $model");
-            
+
             if ($machinery->images && $machinery->images->count() > 0) {
-                $firstImage                 = $machinery->images->first()->image_path;
-                $machinery->first_image_url = asset('machinery/' . ltrim($firstImage, '/'));
+                $firstImage = $machinery->images->first();
+                $machineryImagePath = public_path('uploads/machinery/images/' . $firstImage->image_path);
+                if (file_exists($machineryImagePath)) {
+                    $machinery->first_image_url = asset('uploads/machinery/images/' . $firstImage->image_path);
+                } else {
+                    $machinery->first_image_url = null;
+                }
             } else {
                 $machinery->first_image_url = null;
             }
@@ -114,7 +180,7 @@ class InventoryController extends Controller
         if ($machineryWithImages->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'No machinery found in this category',
+                'message' => 'No machinery found in the specified category(s)',
             ], 404);
         }
 
@@ -135,7 +201,7 @@ class InventoryController extends Controller
     public function getMachineryDetails(Request $request)
     {
         $machineryId = $request->input('machineryId');
-        $machinery   = Machinery::with('category', 'images')->find($machineryId);
+        $machinery   = Machinery::with('category:id,category_name', 'images')->find($machineryId);
 
         if (! $machinery) {
             return response()->json([
@@ -151,7 +217,22 @@ class InventoryController extends Controller
 
         if ($machinery->images) {
             $machinery->images = $machinery->images->map(function ($image) {
-                $image->full_url = asset('machinery/' . ltrim($image->image_path, '/'));
+        
+                if ($image->type === 'video') {
+                    $machineryFilePath = public_path('uploads/machinery/videos/' . $image->image_path);
+                    if (file_exists($machineryFilePath)) {
+                        $image->full_url = asset('uploads/machinery/videos/' . $image->image_path);
+                    } else {
+                        $image->full_url = null;
+                    }
+                } else {
+                    $machineryFilePath = public_path('uploads/machinery/images/' . $image->image_path);
+                    if (file_exists($machineryFilePath)) {
+                        $image->full_url = asset('uploads/machinery/images/' . $image->image_path);
+                    } else {
+                        $image->full_url = null;
+                    }
+                }
                 return $image;
             });
         }
@@ -159,6 +240,39 @@ class InventoryController extends Controller
         return response()->json([
             'success' => true,
             'data'    => $machinery,
+        ], 200);
+    }
+
+    public function getMakesOrModels(Request $request)
+    {
+        $type = $request->input('type');
+
+        if (!$type || !in_array($type, ['make', 'model'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid type parameter. Must be make or model.',
+            ], 400);
+        }
+
+        if ($type === 'make') {
+            $results = Machinery::select('make')
+                ->whereNotNull('make')
+                ->where('make', '!=', '')
+                ->distinct()
+                ->orderBy('make')
+                ->pluck('make');
+        } else {
+            $results = Machinery::select('model')
+                ->whereNotNull('model')
+                ->where('model', '!=', '')
+                ->distinct()
+                ->orderBy('model')
+                ->pluck('model');
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $results,
         ], 200);
     }
 }

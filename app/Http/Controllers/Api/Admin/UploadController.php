@@ -13,6 +13,7 @@ class UploadController extends Controller
     /**
      * Upload single or multiple images
      * Accepts 'images' parameter which can be single file or array of files
+     * Accepts 'type' parameter to determine folder structure (category or machinery)
      */
     public function uploadImage(Request $request)
     {
@@ -26,6 +27,13 @@ class UploadController extends Controller
 
             $files = $request->file('images');
             $isMultiple = is_array($files);
+            $type = $request->input('type', 'general'); // Default to 'general' if no type provided
+            
+            // Validate type parameter
+            $allowedTypes = ['category', 'machinery'];
+            if (!in_array($type, $allowedTypes)) {
+                $type = 'general'; // Fallback to general if invalid type
+            }
 
             $filesArray = $isMultiple ? $files : [$files];
 
@@ -34,6 +42,7 @@ class UploadController extends Controller
                 [
                     'images' => $isMultiple ? 'required|array' : 'required',
                     'images.*' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:20480',
+                    'type' => 'sometimes|in:category,machinery',
                 ],
                 [
                     'images.required' => 'Please provide at least one image.',
@@ -42,6 +51,7 @@ class UploadController extends Controller
                     'images.*.image' => 'Each file must be an image.',
                     'images.*.mimes' => 'Images must be of type: jpeg, png, jpg, gif, svg, webp.',
                     'images.*.max' => 'Each image may not be greater than 20MB.',
+                    'type.in' => 'Type must be either category or machinery.',
                 ]
             );
 
@@ -54,7 +64,7 @@ class UploadController extends Controller
             }
 
             $uploadedImages = [];
-            $destinationPath = public_path('uploads/images');
+            $destinationPath = public_path('uploads/' . $type . '/images');
             
             if (!File::exists($destinationPath)) {
                 File::makeDirectory($destinationPath, 0755, true);
@@ -68,7 +78,7 @@ class UploadController extends Controller
                 $imageName = time() . '_' . Str::random(10) . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
                 $image->move($destinationPath, $imageName);
                 
-                $imageUrl = asset('uploads/images/' . $imageName);
+                $imageUrl = asset('uploads/' . $type . '/images/' . $imageName);
                 
                 $uploadedImages[] = [
                     'filename' => $imageName,
@@ -95,6 +105,7 @@ class UploadController extends Controller
     /**
      * Upload single or multiple videos
      * Accepts 'videos' parameter which can be single file or array of files
+     * Accepts 'type' parameter to determine folder structure (category or machinery)
      */
     public function uploadVideo(Request $request)
     {
@@ -111,6 +122,13 @@ class UploadController extends Controller
 
             $files = $request->file('videos');
             $isMultiple = is_array($files);
+            $type = $request->input('type', 'general'); // Default to 'general' if no type provided
+            
+            // Validate type parameter
+            $allowedTypes = ['category', 'machinery'];
+            if (!in_array($type, $allowedTypes)) {
+                $type = 'general'; // Fallback to general if invalid type
+            }
 
             $filesArray = $isMultiple ? $files : [$files];
 
@@ -119,6 +137,7 @@ class UploadController extends Controller
                 [
                     'videos' => $isMultiple ? 'required|array' : 'required',
                     'videos.*' => 'required|mimes:mp4,avi,mov,wmv,flv,webm,3gp|max:204800',
+                    'type' => 'sometimes|in:category,machinery',
                 ],
                 [
                     'videos.required' => 'Please provide at least one video.',
@@ -126,6 +145,7 @@ class UploadController extends Controller
                     'videos.*.required' => 'Each video is required.',
                     'videos.*.mimes' => 'Videos must be of type: mp4, avi, mov, wmv, flv, webm, 3gp.',
                     'videos.*.max' => 'Each video may not be greater than 200MB.',
+                    'type.in' => 'Type must be either category or machinery.',
                 ]
             );
 
@@ -138,7 +158,7 @@ class UploadController extends Controller
             }
 
             $uploadedVideos = [];
-            $destinationPath = public_path('uploads/videos');
+            $destinationPath = public_path('uploads/' . $type . '/videos');
             
             if (!File::exists($destinationPath)) {
                 File::makeDirectory($destinationPath, 0755, true);
@@ -152,7 +172,7 @@ class UploadController extends Controller
                 $videoName = time() . '_' . Str::random(10) . '_' . uniqid() . '.' . $video->getClientOriginalExtension();
                 $video->move($destinationPath, $videoName);
                 
-                $videoUrl = asset('uploads/videos/' . $videoName);
+                $videoUrl = asset('uploads/' . $type . '/videos/' . $videoName);
                 
                 $uploadedVideos[] = [
                     'filename' => $videoName,

@@ -27,7 +27,6 @@ class Machinery extends Model
         'description',
         'specification',
         'offer',
-        'video_path',
         'status'
     ];
 
@@ -45,6 +44,6 @@ class Machinery extends Model
 
     public function images()
     {
-        return $this->hasMany(MachineryImage::class);
+        return $this->hasMany(MachineryFileManager::class);
     }
 }

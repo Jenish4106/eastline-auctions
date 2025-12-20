@@ -1,13 +1,11 @@
 <?php
-
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 class CategoryController extends Controller
 {
@@ -17,10 +15,23 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $search = $request->request->get('search', '');
+            $search = $request->input('search', '');
             
             $perPage = $request->input('per_page', 10);
             $page = $request->input('page', 1);
+            $sortBy = $request->input('sort_by', 'created_at');
+            $sortOrder = $request->input('sort_order', 'desc');
+
+            $allowedSortFields = ['id', 'category_name', 'total_machinery', 'created_at', 'updated_at'];
+            $allowedSortOrders = ['asc', 'desc'];
+            
+            if (!in_array($sortBy, $allowedSortFields)) {
+                $sortBy = 'created_at';
+            }
+            
+            if (!in_array($sortOrder, $allowedSortOrders)) {
+                $sortOrder = 'desc';
+            }
 
             $query = Category::select([
                 'id',
@@ -38,16 +49,36 @@ class CategoryController extends Controller
                 });
             }
 
-            $categories = $query->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
+            $categories = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
 
             $categoriesWithImages = $categories->getCollection()->map(function ($category) {
                 if ($category->image) {
-                    if (!is_array($category->image)) {
-                        if (filter_var($category->image, FILTER_VALIDATE_URL)) {
-                            $category->image = [$category->image];
-                        } else {
-                            $category->image = [asset('categories/' . $category->image)];
+                    // Decode JSON string back to array
+                    $imageArray = json_decode($category->image, true);
+                    if (is_array($imageArray)) {
+                        $imageUrls = [];
+                        foreach ($imageArray as $filename) {
+
+                            $categoryImagePath = public_path('uploads/category/images/' . $filename);
+                            if (file_exists($categoryImagePath)) {
+                                $imageUrls[] = asset('uploads/category/images/' . $filename);
+                            } else {
+                                $imageUrls[] = null;
+                            }
                         }
+
+                        $imageUrls = array_filter($imageUrls);
+                        $category->image = $imageUrls;
+                    } else {
+                        // Handle single image (backward compatibility)
+                        $categoryImagePath = public_path('uploads/category/images/' . $category->image);
+                        if (file_exists($categoryImagePath)) {
+                            $category->image = [asset('uploads/category/images/' . $category->image)];
+                        } else {
+                            $category->image = [null];
+                        }
+
+                        $category->image = array_filter($category->image);
                     }
                 } else {
                     $category->image = [];
@@ -55,22 +86,29 @@ class CategoryController extends Controller
                 return $category;
             });
 
+            if ($categoriesWithImages->isEmpty()) {
+                return response()->json([
+                    'status'  => true,
+                    'message' => 'No categories found',
+                ], 200);
+            }
+
             return response()->json([
-                'status' => true,
-                'message' => 'Categories retrieved successfully',
-                'data' => $categoriesWithImages,
+                'status'     => true,
+                'message'    => 'Categories retrieved successfully',
+                'data'       => $categoriesWithImages,
                 'pagination' => [
                     'current_page' => $categories->currentPage(),
-                    'last_page' => $categories->lastPage(),
-                    'per_page' => $categories->perPage(),
-                    'total' => $categories->total(),
-                    'from' => $categories->firstItem(),
-                    'to' => $categories->lastItem(),
+                    'last_page'    => $categories->lastPage(),
+                    'per_page'     => $categories->perPage(),
+                    'total'        => $categories->total(),
+                    'from'         => $categories->firstItem(),
+                    'to'           => $categories->lastItem(),
                 ],
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Something went wrong, please try again.',
             ], 500);
         }
@@ -82,36 +120,56 @@ class CategoryController extends Controller
     public function show(Request $request)
     {
         try {
-            $id = $request->id;
+            $id       = $request->id;
             $category = Category::find($id);
 
-            if (!$category) {
+            if (! $category) {
                 return response()->json([
-                    'status' => false,
+                    'status'  => false,
                     'message' => 'Category not found',
                 ], 404);
             }
 
             if ($category->image) {
-                if (!is_array($category->image)) {
-                    if (filter_var($category->image, FILTER_VALIDATE_URL)) {
-                        $category->image = [$category->image];
-                    } else {
-                        $category->image = [asset('categories/' . $category->image)];
+                // Decode JSON string back to array
+                $imageArray = json_decode($category->image, true);
+                if (is_array($imageArray)) {
+                    $imageUrls = [];
+                    foreach ($imageArray as $filename) {
+                        // Check if the image exists in the category folder
+                        $categoryImagePath = public_path('uploads/category/images/' . $filename);
+                        if (file_exists($categoryImagePath)) {
+                            $imageUrls[] = asset('uploads/category/images/' . $filename);
+                        } else {
+                            $imageUrls[] = null;
+                        }
                     }
+                    // Filter out null values
+                    $imageUrls = array_filter($imageUrls);
+                    $category->image = $imageUrls;
+                } else {
+                    // Handle single image (backward compatibility)
+                    $categoryImagePath = public_path('uploads/category/images/' . $category->image);
+                    if (file_exists($categoryImagePath)) {
+                        $category->image = [asset('uploads/category/images/' . $category->image)];
+                    } else {
+                        $category->image = [null];
+                    }
+                    // Filter out null values
+                    $category->image = array_filter($category->image);
                 }
             } else {
                 $category->image = [];
             }
 
             return response()->json([
-                'status' => true,
+                'status'  => true,
                 'message' => 'Category retrieved successfully',
-                'data' => $category,
+                'data'    => $category,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Something went wrong, please try again.',
             ], 500);
         }
@@ -124,45 +182,52 @@ class CategoryController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'category_name' => 'required|string|max:255',
-                'image_urls' => 'required|array',
-                'image_urls.*' => 'required|url',
+                'category_name'   => 'required|string|max:255',
+                'image_urls'      => 'required|array',
+                'image_urls.*'    => 'required|url',
                 'total_machinery' => 'required|integer|min:0',
             ], [
-                'category_name.required' => 'The category name field is required.',
-                'image_urls.required' => 'The category image URLs field is required.',
-                'image_urls.array' => 'The image URLs must be an array.',
-                'image_urls.*.required' => 'Each image URL is required.',
-                'image_urls.*.url' => 'Each image URL must be a valid URL.',
+                'category_name.required'   => 'The category name field is required.',
+                'image_urls.required'      => 'The category image URLs field is required.',
+                'image_urls.array'         => 'The image URLs must be an array.',
+                'image_urls.*.required'    => 'Each image URL is required.',
+                'image_urls.*.url'         => 'Each image URL must be a valid URL.',
                 'total_machinery.required' => 'The total machinery field is required.',
-                'total_machinery.integer' => 'The total machinery must be an integer.',
-                'total_machinery.min' => 'The total machinery must be at least 0.',
+                'total_machinery.integer'  => 'The total machinery must be an integer.',
+                'total_machinery.min'      => 'The total machinery must be at least 0.',
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
-                    'status' => false,
+                    'status'  => false,
                     'message' => 'Validation errors',
-                    'errors' => $validator->errors(),
+                    'errors'  => $validator->errors(),
                 ], 422);
             }
 
-            $category = new Category();
-            $category->category_name = $request->category_name;
+            $category                  = new Category();
+            $category->category_name   = $request->category_name;
             $category->total_machinery = $request->total_machinery;
-            $category->image = $request->image_urls;
+            
+            $filenames = [];
+            foreach ($request->image_urls as $imageUrl) {
+                $filenames[] = basename(parse_url($imageUrl, PHP_URL_PATH));
+            }
+            // Store as JSON string since the database field is a string
+            $category->image = json_encode($filenames);
 
             $category->save();
 
             return response()->json([
-                'status' => true,
+                'status'  => true,
                 'message' => 'Category created successfully',
-                'data' => $category,
+                'data'    => $category,
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Something went wrong, please try again.',
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -173,54 +238,82 @@ class CategoryController extends Controller
     public function update(Request $request)
     {
         try {
-            $id = $request->id;
+            $id       = $request->id;
             $category = Category::findOrFail($id);
 
             $validator = Validator::make($request->all(), [
-                'category_name' => 'required|string|max:255',
-                'image_urls' => 'sometimes|array',
-                'image_urls.*' => 'required|url',
+                'category_name'   => 'required|string|max:255',
+                'image_urls'      => 'sometimes|array',
+                'image_urls.*'    => 'required|url',
                 'total_machinery' => 'required|integer|min:0',
             ], [
-                'category_name.required' => 'The category name field is required.',
-                'image_urls.array' => 'The image URLs must be an array.',
-                'image_urls.*.required' => 'Each image URL is required.',
-                'image_urls.*.url' => 'Each image URL must be a valid URL.',
+                'category_name.required'   => 'The category name field is required.',
+                'image_urls.array'         => 'The image URLs must be an array.',
+                'image_urls.*.required'    => 'Each image URL is required.',
+                'image_urls.*.url'         => 'Each image URL must be a valid URL.',
                 'total_machinery.required' => 'The total machinery field is required.',
-                'total_machinery.integer' => 'The total machinery must be an integer.',
-                'total_machinery.min' => 'The total machinery must be at least 0.',
+                'total_machinery.integer'  => 'The total machinery must be an integer.',
+                'total_machinery.min'      => 'The total machinery must be at least 0.',
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
-                    'status' => false,
+                    'status'  => false,
                     'message' => 'Validation errors',
-                    'errors' => $validator->errors(),
+                    'errors'  => $validator->errors(),
                 ], 422);
             }
 
-            $category->category_name = $request->category_name;
+            $category->category_name   = $request->category_name;
             $category->total_machinery = $request->total_machinery;
 
             if ($request->has('image_urls')) {
-                $category->image = $request->image_urls;
+                // Decode JSON string back to array
+                $existingImages = json_decode($category->image, true);
+                if (!is_array($existingImages)) {
+                    $existingImages = $existingImages ? [$existingImages] : [];
+                }
+                
+                $incomingFilenames = [];
+                foreach ($request->image_urls as $imageUrl) {
+                    $incomingFilenames[] = basename(parse_url($imageUrl, PHP_URL_PATH));
+                }
+                
+                foreach ($existingImages as $existingImage) {
+                    $existingFilename = is_string($existingImage) ? basename(parse_url($existingImage, PHP_URL_PATH)) : null;
+                    if ($existingFilename && !in_array($existingFilename, $incomingFilenames)) {
+
+                        $categoryImagePath = public_path('uploads/category/images/' . $existingFilename);
+                        
+                        if (file_exists($categoryImagePath)) {
+                            unlink($categoryImagePath);
+                        }
+                    }
+                }
+                
+                $filenames = [];
+                foreach ($request->image_urls as $imageUrl) {
+                    $filenames[] = basename(parse_url($imageUrl, PHP_URL_PATH));
+                }
+                // Store as JSON string since the database field is a string
+                $category->image = json_encode($filenames);
             }
 
             $category->save();
 
             return response()->json([
-                'status' => true,
+                'status'  => true,
                 'message' => 'Category updated successfully',
-                'data' => $category,
+                'data'    => $category,
             ], 200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Category not found',
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Something went wrong, please try again.',
             ], 500);
         }
@@ -232,48 +325,39 @@ class CategoryController extends Controller
     public function delete(Request $request)
     {
         try {
-            $id = $request->id;
+            $id       = $request->id;
             $category = Category::find($id);
 
-            if (!$category) {
+            if (! $category) {
                 return response()->json([
-                    'status' => false,
+                    'status'  => false,
                     'message' => 'Category not found',
                 ], 404);
             }
 
             if ($category->image) {
-                if (is_array($category->image)) {
-                    foreach ($category->image as $imageUrl) {
-                        $filename = basename(parse_url($imageUrl, PHP_URL_PATH));
+                // Decode JSON string back to array
+                $imageArray = json_decode($category->image, true);
+                if (is_array($imageArray)) {
+                    foreach ($imageArray as $image) {
+                        $filename = is_string($image) ? basename(parse_url($image, PHP_URL_PATH)) : null;
                         if ($filename) {
-                            $imagePath = public_path('uploads/images/' . $filename);
-                            if (File::exists($imagePath)) {
-                                File::delete($imagePath);
-                            }
-                            $oldImagePath = public_path('categories/' . $filename);
-                            if (File::exists($oldImagePath)) {
-                                File::delete($oldImagePath);
+                            // Check if the image exists in the category folder
+                            $categoryImagePath = public_path('uploads/category/images/' . $filename);
+                            
+                            if (file_exists($categoryImagePath)) {
+                                unlink($categoryImagePath);
                             }
                         }
                     }
                 } else {
-                    if (filter_var($category->image, FILTER_VALIDATE_URL)) {
-                        $filename = basename(parse_url($category->image, PHP_URL_PATH));
-                        if ($filename) {
-                            $imagePath = public_path('uploads/images/' . $filename);
-                            if (File::exists($imagePath)) {
-                                File::delete($imagePath);
-                            }
-                        }
-                    } else {
-                        $imagePath = public_path('categories/' . $category->image);
-                        if (File::exists($imagePath)) {
-                            File::delete($imagePath);
-                        }
-                        $imagePath2 = public_path('uploads/images/' . $category->image);
-                        if (File::exists($imagePath2)) {
-                            File::delete($imagePath2);
+                    $filename = is_string($category->image) ? basename(parse_url($category->image, PHP_URL_PATH)) : null;
+                    if ($filename) {
+                        // Check if the image exists in the category folder
+                        $categoryImagePath = public_path('uploads/category/images/' . $filename);
+                        
+                        if (file_exists($categoryImagePath)) {
+                            unlink($categoryImagePath);
                         }
                     }
                 }
@@ -282,15 +366,14 @@ class CategoryController extends Controller
             $category->delete();
 
             return response()->json([
-                'status' => true,
+                'status'  => true,
                 'message' => 'Category deleted successfully',
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Something went wrong, please try again.',
             ], 500);
         }
     }
 }
-
