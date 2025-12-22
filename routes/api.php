@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\ForgotPasswordController;
-use App\Http\Controllers\Api\Admin\LoginController as AdminLoginController;
+use App\Http\Controllers\Api\Admin\Auth\LoginController as AdminLoginController;
 use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\Admin\MachineryController as AdminMachineryController;
 use App\Http\Controllers\Api\Admin\UploadController as AdminUploadController;
@@ -58,6 +58,7 @@ Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
     Route::prefix('settings')->group(function () {
         Route::get('/', [SettingsController::class, 'getSettings']);
         Route::post('/update', [SettingsController::class, 'updateSettings']);
+        Route::post('/change-admin-password', [SettingsController::class, 'changeAdminPassword']);
     });
 });
 

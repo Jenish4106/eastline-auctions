@@ -49,11 +49,12 @@ class CategoryController extends Controller
                 });
             }
 
-            $categories = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
+            $perPageData = $perPage ?? Category::count();
+            $categories = $query->orderBy($sortBy, $sortOrder)->paginate($perPageData, ['*'], 'page', $page);
 
             $categoriesWithImages = $categories->getCollection()->map(function ($category) {
                 if ($category->image) {
-                    // Decode JSON string back to array
+                    
                     $imageArray = json_decode($category->image, true);
                     if (is_array($imageArray)) {
                         $imageUrls = [];
@@ -67,22 +68,24 @@ class CategoryController extends Controller
                             }
                         }
 
-                        $imageUrls = array_filter($imageUrls);
-                        $category->image = $imageUrls;
+                        $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
                     } else {
-                        // Handle single image (backward compatibility)
+                        
                         $categoryImagePath = public_path('uploads/category/images/' . $category->image);
                         if (file_exists($categoryImagePath)) {
-                            $category->image = [asset('uploads/category/images/' . $category->image)];
+                            $category->image_urls = [asset('uploads/category/images/' . $category->image)];
                         } else {
-                            $category->image = [null];
+                            $category->image_urls = [null];
                         }
 
-                        $category->image = array_filter($category->image);
+                        $category->image_urls = collect($category->image_urls)->filter()->values()->toArray();
                     }
                 } else {
-                    $category->image = [];
+                    $category->image_urls = [];
                 }
+                
+                // Remove the original image field to avoid confusion
+                unset($category->image);
                 return $category;
             });
 
@@ -144,23 +147,25 @@ class CategoryController extends Controller
                             $imageUrls[] = null;
                         }
                     }
-                    // Filter out null values
-                    $imageUrls = array_filter($imageUrls);
-                    $category->image = $imageUrls;
+                    // Filter out null values and ensure proper array format
+                    $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
                 } else {
                     // Handle single image (backward compatibility)
                     $categoryImagePath = public_path('uploads/category/images/' . $category->image);
                     if (file_exists($categoryImagePath)) {
-                        $category->image = [asset('uploads/category/images/' . $category->image)];
+                        $category->image_urls = [asset('uploads/category/images/' . $category->image)];
                     } else {
-                        $category->image = [null];
+                        $category->image_urls = [null];
                     }
-                    // Filter out null values
-                    $category->image = array_filter($category->image);
+                    // Filter out null values and ensure proper array format
+                    $category->image_urls = collect($category->image_urls)->filter()->values()->toArray();
                 }
             } else {
-                $category->image = [];
+                $category->image_urls = [];
             }
+            
+            // Remove the original image field to avoid confusion
+            unset($category->image);
 
             return response()->json([
                 'status'  => true,
@@ -213,10 +218,23 @@ class CategoryController extends Controller
             foreach ($request->image_urls as $imageUrl) {
                 $filenames[] = basename(parse_url($imageUrl, PHP_URL_PATH));
             }
-            // Store as JSON string since the database field is a string
+
             $category->image = json_encode($filenames);
 
             $category->save();
+            
+            // Add image_urls to response for consistency
+            $imageUrls = [];
+            foreach ($filenames as $filename) {
+                $categoryImagePath = public_path('uploads/category/images/' . $filename);
+                if (file_exists($categoryImagePath)) {
+                    $imageUrls[] = asset('uploads/category/images/' . $filename);
+                } else {
+                    $imageUrls[] = null;
+                }
+            }
+            $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
+            unset($category->image);
 
             return response()->json([
                 'status'  => true,
@@ -227,7 +245,6 @@ class CategoryController extends Controller
             return response()->json([
                 'status'  => false,
                 'message' => 'Something went wrong, please try again.',
-                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -300,6 +317,21 @@ class CategoryController extends Controller
             }
 
             $category->save();
+            
+            // Add image_urls to response for consistency
+            if ($request->has('image_urls')) {
+                $imageUrls = [];
+                foreach ($filenames as $filename) {
+                    $categoryImagePath = public_path('uploads/category/images/' . $filename);
+                    if (file_exists($categoryImagePath)) {
+                        $imageUrls[] = asset('uploads/category/images/' . $filename);
+                    } else {
+                        $imageUrls[] = null;
+                    }
+                }
+                $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
+                unset($category->image);
+            }
 
             return response()->json([
                 'status'  => true,

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Settings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class SettingsController extends Controller
@@ -18,14 +20,13 @@ class SettingsController extends Controller
         try {
             $settings = Settings::allToArray();
 
-            if(!$settings){
+            if (! $settings) {
                 return response()->json([
                     'success' => true,
                     'message' => 'No settings found.',
                 ], 200);
             }
 
-            // Convert logo path to full URL if it exists
             if (isset($settings['logo'])) {
                 $settings['logo'] = asset($settings['logo']);
             }
@@ -124,6 +125,49 @@ class SettingsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update settings.',
+            ], 500);
+        }
+    }
+
+    public function changeAdminPassword(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'current_password' => 'required|string',
+                'new_password'     => 'required|string|min:8',
+                'confirm_password' => 'required|string|min:8|same:new_password',
+            ], [
+                'confirm_password.same' => 'New password and confirm password do not match.',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation error',
+                    'errors'  => $validator->errors(),
+                ], 422);
+            }
+
+            $admin = auth('admin-api')->user();
+
+            if (! Hash::check($request->current_password, $admin->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Current password is incorrect.',
+                ], 422);
+            }
+
+            $admin->password = Hash::make($request->new_password);
+            $admin->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password changed successfully.',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong, please try again.',
             ], 500);
         }
     }
