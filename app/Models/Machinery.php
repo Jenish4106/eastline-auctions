@@ -46,4 +46,9 @@ class Machinery extends Model
     {
         return $this->hasMany(MachineryFileManager::class);
     }
+
+    public function bids()
+    {
+        return $this->hasMany(Bid::class);
+    }
 }

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class RegisterController extends Controller
 {
@@ -47,10 +48,21 @@ class RegisterController extends Controller
                 'password'     => Hash::make($request->password),
             ]);
 
+            $credentials = $request->only('email', 'password');
+            if (! $token = auth('api')->attempt($credentials)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to create token after registration',
+                ], 500);
+            }
+
             return response()->json([
-                'success' => true,
-                'message' => 'User registered successfully',
-                'data'    => $user,
+                'success'    => true,
+                'message'    => 'User registered successfully',
+                'token'      => $token,
+                'token_type' => 'bearer',
+                'expires_in' => auth('api')->factory()->getTTL() * 60,
+                'data'       => $user,
             ], 201);
 
         } catch (\Exception $e) {

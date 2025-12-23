@@ -12,7 +12,9 @@ use App\Http\Controllers\Api\Admin\UploadController as AdminUploadController;
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\UsersController;
 use App\Http\Controllers\Api\InventoryController;
-use App\Http\Controllers\Api\SettingsController;
+use App\Http\Controllers\Api\SettingsController as UserSettingsController;
+use App\Http\Controllers\Api\Admin\SettingsController;
+use App\Http\Controllers\Api\BiddingController;
 
 Route::post('/register',[RegisterController::class,'register']);
 Route::post('/login',[LoginController::class,'login']);
@@ -62,8 +64,13 @@ Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
     });
 });
 
-Route::middleware(['auth.api'])->group(function () {
+Route::middleware(['auth.user'])->group(function () {
+    Route::post('/user/logout',[LoginController::class,'logout']);
     Route::post('/user/upload-license',[UsersController::class,'uploadLicense']);
+
+    Route::post('/user/settings',[UserSettingsController::class,'settings']);
+    
+    Route::post('/place-bid', [BiddingController::class, 'placeBid']);
 });
 
 Route::get('/get-categories',[UsersController::class,'getCategories']);

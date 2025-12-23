@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'auth.admin' => Authenticate::class,
-            'auth.api' => ApiTokenCheck::class,
+            'auth.user' => ApiTokenCheck::class,
             'auth.admin-api' => AdminApiTokenCheck::class,
         ]);
         

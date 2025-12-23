@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Middleware;
 
 use Closure;
@@ -22,24 +21,21 @@ class ApiTokenCheck
     {
         try {
             $token = $request->bearerToken();
-            
-            if (!$token) {
+
+            if (! $token) {
                 return response()->json([
                     'status'  => 'error',
                     'message' => 'Access denied. No token provided.',
                 ], 401);
             }
 
-            $user = auth('api')->user();
+            // 🔐 Force JWT validation (expiry + blacklist)
+            $user = JWTAuth::setToken($token)->authenticate();
 
-            if (!$user) {
-                $user = JWTAuth::parseToken()->authenticate();
-            }
-
-            if (!$user) {
+            if (! $user) {
                 return response()->json([
                     'status'  => 'error',
-                    'message' => 'Unauthorized access. Invalid credentials.',
+                    'message' => 'Unauthorized access.',
                 ], 401);
             }
 
@@ -49,22 +45,22 @@ class ApiTokenCheck
                 'message' => 'Session expired. Please login again.',
             ], 401);
 
-        } catch (TokenInvalidException $e) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Invalid token. Please login again.',
-            ], 401);
-
         } catch (TokenBlacklistedException $e) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Token has been revoked. Please login again.',
             ], 401);
 
+        } catch (TokenInvalidException $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Invalid token. Please login again.',
+            ], 401);
+
         } catch (JWTException $e) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Something went wrong with authentication, please try again.',
+                'message' => 'Authentication failed.',
             ], 401);
         }
 

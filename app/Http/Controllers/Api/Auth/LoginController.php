@@ -18,8 +18,8 @@ class LoginController extends Controller
 
             if ($validator->fails()) {
                 return response()->json([
-                    'status'  => false,
-                    'errors'  => $validator->errors(),
+                    'status' => false,
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -48,4 +48,13 @@ class LoginController extends Controller
         }
     }
 
+    public function logout(Request $request)
+    {
+        auth('api')->logout();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Logout successful'
+        ]);
+    }
 }

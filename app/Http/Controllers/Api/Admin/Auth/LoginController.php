@@ -52,16 +52,21 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         try {
-            auth('admin-api')->logout();
+            $token = auth('admin-api')->getToken();
+            
+            if ($token) {
+                auth('admin-api')->logout();
+                auth('admin-api')->invalidate();
+            }
 
             return response()->json([
                 'status'  => true,
                 'message' => 'Logout successful',
             ]);
-        } catch (\Exception $e) {
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
             return response()->json([
                 'status'  => false,
-                'message' => 'Something went wrong, please try again.',
+                'message' => 'Failed to logout, please try again.',
             ], 500);
         }
     }
