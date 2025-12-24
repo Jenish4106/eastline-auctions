@@ -207,7 +207,7 @@ class MachineryController extends Controller
                 'serial_number'   => 'nullable|string|max:100',
                 'buy_now_price'   => 'required|numeric|min:0',
                 'bid_start_price' => 'nullable|numeric|min:0',
-                'bid_end_time'    => 'required|date',
+                'bid_end_time'    => 'required|date_format:Y-m-d H:i:s',
                 'description'     => 'nullable|string',
                 'specification'   => 'nullable',
                 'offer'           => 'nullable|string|max:255',
@@ -228,6 +228,7 @@ class MachineryController extends Controller
                 'fuel.required'          => 'The fuel field is required.',
                 'buy_now_price.required' => 'The buy now price field is required.',
                 'bid_end_time.required'  => 'The bid end time field is required.',
+                'bid_end_time.date_format' => 'The bid end time must be in Y-m-d H:i:s format.',
                 'image_urls.required'    => 'At least one image URL is required.',
                 'image_urls.array'       => 'Image URLs must be an array.',
                 'image_urls.*.url'       => 'Each image URL must be a valid URL.',
@@ -364,7 +365,7 @@ class MachineryController extends Controller
                 'serial_number'   => 'nullable|string|max:100',
                 'buy_now_price'   => 'required|numeric|min:0',
                 'bid_start_price' => 'nullable|numeric|min:0',
-                'bid_end_time'    => 'required|date',
+                'bid_end_time'    => 'required|date_format:Y-m-d H:i:s',
                 'description'     => 'nullable|string',
                 'specification'   => 'nullable',
                 'offer'           => 'nullable|string|max:255',
@@ -385,6 +386,7 @@ class MachineryController extends Controller
                 'fuel.required'          => 'The fuel field is required.',
                 'buy_now_price.required' => 'The buy now price field is required.',
                 'bid_end_time.required'  => 'The bid end time field is required.',
+                'bid_end_time.date_format' => 'The bid end time must be in Y-m-d H:i:s format.',
                 'image_urls.array'       => 'Image URLs must be an array.',
                 'image_urls.*.url'       => 'Each image URL must be a valid URL.',
                 'video_urls.array'        => 'Video URLs must be an array.',
@@ -429,7 +431,6 @@ class MachineryController extends Controller
             if ($request->has('video_urls') && $request->video_urls !== null) {
                 $existingVideos = $machinery->images()->where('type', 'video')->get();
                 
-                // Handle incoming video URLs (can be array or single URL)
                 $incomingVideoFilenames = [];
                 $videoUrls = is_array($request->video_urls) ? $request->video_urls : [$request->video_urls];
                 
@@ -439,7 +440,6 @@ class MachineryController extends Controller
                     }
                 }
                 
-                // Delete existing videos that are not in the incoming list
                 foreach ($existingVideos as $existingVideo) {
                     $existingFilename = $existingVideo->image_path;
                     if (!in_array($existingFilename, $incomingVideoFilenames)) {
@@ -451,10 +451,8 @@ class MachineryController extends Controller
                     }
                 }
                 
-                // Remove video records that are not in the incoming list
                 $machinery->images()->where('type', 'video')->whereNotIn('image_path', $incomingVideoFilenames)->delete();
                 
-                // Add new videos that don't already exist
                 foreach ($incomingVideoFilenames as $filename) {
                     $existingVideo = $machinery->images()->where('type', 'video')->where('image_path', $filename)->first();
                     

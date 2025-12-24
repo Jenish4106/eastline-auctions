@@ -24,6 +24,11 @@ class Machinery extends Model
         'buy_now_price',
         'bid_start_price',
         'bid_end_time',
+        'bid_status',
+        'won_user',
+        'bid_won_date',
+        'contract_path',
+        'contract_status',
         'description',
         'specification',
         'offer',
@@ -34,7 +39,11 @@ class Machinery extends Model
         'specification' => 'array',
         'buy_now_price' => 'decimal:2',
         'bid_start_price' => 'decimal:2',
-        'bid_end_time' => 'datetime'
+        'bid_end_time' => 'datetime',
+        'bid_status' => 'string',
+        'contract_status' => 'integer',
+        'won_user' => 'integer',
+        'bid_won_date' => 'datetime'
     ];
 
     public function category()
@@ -50,5 +59,10 @@ class Machinery extends Model
     public function bids()
     {
         return $this->hasMany(Bid::class);
+    }
+
+    public function wonUser()
+    {
+        return $this->belongsTo(User::class, 'won_user');
     }
 }

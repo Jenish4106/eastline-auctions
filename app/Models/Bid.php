@@ -23,4 +23,9 @@ class Bid extends Model
     {
         return $this->belongsTo(User::class);
     }
+    
+    public function machinery()
+    {
+        return $this->belongsTo(Machinery::class);
+    }
 }

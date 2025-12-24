@@ -26,6 +26,7 @@ Thumbs.db
 node_modules/
 npm-debug.log
 yarn-error.log
+working-hours.txt
 
 # Laravel 4 specific
 bootstrap/compiled.php

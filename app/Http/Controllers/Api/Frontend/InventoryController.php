@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
@@ -159,6 +159,14 @@ class InventoryController extends Controller
             $make = $machinery->make ?? '';
             $model = $machinery->model ?? '';
             $machinery->name = trim("$year $make $model");
+
+            if ($machinery->bid_end_time) {
+                $bidEndTime = new \DateTime($machinery->bid_end_time);
+                $currentTime = new \DateTime();
+                $machinery->is_view = $bidEndTime > $currentTime ? 1 : 0;
+            } else {
+                $machinery->is_view = 0;
+            }
 
             if ($machinery->images && $machinery->images->count() > 0) {
                 $firstImage = $machinery->images->first();

@@ -5,16 +5,17 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\ForgotPasswordController;
+use App\Http\Controllers\Api\BiddingController;
 use App\Http\Controllers\Api\Admin\Auth\LoginController as AdminLoginController;
+use App\Http\Controllers\Api\Admin\BiddingController as AdminBiddingController;
 use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\Admin\MachineryController as AdminMachineryController;
 use App\Http\Controllers\Api\Admin\UploadController as AdminUploadController;
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\UsersController;
-use App\Http\Controllers\Api\InventoryController;
+use App\Http\Controllers\Api\Frontend\InventoryController;
 use App\Http\Controllers\Api\SettingsController as UserSettingsController;
 use App\Http\Controllers\Api\Admin\SettingsController;
-use App\Http\Controllers\Api\BiddingController;
 
 Route::post('/register',[RegisterController::class,'register']);
 Route::post('/login',[LoginController::class,'login']);
@@ -47,6 +48,11 @@ Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
         Route::post('/update', [AdminMachineryController::class, 'update']);
         Route::post('/delete', [AdminMachineryController::class, 'delete']);
     });
+    
+    Route::prefix('bidding')->group(function () {
+        Route::post('/machinery-bidding-info', [AdminBiddingController::class, 'getMachineryBiddingInfo']);
+        Route::post('/machinery-bidding-details', [AdminBiddingController::class, 'getMachineryBiddingDetails']);
+    });
 
     Route::prefix('users')->group(function () {
         Route::post('/', [AdminUserController::class, 'index']);
@@ -71,6 +77,10 @@ Route::middleware(['auth.user'])->group(function () {
     Route::post('/user/settings',[UserSettingsController::class,'settings']);
     
     Route::post('/place-bid', [BiddingController::class, 'placeBid']);
+    Route::post('/user/my-bids', [BiddingController::class, 'getMachineryWithBids']);
+    Route::post('/user/machinery-bidding-details', [BiddingController::class, 'getMachineryBiddingDetails']);
+    Route::post('/user/won-bids', [BiddingController::class, 'getUserWonBids']);
+    Route::post('/user/single-won-bids', [BiddingController::class, 'getSingleWonBid']);
 });
 
 Route::get('/get-categories',[UsersController::class,'getCategories']);
