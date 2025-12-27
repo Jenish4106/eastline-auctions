@@ -69,7 +69,22 @@ class UserController extends Controller
                 $user->name = $user->first_name . ' ' . $user->last_name;
                 $user->created_at = $user->created_at->format('M d, Y h:i A');
                 $user->updated_at = $user->updated_at->format('M d, Y h:i A');
+                
+                $statusMap = [
+                    0 => 'Inactive',
+                    1 => 'Active',
+                    2 => 'Blocked',
+                ];
+                $user->status_text = isset($statusMap[$user->status]) ? $statusMap[$user->status] : 'Unknown';
+                
+                $licenseStatusMap = [
+                    0 => 'Pending',
+                    1 => 'Approved',
+                    2 => 'Rejected',
+                ];
                 $user->license_status = $user->license ? $user->license->status : null;
+                $user->license_status_text = $user->license ? (isset($licenseStatusMap[$user->license->status]) ? $licenseStatusMap[$user->license->status] : 'Unknown') : 'No License';
+                
                 unset($user->license);
                 return $user;
             });
@@ -122,10 +137,27 @@ class UserController extends Controller
             $user->created_at = $user->created_at->format('M d, Y h:i A');
             $user->updated_at = $user->updated_at->format('M d, Y h:i A');
             
+            $statusMap = [
+                0 => 'Inactive',
+                1 => 'Active',
+                2 => 'Blocked',
+            ];
+            $user->status_text = isset($statusMap[$user->status]) ? $statusMap[$user->status] : 'Unknown';
+            
+            $licenseStatusMap = [
+                0 => 'Pending',
+                1 => 'Approved',
+                2 => 'Rejected',
+            ];
+            
             if ($user->license) {
                 if ($user->license->file) {
                     $user->license->file_url = url($user->license->file);
                 }
+                
+                $user->license_status_text = isset($licenseStatusMap[$user->license->status]) ? $licenseStatusMap[$user->license->status] : 'Unknown';
+            } else {
+                $user->license_status_text = 'No License';
             }
 
             return response()->json([
