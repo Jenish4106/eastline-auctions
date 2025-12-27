@@ -99,7 +99,7 @@ class UserController extends Controller
             return response()->json([
                 'status'     => true,
                 'message'    => 'Users retrieved successfully',
-                'data'       => $usersWithFormattedData->makeHidden(['created_at', 'updated_at']),
+                'data'       => $usersWithFormattedData->makeHidden(['updated_at']),
                 'pagination' => [
                     'current_page' => $users->currentPage(),
                     'last_page'    => $users->lastPage(),
