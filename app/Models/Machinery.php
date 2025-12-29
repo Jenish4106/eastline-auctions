@@ -27,6 +27,7 @@ class Machinery extends Model
         'bid_status',
         'won_user',
         'bid_won_date',
+        'is_purchase',
         'contract_path',
         'contract_status',
         'description',

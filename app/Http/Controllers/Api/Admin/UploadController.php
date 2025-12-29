@@ -27,12 +27,11 @@ class UploadController extends Controller
 
             $files = $request->file('images');
             $isMultiple = is_array($files);
-            $type = $request->input('type', 'general'); // Default to 'general' if no type provided
+            $type = $request->input('type', 'general');
             
-            // Validate type parameter
             $allowedTypes = ['category', 'machinery'];
             if (!in_array($type, $allowedTypes)) {
-                $type = 'general'; // Fallback to general if invalid type
+                $type = 'general';
             }
 
             $filesArray = $isMultiple ? $files : [$files];
@@ -122,12 +121,11 @@ class UploadController extends Controller
 
             $files = $request->file('videos');
             $isMultiple = is_array($files);
-            $type = $request->input('type', 'general'); // Default to 'general' if no type provided
+            $type = $request->input('type', 'general');
             
-            // Validate type parameter
             $allowedTypes = ['category', 'machinery'];
             if (!in_array($type, $allowedTypes)) {
-                $type = 'general'; // Fallback to general if invalid type
+                $type = 'general';
             }
 
             $filesArray = $isMultiple ? $files : [$files];

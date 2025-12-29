@@ -185,16 +185,20 @@
             <tr>
                 <td>
                     Buyer Signature:<br>
-                    _______________________________<br>
+                    @if(isset($absoluteSignaturePath) && file_exists($absoluteSignaturePath))
+                        <img src="{{ $absoluteSignaturePath }}" alt="Buyer Signature" style="max-width: 200px; max-height: 60px;"><br>
+                    @else
+                        _______________________________<br>
+                    @endif
                     Name: {{ $user->first_name }} {{ $user->last_name }}<br>
-                    Date: _____________
+                    Date: {{ $contractDate }}
                 </td>
                 <td>
                     Seller Signature:<br>
                     _______________________________<br>
                     Authorized Representative<br>
                     RB Equipment Sales<br>
-                    Date: _____________
+                    Date: {{ $contractDate }}
                 </td>
             </tr>
         </table>

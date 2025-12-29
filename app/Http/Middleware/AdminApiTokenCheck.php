@@ -31,7 +31,7 @@ class AdminApiTokenCheck
             }
 
             $admin = auth('admin-api')->user();
-
+            
             if (!$admin) {
                 $admin = auth('admin-api')->setToken($token)->user();
             }

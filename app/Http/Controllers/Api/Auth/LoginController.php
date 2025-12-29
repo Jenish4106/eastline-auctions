@@ -32,6 +32,15 @@ class LoginController extends Controller
                 ], 401);
             }
 
+            $user = auth('api')->user();
+            
+            if ($user && $user->status == 2) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Your account has been blocked. Please contact administrator.',
+                ], 401);
+            }
+
             return response()->json([
                 'status'     => true,
                 'message'    => 'Login successful',

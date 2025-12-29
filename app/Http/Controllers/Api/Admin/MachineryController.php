@@ -57,7 +57,7 @@ class MachineryController extends Controller
                 'offer',
                 'status',
                 'created_at',
-                'updated_at'
+                'updated_at',
             ]);
 
             if (! empty($search)) {
@@ -75,7 +75,7 @@ class MachineryController extends Controller
                 $images = $item->images->filter(function ($file) {
                     return $file->type === 'image';
                 });
-                
+
                 $item->image_urls = $images->map(function ($image) {
 
                     $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
@@ -89,7 +89,7 @@ class MachineryController extends Controller
                 $videos = $item->images->filter(function ($file) {
                     return $file->type === 'video';
                 });
-                
+
                 $item->video_urls = $videos->map(function ($video) {
                     $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                     if (file_exists($machineryVideoPath)) {
@@ -150,7 +150,7 @@ class MachineryController extends Controller
             $images = $machinery->images->filter(function ($file) {
                 return $file->type === 'image';
             });
-            
+
             $machinery->image_urls = $images->map(function ($image) {
 
                 $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
@@ -164,7 +164,7 @@ class MachineryController extends Controller
             $videos = $machinery->images->filter(function ($file) {
                 return $file->type === 'video';
             });
-            
+
             $machinery->video_urls = $videos->map(function ($video) {
                 $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                 if (file_exists($machineryVideoPath)) {
@@ -213,29 +213,29 @@ class MachineryController extends Controller
                 'offer'           => 'nullable|string|max:255',
                 'image_urls'      => 'required|array',
                 'image_urls.*'    => 'required|url',
-                'video_urls'       => 'nullable|array',
-                'video_urls.*'     => 'nullable|url',
+                'video_urls'      => 'nullable|array',
+                'video_urls.*'    => 'nullable|url',
                 'status'          => 'required|in:1,2,3',
             ], [
-                'category_id.required'   => 'The category field is required.',
-                'category_id.exists'     => 'The selected category does not exist.',
-                'make.required'          => 'The make field is required.',
-                'model.required'         => 'The model field is required.',
-                'year.required'          => 'The year field is required.',
-                'weight.required'        => 'The weight field is required.',
-                'working_hours.required' => 'The working hours field is required.',
-                'condition.required'     => 'The condition field is required.',
-                'fuel.required'          => 'The fuel field is required.',
-                'buy_now_price.required' => 'The buy now price field is required.',
-                'bid_end_time.required'  => 'The bid end time field is required.',
+                'category_id.required'     => 'The category field is required.',
+                'category_id.exists'       => 'The selected category does not exist.',
+                'make.required'            => 'The make field is required.',
+                'model.required'           => 'The model field is required.',
+                'year.required'            => 'The year field is required.',
+                'weight.required'          => 'The weight field is required.',
+                'working_hours.required'   => 'The working hours field is required.',
+                'condition.required'       => 'The condition field is required.',
+                'fuel.required'            => 'The fuel field is required.',
+                'buy_now_price.required'   => 'The buy now price field is required.',
+                'bid_end_time.required'    => 'The bid end time field is required.',
                 'bid_end_time.date_format' => 'The bid end time must be in Y-m-d H:i:s format.',
-                'image_urls.required'    => 'At least one image URL is required.',
-                'image_urls.array'       => 'Image URLs must be an array.',
-                'image_urls.*.url'       => 'Each image URL must be a valid URL.',
-                'video_urls.array'        => 'Video URLs must be an array.',
-                'video_urls.*.url'        => 'Each video URL must be a valid URL.',
-                'status.required'        => 'The status field is required.',
-                'status.in'              => 'The status must be 1 (Active), 2 (Sold), or 3 (Closed).',
+                'image_urls.required'      => 'At least one image URL is required.',
+                'image_urls.array'         => 'Image URLs must be an array.',
+                'image_urls.*.url'         => 'Each image URL must be a valid URL.',
+                'video_urls.array'         => 'Video URLs must be an array.',
+                'video_urls.*.url'         => 'Each video URL must be a valid URL.',
+                'status.required'          => 'The status field is required.',
+                'status.in'                => 'The status must be 1 (Active), 2 (Sold), or 3 (Closed).',
             ]);
 
             if ($validator->fails()) {
@@ -276,14 +276,14 @@ class MachineryController extends Controller
 
             if ($request->has('video_urls') && $request->video_urls !== null) {
                 $videoUrls = is_array($request->video_urls) ? $request->video_urls : [$request->video_urls];
-                
+
                 foreach ($videoUrls as $videoUrl) {
                     if (filter_var($videoUrl, FILTER_VALIDATE_URL)) {
                         $filename = basename(parse_url($videoUrl, PHP_URL_PATH));
                         MachineryFileManager::create([
                             'machinery_id' => $machinery->id,
                             'image_path'   => $filename,
-                            'type'         => 'video'
+                            'type'         => 'video',
                         ]);
                     }
                 }
@@ -295,7 +295,7 @@ class MachineryController extends Controller
                     MachineryFileManager::create([
                         'machinery_id' => $machinery->id,
                         'image_path'   => $filename,
-                        'type'         => 'image'
+                        'type'         => 'image',
                     ]);
                 }
             }
@@ -305,7 +305,7 @@ class MachineryController extends Controller
             $images = $machinery->images->filter(function ($file) {
                 return $file->type === 'image';
             });
-            
+
             $machinery->image_urls = $images->map(function ($image) {
 
                 $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
@@ -315,11 +315,11 @@ class MachineryController extends Controller
                     return null;
                 }
             })->filter()->values()->toArray();
-            
+
             $videos = $machinery->images->filter(function ($file) {
                 return $file->type === 'video';
             });
-            
+
             $machinery->video_urls = $videos->map(function ($video) {
                 $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                 if (file_exists($machineryVideoPath)) {
@@ -328,7 +328,7 @@ class MachineryController extends Controller
                     return null;
                 }
             })->filter()->values()->toArray();
-            
+
             unset($machinery->images);
 
             return response()->json([
@@ -371,28 +371,28 @@ class MachineryController extends Controller
                 'offer'           => 'nullable|string|max:255',
                 'image_urls'      => 'sometimes|array',
                 'image_urls.*'    => 'required|url',
-                'video_urls'       => 'nullable|array',
-                'video_urls.*'     => 'nullable|url',
+                'video_urls'      => 'nullable|array',
+                'video_urls.*'    => 'nullable|url',
                 'status'          => 'required|in:1,2,3',
             ], [
-                'category_id.required'   => 'The category field is required.',
-                'category_id.exists'     => 'The selected category does not exist.',
-                'make.required'          => 'The make field is required.',
-                'model.required'         => 'The model field is required.',
-                'year.required'          => 'The year field is required.',
-                'weight.required'        => 'The weight field is required.',
-                'working_hours.required' => 'The working hours field is required.',
-                'condition.required'     => 'The condition field is required.',
-                'fuel.required'          => 'The fuel field is required.',
-                'buy_now_price.required' => 'The buy now price field is required.',
-                'bid_end_time.required'  => 'The bid end time field is required.',
+                'category_id.required'     => 'The category field is required.',
+                'category_id.exists'       => 'The selected category does not exist.',
+                'make.required'            => 'The make field is required.',
+                'model.required'           => 'The model field is required.',
+                'year.required'            => 'The year field is required.',
+                'weight.required'          => 'The weight field is required.',
+                'working_hours.required'   => 'The working hours field is required.',
+                'condition.required'       => 'The condition field is required.',
+                'fuel.required'            => 'The fuel field is required.',
+                'buy_now_price.required'   => 'The buy now price field is required.',
+                'bid_end_time.required'    => 'The bid end time field is required.',
                 'bid_end_time.date_format' => 'The bid end time must be in Y-m-d H:i:s format.',
-                'image_urls.array'       => 'Image URLs must be an array.',
-                'image_urls.*.url'       => 'Each image URL must be a valid URL.',
-                'video_urls.array'        => 'Video URLs must be an array.',
-                'video_urls.*.url'        => 'Each video URL must be a valid URL.',
-                'status.required'        => 'The status field is required.',
-                'status.in'              => 'The status must be 1 (Active), 2 (Sold), or 3 (Closed).',
+                'image_urls.array'         => 'Image URLs must be an array.',
+                'image_urls.*.url'         => 'Each image URL must be a valid URL.',
+                'video_urls.array'         => 'Video URLs must be an array.',
+                'video_urls.*.url'         => 'Each video URL must be a valid URL.',
+                'status.required'          => 'The status field is required.',
+                'status.in'                => 'The status must be 1 (Active), 2 (Sold), or 3 (Closed).',
             ]);
 
             if ($validator->fails()) {
@@ -430,37 +430,37 @@ class MachineryController extends Controller
 
             if ($request->has('video_urls') && $request->video_urls !== null) {
                 $existingVideos = $machinery->images()->where('type', 'video')->get();
-                
+
                 $incomingVideoFilenames = [];
-                $videoUrls = is_array($request->video_urls) ? $request->video_urls : [$request->video_urls];
-                
+                $videoUrls              = is_array($request->video_urls) ? $request->video_urls : [$request->video_urls];
+
                 foreach ($videoUrls as $videoUrl) {
                     if (filter_var($videoUrl, FILTER_VALIDATE_URL)) {
                         $incomingVideoFilenames[] = basename(parse_url($videoUrl, PHP_URL_PATH));
                     }
                 }
-                
+
                 foreach ($existingVideos as $existingVideo) {
                     $existingFilename = $existingVideo->image_path;
-                    if (!in_array($existingFilename, $incomingVideoFilenames)) {
+                    if (! in_array($existingFilename, $incomingVideoFilenames)) {
                         $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($existingFilename, '/'));
-                        
+
                         if (file_exists($machineryVideoPath)) {
                             unlink($machineryVideoPath);
                         }
                     }
                 }
-                
+
                 $machinery->images()->where('type', 'video')->whereNotIn('image_path', $incomingVideoFilenames)->delete();
-                
+
                 foreach ($incomingVideoFilenames as $filename) {
                     $existingVideo = $machinery->images()->where('type', 'video')->where('image_path', $filename)->first();
-                    
-                    if (!$existingVideo) {
+
+                    if (! $existingVideo) {
                         MachineryFileManager::create([
                             'machinery_id' => $machinery->id,
                             'image_path'   => $filename,
-                            'type'         => 'video'
+                            'type'         => 'video',
                         ]);
                     }
                 }
@@ -471,41 +471,36 @@ class MachineryController extends Controller
             if ($request->has('image_urls') && is_array($request->image_urls)) {
 
                 $existingImages = $machinery->images()->where('type', 'image')->get();
-                
 
                 $incomingFilenames = [];
                 foreach ($request->image_urls as $imageUrl) {
                     $incomingFilenames[] = basename(parse_url($imageUrl, PHP_URL_PATH));
                 }
-                
 
                 foreach ($existingImages as $existingImage) {
                     $existingFilename = $existingImage->image_path;
-                    if (!in_array($existingFilename, $incomingFilenames)) {
-
+                    if (! in_array($existingFilename, $incomingFilenames)) {
 
                         $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($existingFilename, '/'));
-                        
+
                         if (file_exists($machineryImagePath)) {
                             unlink($machineryImagePath);
                         }
                     }
                 }
-                
 
                 $machinery->images()->where('type', 'image')->whereNotIn('image_path', $incomingFilenames)->delete();
-                
 
                 foreach ($request->image_urls as $imageUrl) {
-                    $filename = basename(parse_url($imageUrl, PHP_URL_PATH));
+                    $filename      = basename(parse_url($imageUrl, PHP_URL_PATH));
                     $existingImage = $machinery->images()->where('type', 'image')->where('image_path', $filename)->first();
-                    
-                    if (!$existingImage) {
+
+                    if (! $existingImage) {
 
                         MachineryFileManager::create([
                             'machinery_id' => $machinery->id,
                             'image_path'   => $filename,
-                            'type'         => 'image'
+                            'type'         => 'image',
                         ]);
                     }
                 }
@@ -516,7 +511,7 @@ class MachineryController extends Controller
             $images = $machinery->images->filter(function ($file) {
                 return $file->type === 'image';
             });
-            
+
             $machinery->image_urls = $images->map(function ($image) {
                 $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
                 if (file_exists($machineryImagePath)) {
@@ -525,11 +520,11 @@ class MachineryController extends Controller
                     return null;
                 }
             })->filter()->values()->toArray();
-            
+
             $videos = $machinery->images->filter(function ($file) {
                 return $file->type === 'video';
             });
-            
+
             $machinery->video_urls = $videos->map(function ($video) {
                 $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                 if (file_exists($machineryVideoPath)) {
@@ -538,7 +533,7 @@ class MachineryController extends Controller
                     return null;
                 }
             })->filter()->values()->toArray();
-            
+
             unset($machinery->images);
 
             return response()->json([
@@ -575,26 +570,24 @@ class MachineryController extends Controller
                 ], 404);
             }
 
-
             $files = $machinery->images;
             foreach ($files as $file) {
                 if ($file->type === 'video') {
 
                     $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($file->image_path, '/'));
-                    
+
                     if (file_exists($machineryVideoPath)) {
                         unlink($machineryVideoPath);
                     }
                 } else {
 
                     $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($file->image_path, '/'));
-                    
+
                     if (file_exists($machineryImagePath)) {
                         unlink($machineryImagePath);
                     }
                 }
             }
-
 
             $machinery->images()->delete();
 

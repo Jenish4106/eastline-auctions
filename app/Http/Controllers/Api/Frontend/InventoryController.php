@@ -228,7 +228,6 @@ class InventoryController extends Controller
 
         if ($machinery->images) {
             $machinery->images = $machinery->images->map(function ($image) {
-        
                 if ($image->type === 'video') {
                     $machineryFilePath = public_path('uploads/machinery/videos/' . $image->image_path);
                     if (file_exists($machineryFilePath)) {

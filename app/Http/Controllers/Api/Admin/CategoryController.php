@@ -84,7 +84,6 @@ class CategoryController extends Controller
                     $category->image_urls = [];
                 }
                 
-                // Remove the original image field to avoid confusion
                 unset($category->image);
                 return $category;
             });
@@ -134,12 +133,10 @@ class CategoryController extends Controller
             }
 
             if ($category->image) {
-                // Decode JSON string back to array
                 $imageArray = json_decode($category->image, true);
                 if (is_array($imageArray)) {
                     $imageUrls = [];
                     foreach ($imageArray as $filename) {
-                        // Check if the image exists in the category folder
                         $categoryImagePath = public_path('uploads/category/images/' . $filename);
                         if (file_exists($categoryImagePath)) {
                             $imageUrls[] = asset('uploads/category/images/' . $filename);
@@ -147,24 +144,20 @@ class CategoryController extends Controller
                             $imageUrls[] = null;
                         }
                     }
-                    // Filter out null values and ensure proper array format
                     $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
                 } else {
-                    // Handle single image (backward compatibility)
                     $categoryImagePath = public_path('uploads/category/images/' . $category->image);
                     if (file_exists($categoryImagePath)) {
                         $category->image_urls = [asset('uploads/category/images/' . $category->image)];
                     } else {
                         $category->image_urls = [null];
                     }
-                    // Filter out null values and ensure proper array format
                     $category->image_urls = collect($category->image_urls)->filter()->values()->toArray();
                 }
             } else {
                 $category->image_urls = [];
             }
             
-            // Remove the original image field to avoid confusion
             unset($category->image);
 
             return response()->json([
@@ -223,7 +216,6 @@ class CategoryController extends Controller
 
             $category->save();
             
-            // Add image_urls to response for consistency
             $imageUrls = [];
             foreach ($filenames as $filename) {
                 $categoryImagePath = public_path('uploads/category/images/' . $filename);
@@ -285,7 +277,6 @@ class CategoryController extends Controller
             $category->total_machinery = $request->total_machinery;
 
             if ($request->has('image_urls')) {
-                // Decode JSON string back to array
                 $existingImages = json_decode($category->image, true);
                 if (!is_array($existingImages)) {
                     $existingImages = $existingImages ? [$existingImages] : [];
@@ -312,13 +303,11 @@ class CategoryController extends Controller
                 foreach ($request->image_urls as $imageUrl) {
                     $filenames[] = basename(parse_url($imageUrl, PHP_URL_PATH));
                 }
-                // Store as JSON string since the database field is a string
                 $category->image = json_encode($filenames);
             }
 
             $category->save();
             
-            // Add image_urls to response for consistency
             if ($request->has('image_urls')) {
                 $imageUrls = [];
                 foreach ($filenames as $filename) {
@@ -368,13 +357,11 @@ class CategoryController extends Controller
             }
 
             if ($category->image) {
-                // Decode JSON string back to array
                 $imageArray = json_decode($category->image, true);
                 if (is_array($imageArray)) {
                     foreach ($imageArray as $image) {
                         $filename = is_string($image) ? basename(parse_url($image, PHP_URL_PATH)) : null;
                         if ($filename) {
-                            // Check if the image exists in the category folder
                             $categoryImagePath = public_path('uploads/category/images/' . $filename);
                             
                             if (file_exists($categoryImagePath)) {
@@ -385,7 +372,6 @@ class CategoryController extends Controller
                 } else {
                     $filename = is_string($category->image) ? basename(parse_url($category->image, PHP_URL_PATH)) : null;
                     if ($filename) {
-                        // Check if the image exists in the category folder
                         $categoryImagePath = public_path('uploads/category/images/' . $filename);
                         
                         if (file_exists($categoryImagePath)) {

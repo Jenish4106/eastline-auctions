@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 use App\Models\Settings;
 use Illuminate\Support\Facades\View;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
 class BiddingController extends Controller
 {
@@ -346,7 +349,136 @@ class BiddingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong, please try again.',
-                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function addSignatureToContract(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'machinery_id' => 'required|exists:machinery,id',
+            'sign_photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors(),
+            ], 400);
+        }
+        
+        try {
+            $user = auth('api')->user();
+
+            $machineryId = $request->machinery_id;
+            
+            $machinery = Machinery::with(['category', 'bids'])->find($machineryId);
+            
+            if (!$machinery) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Machinery not found',
+                ], 404);
+            }
+            
+            if ($machinery->won_user != $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not authorized to sign this contract',
+                ], 403);
+            }
+            
+            // Process the signature image
+            $signatureImage = $request->file('sign_photo');
+            
+            // Create directory if it doesn't exist in the public/uploads folder
+            $signatureDirectory = public_path('uploads/signatures');
+            if (!File::exists($signatureDirectory)) {
+                File::makeDirectory($signatureDirectory, 0755, true);
+            }
+            
+            // Store signature in public/uploads/signatures
+            $signatureFileName = time() . '_' . $signatureImage->getClientOriginalName();
+            $signaturePath = 'uploads/signatures/' . $signatureFileName;
+            $signatureImage->move(public_path('uploads/signatures'), $signatureFileName);
+            
+            $highestBid = $machinery->bids()->max('amount');
+            
+            $contractStatusMap = [
+                0 => 'Pending',
+                1 => 'Approved',
+                3 => 'Signed',
+                4 => 'Rejected',
+            ];
+            
+            $winningUser = User::find($machinery->won_user);
+            
+            $highestBidModel = $machinery->bids()->orderBy('amount', 'desc')->first();
+            
+            // Add signature to the contract data
+            $contractDataView = [
+                'machinery' => $machinery,
+                'highestBid' => $highestBidModel,
+                'user' => $winningUser,
+                'signaturePath' => $signaturePath, // This will be used for the PDF
+                'absoluteSignaturePath' => public_path($signaturePath), // Absolute path for PDF generation
+                'companyInfo' => [
+                    'name' => Settings::get('company_name',),
+                    'address' => Settings::get('address'),
+                    'phone' => Settings::get('phone_no'),
+                    'email' => Settings::get('email'),
+                ],
+                'contractDate' => now()->format('Y-m-d'),
+            ];
+            
+            // Generate PDF with signature
+            $pdf = Pdf::loadView('pdf.contract', $contractDataView);
+            $pdfContent = $pdf->output();
+            
+            // Ensure directory exists and store the PDF in the machinery_files table
+            $pdfFileName = 'contract_' . $machineryId . '_' . time() . '.pdf';
+            $pdfPath = 'machinery_files/' . $pdfFileName;
+            
+            // Create directory if it doesn't exist in the public/uploads folder
+            $publicDirectory = public_path('uploads/machinery_files');
+            if (!File::exists($publicDirectory)) {
+                File::makeDirectory($publicDirectory, 0755, true);
+            }
+            
+            // Save PDF to public/uploads/machinery_files directory
+            $fullPath = public_path('uploads/machinery_files/' . $pdfFileName);
+            file_put_contents($fullPath, $pdfContent);
+            
+            // Store relative path in database
+            $pdfPath = 'uploads/machinery_files/' . $pdfFileName;
+            
+            // Save to MachineryFileManager
+            $fileManager = MachineryFileManager::create([
+                'machinery_id' => $machineryId,
+                'image_path' => $pdfPath,
+                'type' => 'contract_pdf',
+            ]);
+            
+            // Update machinery contract status and path to 'Signed' (3)
+            $machinery->update([
+                'contract_status' => 3,
+                'contract_path' => $pdfPath,
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Contract signed and PDF generated successfully',
+                'data' => [
+                    'contract_file_id' => $fileManager->id,
+                    'contract_file_path' => asset($pdfPath),
+                    'signature_path' => asset($signaturePath),
+                    'machinery_id' => $machineryId,
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong, please try again.',
             ], 500);
         }
     }
