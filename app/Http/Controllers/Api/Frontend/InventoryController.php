@@ -209,7 +209,7 @@ class InventoryController extends Controller
     public function getMachineryDetails(Request $request)
     {
         $machineryId = $request->input('machineryId');
-        $machinery   = Machinery::with('category:id,category_name', 'images')->find($machineryId);
+        $machinery   = Machinery::with('category:id,category_name', 'images', 'bids')->find($machineryId);
 
         if (! $machinery) {
             return response()->json([
@@ -222,6 +222,9 @@ class InventoryController extends Controller
         $make = $machinery->make ?? '';
         $model = $machinery->model ?? '';
         $machinery->name = trim("$year $make $model");
+        
+        $highestBid = $machinery->bids->max('amount');
+        $machinery->current_bid = $highestBid ?: $machinery->bid_start_price;
 
         if ($machinery->images) {
             $machinery->images = $machinery->images->map(function ($image) {
