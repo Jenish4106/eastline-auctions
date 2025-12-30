@@ -101,7 +101,7 @@ Route::middleware(['auth.user'])->group(function () {
     Route::get('/user/dashboard', [UserDashboardController::class, 'index']);
 
     Route::post('/user/profile-update', [UsersController::class, 'updateProfile']);
-    Route::post('/user/profile-update', [UsersController::class, 'getProfile']);
+    Route::get('/user/get-profile', [UsersController::class, 'getProfile']);   
 });
 
 Route::get('/get-categories', [UsersController::class, 'getCategories']);

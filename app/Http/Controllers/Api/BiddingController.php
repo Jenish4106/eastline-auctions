@@ -648,7 +648,6 @@ class BiddingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong, please try again.',
-                'error' => $e->getMessage()
             ], 500);
         }
     }

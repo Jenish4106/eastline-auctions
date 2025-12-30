@@ -140,7 +140,6 @@ class UsersController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Something went wrong, please try again.',
-                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -157,10 +156,28 @@ class UsersController extends Controller
                 ], 401);
             }
 
+            $licenseStatusText = 'Unverified';
+            if ($user->is_license !== null) {
+                switch ($user->is_license) {
+                    case 0:
+                        $licenseStatusText = 'Pending';
+                        break;
+                    case 1:
+                        $licenseStatusText = 'Verified';
+                        break;
+                    case 2:
+                        $licenseStatusText = 'Declined';
+                        break;
+                }
+            }
+            
+            $userData = $user->toArray();
+            $userData['license_status'] = $licenseStatusText;
+
             return response()->json([
                 'status' => true,
                 'message' => 'Profile retrieved successfully',
-                'data' => $user,
+                'data' => $userData,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
