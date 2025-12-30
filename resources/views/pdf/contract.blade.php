@@ -155,7 +155,7 @@
             </tr>
             <tr>
                 <th>Final Sale Price</th>
-                <td><strong>${{ number_format($highestBid->amount, 2) }}</strong></td>
+                <td><strong>${{ number_format($highestBid->amount, 2 ?? '') ?? '0.00' }}</strong></td>
             </tr>
             <tr>
                 <th>Sale Date</th>

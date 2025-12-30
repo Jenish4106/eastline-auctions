@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use App\Models\License;
 use App\Models\Machinery;
 use App\Models\Order;
+use App\Models\User;
 
 class UsersController extends Controller
 {
@@ -63,12 +64,7 @@ class UsersController extends Controller
                     'status'  => 0,
                 ];
 
-                if ($existingLicense) {
-                    $existingLicense->update($licenseData);
-                    $license = $existingLicense;
-                } else {
-                    $license = License::create($licenseData);
-                }
+                $license = License::create($licenseData);
 
                 $user->update(['is_license' => 0]);
 
@@ -86,6 +82,89 @@ class UsersController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status'  => false,
+                'message' => 'Something went wrong, please try again.',
+            ], 500);
+        }
+    }
+
+    public function updateProfile(Request $request)
+    {
+        try {
+            $user = auth('api')->user();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized access',
+                ], 401);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+                'phone' => 'required|string|max:20',
+                'address' => 'required|string|max:500',
+                'company_name' => 'required|string|max:255',
+                'city' => 'required|string|max:100',
+                'state' => 'required|string|max:100',
+                'zip_code' => 'required|string|max:20',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation error',
+                    'errors' => $validator->errors()->first(),
+                ], 422);
+            }
+
+            $user->update([
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'phone_no' => $request->phone,
+                'address' => $request->address,
+                'company_name' => $request->company_name,
+                'city' => $request->city,
+                'state' => $request->state,
+                'zip_code' => $request->zip_code,
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Profile updated successfully',
+                'data' => $user,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong, please try again.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getProfile()
+    {
+        try {
+            $user = auth('api')->user();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized access',
+                ], 401);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Profile retrieved successfully',
+                'data' => $user,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
                 'message' => 'Something went wrong, please try again.',
             ], 500);
         }

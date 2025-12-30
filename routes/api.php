@@ -99,6 +99,9 @@ Route::middleware(['auth.user'])->group(function () {
     Route::post('/user/order-details', [BiddingController::class, 'getOrderDetails']);
     
     Route::get('/user/dashboard', [UserDashboardController::class, 'index']);
+
+    Route::post('/user/profile-update', [UsersController::class, 'updateProfile']);
+    Route::post('/user/profile-update', [UsersController::class, 'getProfile']);
 });
 
 Route::get('/get-categories', [UsersController::class, 'getCategories']);

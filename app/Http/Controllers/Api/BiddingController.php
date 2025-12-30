@@ -613,6 +613,7 @@ class BiddingController extends Controller
                     ];
                     
                     return [
+                        'id' => $order->id,
                         'order_id' => $order->order_id,
                         'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
                         'name' => $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model,
@@ -795,12 +796,12 @@ class BiddingController extends Controller
                 ], 404);
             }
             
-            if ($machinery->bid_status !== '0' || $machinery->buy_now_price <= 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This machinery is not available for direct purchase',
-                ], 400);
-            }
+            // if ($machinery->bid_status !== '0' || $machinery->buy_now_price <= 0) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'This machinery is not available for direct purchase',
+            //     ], 400);
+            // }
             
             if ($machinery->is_purchase) {
                 return response()->json([
