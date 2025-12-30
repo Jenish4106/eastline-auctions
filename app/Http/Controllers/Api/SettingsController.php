@@ -46,10 +46,13 @@ class SettingsController extends Controller
                     }
                     
                     $isVerified = false;
+                    $isRejected = false;
                     if ($latestLicense) {
                         $isVerified = ($latestLicense->status == 1);
+                        $isRejected = ($latestLicense->status == 2);
                     } else {
                         $isVerified = ($user->is_license == 1);
+                        $isRejected = ($user->is_license == 2);
                     }
                     
                     if($hasUploaded && $isVerified) {
@@ -57,12 +60,14 @@ class SettingsController extends Controller
                             'success' => true,
                             'is_verify' => true,
                             'is_upload' => true,
+                            'is_reject' => false,
                         ], 200);
                     } else {
                         return response()->json([
                             'success' => $hasUploaded, 
                             'is_verify' => false,
                             'is_upload' => $hasUploaded,
+                            'is_reject' => $isRejected,
                         ], 200);
                     }
                     break;
