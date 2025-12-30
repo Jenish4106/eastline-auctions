@@ -3,7 +3,9 @@
 use App\Http\Controllers\Api\Admin\Auth\LoginController as AdminLoginController;
 use App\Http\Controllers\Api\Admin\BiddingController as AdminBiddingController;
 use App\Http\Controllers\Api\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\MachineryController as AdminMachineryController;
+use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\Admin\SettingsController;
 use App\Http\Controllers\Api\Admin\UploadController as AdminUploadController;
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
@@ -14,6 +16,7 @@ use App\Http\Controllers\Api\BiddingController;
 use App\Http\Controllers\Api\Frontend\InventoryController;
 use App\Http\Controllers\Api\SettingsController as UserSettingsController;
 use App\Http\Controllers\Api\UsersController;
+use App\Http\Controllers\Api\UserDashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [RegisterController::class, 'register']);
@@ -26,6 +29,8 @@ Route::post('/admin/login', [AdminLoginController::class, 'login']);
 
 Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
     Route::post('/logout', [AdminLoginController::class, 'logout']);
+
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
     Route::prefix('upload')->group(function () {
         Route::post('/image', [AdminUploadController::class, 'uploadImage']);
@@ -89,7 +94,11 @@ Route::middleware(['auth.user'])->group(function () {
     Route::post('/user/single-won-bids', [BiddingController::class, 'getSingleWonBid']);
 
     Route::post('/user/sign-contract', [BiddingController::class, 'addSignatureToContract']);
-    Route::post('/user/machinery-purchase', [UsersController::class, 'purchaseMachinery']);
+    Route::post('/user/machinery-purchase', [BiddingController::class, 'purchaseMachinery']);
+    Route::post('/user/orders', [BiddingController::class, 'getUserOrders']);
+    Route::post('/user/order-details', [BiddingController::class, 'getOrderDetails']);
+    
+    Route::get('/user/dashboard', [UserDashboardController::class, 'index']);
 });
 
 Route::get('/get-categories', [UsersController::class, 'getCategories']);

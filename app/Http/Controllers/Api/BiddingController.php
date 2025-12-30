@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Bid;
 use App\Models\Machinery;
 use App\Models\MachineryFileManager;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\View;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
+use Yajra\DataTables\DataTables;
 
 class BiddingController extends Controller
 {
@@ -83,14 +85,40 @@ class BiddingController extends Controller
     {
         try {
             $user = auth('api')->user();
+            
+            $search = $request->input('search', '');
+            $perPage = $request->input('per_page', 10);
+            $page = $request->input('page', 1);
+            $sortBy = $request->input('sort_by', 'created_at');
+            $sortOrder = $request->input('sort_order', 'desc');
 
-            $machineries = Machinery::whereHas('bids')
-                ->with(['images', 'bids.user'])
-                ->get();
+            $allowedSortFields = ['id', 'year', 'make', 'model', 'bid_start_price', 'bid_end_time', 'created_at'];
+            $allowedSortOrders = ['asc', 'desc'];
+            
+            if (!in_array($sortBy, $allowedSortFields)) {
+                $sortBy = 'created_at';
+            }
+            
+            if (!in_array($sortOrder, $allowedSortOrders)) {
+                $sortOrder = 'desc';
+            }
 
-            $result = [];
+            $query = Machinery::whereHas('bids')
+                ->with(['images', 'bids.user']);
 
-            foreach ($machineries as $machinery) {
+            if (!empty($search)) {
+                $query->where(function($q) use ($search) {
+                    $q->where('year', 'LIKE', "%{$search}%")
+                      ->orWhere('make', 'LIKE', "%{$search}%")
+                      ->orWhere('model', 'LIKE', "%{$search}%")
+                      ->orWhere('bid_start_price', 'LIKE', "%{$search}%")
+                      ->orWhere('bid_end_time', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $machineries = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
+
+            $machineriesWithFormattedData = $machineries->getCollection()->map(function ($machinery) use ($user) {
                 $bids = $machinery->bids;
                 $highestBid = $bids->max('amount');
                 $lastBid = $highestBid ?: $machinery->bid_start_price;
@@ -120,7 +148,7 @@ class BiddingController extends Controller
 
                 $firstImage = $machinery->images->firstWhere('type', 'image');
 
-                $result[] = [
+                return [
                     'id' => $machinery->id,
                     'name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
                     'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
@@ -129,11 +157,26 @@ class BiddingController extends Controller
                     'bid_end_time' => $machinery->bid_end_time,
                     'status' => $status,
                 ];
+            });
+
+            if ($machineriesWithFormattedData->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'No machinery with bids found',
+                ], 200);
             }
 
             return response()->json([
                 'success' => true,
-                'data' => $result,
+                'data' => $machineriesWithFormattedData,
+                'pagination' => [
+                    'current_page' => $machineries->currentPage(),
+                    'last_page'    => $machineries->lastPage(),
+                    'per_page'     => $machineries->perPage(),
+                    'total'        => $machineries->total(),
+                    'from'         => $machineries->firstItem(),
+                    'to'           => $machineries->lastItem(),
+                ],
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -227,14 +270,42 @@ class BiddingController extends Controller
     {
         try {
             $user = auth('api')->user();
+            
+            $search = $request->input('search', '');
+            $perPage = $request->input('per_page', 10);
+            $page = $request->input('page', 1);
+            $sortBy = $request->input('sort_by', 'bid_won_date');
+            $sortOrder = $request->input('sort_order', 'desc');
 
-            $wonMachinery = Machinery::where('won_user', $user->id)
-                ->with(['images', 'category'])
-                ->get();
+            $allowedSortFields = ['id', 'year', 'make', 'model', 'won_bid_amount', 'bid_won_date', 'contract_status'];
+            $allowedSortOrders = ['asc', 'desc'];
+            
+            if (!in_array($sortBy, $allowedSortFields)) {
+                $sortBy = 'bid_won_date';
+            }
+            
+            if (!in_array($sortOrder, $allowedSortOrders)) {
+                $sortOrder = 'desc';
+            }
 
-            $result = [];
+            $query = Machinery::where('won_user', $user->id)
+                ->with(['images', 'category']);
 
-            foreach ($wonMachinery as $machinery) {
+            if (!empty($search)) {
+                $query->where(function($q) use ($search) {
+                    $q->where('year', 'LIKE', "%{$search}%")
+                      ->orWhere('make', 'LIKE', "%{$search}%")
+                      ->orWhere('model', 'LIKE', "%{$search}%")
+                      ->orWhere('bid_won_date', 'LIKE', "%{$search}%")
+                      ->orWhereHas('category', function($q2) use ($search) {
+                          $q2->where('category_name', 'LIKE', "%{$search}%");
+                      });
+                });
+            }
+
+            $wonMachinery = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
+
+            $wonMachineryWithFormattedData = $wonMachinery->getCollection()->map(function ($machinery) {
                 $highestBid = $machinery->bids()->max('amount');
                 
                 $firstImage = $machinery->images->firstWhere('type', 'image');
@@ -246,7 +317,7 @@ class BiddingController extends Controller
                     4 => 'Rejected',
                 ];
                 
-                $result[] = [
+                return [
                     'id' => $machinery->id,
                     'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
                     'machinery_name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
@@ -255,11 +326,26 @@ class BiddingController extends Controller
                     'won_date' => $machinery->bid_won_date,
                     'contract_status' => isset($contractStatusMap[$machinery->contract_status]) ? $contractStatusMap[$machinery->contract_status] : 'Unknown',
                 ];
+            });
+
+            if ($wonMachineryWithFormattedData->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'No won bids found',
+                ], 200);
             }
 
             return response()->json([
                 'success' => true,
-                'data' => $result,
+                'data' => $wonMachineryWithFormattedData,
+                'pagination' => [
+                    'current_page' => $wonMachinery->currentPage(),
+                    'last_page'    => $wonMachinery->lastPage(),
+                    'per_page'     => $wonMachinery->perPage(),
+                    'total'        => $wonMachinery->total(),
+                    'from'         => $wonMachinery->firstItem(),
+                    'to'           => $wonMachinery->lastItem(),
+                ],
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -388,16 +474,13 @@ class BiddingController extends Controller
                 ], 403);
             }
             
-            // Process the signature image
             $signatureImage = $request->file('sign_photo');
             
-            // Create directory if it doesn't exist in the public/uploads folder
             $signatureDirectory = public_path('uploads/signatures');
             if (!File::exists($signatureDirectory)) {
                 File::makeDirectory($signatureDirectory, 0755, true);
             }
             
-            // Store signature in public/uploads/signatures
             $signatureFileName = time() . '_' . $signatureImage->getClientOriginalName();
             $signaturePath = 'uploads/signatures/' . $signatureFileName;
             $signatureImage->move(public_path('uploads/signatures'), $signatureFileName);
@@ -415,13 +498,12 @@ class BiddingController extends Controller
             
             $highestBidModel = $machinery->bids()->orderBy('amount', 'desc')->first();
             
-            // Add signature to the contract data
             $contractDataView = [
                 'machinery' => $machinery,
                 'highestBid' => $highestBidModel,
                 'user' => $winningUser,
-                'signaturePath' => $signaturePath, // This will be used for the PDF
-                'absoluteSignaturePath' => public_path($signaturePath), // Absolute path for PDF generation
+                'signaturePath' => $signaturePath,
+                'absoluteSignaturePath' => public_path($signaturePath),
                 'companyInfo' => [
                     'name' => Settings::get('company_name',),
                     'address' => Settings::get('address'),
@@ -431,35 +513,28 @@ class BiddingController extends Controller
                 'contractDate' => now()->format('Y-m-d'),
             ];
             
-            // Generate PDF with signature
             $pdf = Pdf::loadView('pdf.contract', $contractDataView);
             $pdfContent = $pdf->output();
             
-            // Ensure directory exists and store the PDF in the machinery_files table
             $pdfFileName = 'contract_' . $machineryId . '_' . time() . '.pdf';
             $pdfPath = 'machinery_files/' . $pdfFileName;
             
-            // Create directory if it doesn't exist in the public/uploads folder
             $publicDirectory = public_path('uploads/machinery_files');
             if (!File::exists($publicDirectory)) {
                 File::makeDirectory($publicDirectory, 0755, true);
             }
             
-            // Save PDF to public/uploads/machinery_files directory
             $fullPath = public_path('uploads/machinery_files/' . $pdfFileName);
             file_put_contents($fullPath, $pdfContent);
             
-            // Store relative path in database
             $pdfPath = 'uploads/machinery_files/' . $pdfFileName;
             
-            // Save to MachineryFileManager
             $fileManager = MachineryFileManager::create([
                 'machinery_id' => $machineryId,
                 'image_path' => $pdfPath,
                 'type' => 'contract_pdf',
             ]);
             
-            // Update machinery contract status and path to 'Signed' (3)
             $machinery->update([
                 'contract_status' => 3,
                 'contract_path' => $pdfPath,
@@ -475,6 +550,292 @@ class BiddingController extends Controller
                     'machinery_id' => $machineryId,
                 ]
             ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong, please try again.',
+            ], 500);
+        }
+    }
+
+    public function getUserOrders(Request $request)
+    {
+        try {
+            $user = auth('api')->user();
+            
+            $search = $request->input('search', '');
+            $perPage = $request->input('per_page', 10);
+            $page = $request->input('page', 1);
+            $sortBy = $request->input('sort_by', 'purchase_date');
+            $sortOrder = $request->input('sort_order', 'desc');
+
+            $allowedSortFields = ['order_id', 'price', 'purchase_date', 'delivery_status'];
+            $allowedSortOrders = ['asc', 'desc'];
+            
+            if (!in_array($sortBy, $allowedSortFields)) {
+                $sortBy = 'purchase_date';
+            }
+            
+            if (!in_array($sortOrder, $allowedSortOrders)) {
+                $sortOrder = 'desc';
+            }
+
+            $query = Order::where('user_id', $user->id)
+                ->with(['machinery' => function($query) {
+                    $query->select('id', 'make', 'model', 'year', 'description');
+                }, 'machinery.images']);
+
+            if (!empty($search)) {
+                $query->where(function($q) use ($search) {
+                    $q->where('order_id', 'LIKE', "%{$search}%")
+                      ->orWhere('price', 'LIKE', "%{$search}%")
+                      ->orWhere('delivery_status', 'LIKE', "%{$search}%")
+                      ->orWhereHas('machinery', function($q2) use ($search) {
+                          $q2->where('make', 'LIKE', "%{$search}%")
+                             ->orWhere('model', 'LIKE', "%{$search}%")
+                             ->orWhere('year', 'LIKE', "%{$search}%");
+                      });
+                });
+            }
+
+            $orders = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
+
+            $ordersWithFormattedData = $orders->getCollection()->map(function ($order) {
+                if ($order->machinery) {
+                    $firstImage = $order->machinery->images->firstWhere('type', 'image');
+                    
+                    $deliveryStatusMap = [
+                        0 => 'Process',
+                        1 => 'Shipped', 
+                        2 => 'In Transit',
+                        3 => 'Delivered',
+                        4 => 'Cancelled',
+                    ];
+                    
+                    return [
+                        'order_id' => $order->order_id,
+                        'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
+                        'name' => $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model,
+                        'price' => $order->price,
+                        'purchase_date' => $order->purchase_date,
+                        'delivery_status' => $order->delivery_status,
+                        'delivery_status_text' => isset($deliveryStatusMap[$order->delivery_status]) ? $deliveryStatusMap[$order->delivery_status] : 'Unknown',
+                    ];
+                }
+            })->filter(); // Remove null values if machinery doesn't exist
+
+            if ($ordersWithFormattedData->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'No orders found',
+                ], 200);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $ordersWithFormattedData,
+                'pagination' => [
+                    'current_page' => $orders->currentPage(),
+                    'last_page'    => $orders->lastPage(),
+                    'per_page'     => $orders->perPage(),
+                    'total'        => $orders->total(),
+                    'from'         => $orders->firstItem(),
+                    'to'           => $orders->lastItem(),
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong, please try again.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getOrderDetails(Request $request)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'order_id' => 'required|string|exists:orders,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors(),
+            ], 400);
+        }
+        
+        try {
+            $user = auth('api')->user();
+            
+            $order = Order::where('id', $request->order_id)
+                ->where('user_id', $user->id)
+                ->with(['machinery' => function($query) {
+                    $query->select('id', 'make', 'model', 'year', 'working_hours', 'weight', 'serial_number');
+                }, 'machinery.images'])
+                ->first();
+                
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found',
+                ], 404);
+            }
+            
+            $firstImage = $order->machinery->images->firstWhere('type', 'image');
+            
+            $settings = Settings::first();
+            $deliveryContact = $settings ? $settings->phone_no : null;
+            
+            $deliveryStatusMap = [
+                0 => 'Process',
+                1 => 'Shipped', 
+                2 => 'In Transit',
+                3 => 'Delivered',
+                4 => 'Cancelled',
+            ];
+            
+            $deliveryTimeline = [];
+            
+            if ($order->process_date) {
+                $deliveryTimeline[] = [
+                    'status' => 'Process',
+                    'date' => $order->process_date,
+                    'status_code' => 0
+                ];
+            }
+            
+            if ($order->shipped_date) {
+                $deliveryTimeline[] = [
+                    'status' => 'Shipped',
+                    'date' => $order->shipped_date,
+                    'status_code' => 1
+                ];
+            }
+            
+            if ($order->in_transit_date) {
+                $deliveryTimeline[] = [
+                    'status' => 'In Transit',
+                    'date' => $order->in_transit_date,
+                    'status_code' => 2
+                ];
+            }
+            
+            if ($order->delivered_date) {
+                $deliveryTimeline[] = [
+                    'status' => 'Delivered',
+                    'date' => $order->delivered_date,
+                    'status_code' => 3
+                ];
+            }
+            
+            if ($order->cancelled_date) {
+                $deliveryTimeline[] = [
+                    'status' => 'Cancelled',
+                    'date' => $order->cancelled_date,
+                    'status_code' => 4
+                ];
+            }
+            
+            $orderDetails = [
+                'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
+                'name' => $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model,
+                'working_hours' => $order->machinery->working_hours,
+                'weight' => $order->machinery->weight,
+                'year' => $order->machinery->year,
+                'price' => $order->price,
+                'serial_no' => $order->machinery->serial_number,
+                'order_id' => $order->order_id,
+                'delivery_contact' => $deliveryContact,
+                'current_status' => isset($deliveryStatusMap[$order->delivery_status]) ? $deliveryStatusMap[$order->delivery_status] : 'Unknown',
+                'delivery_timeline' => $deliveryTimeline,
+            ];
+            
+            return response()->json([
+                'success' => true,
+                'data' => $orderDetails,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong, please try again.',
+            ], 500);
+        }
+    }
+
+    public function purchaseMachinery(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'machineryId' => 'required|exists:machinery,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors(),
+            ], 400);
+        }
+        
+        try {
+            $user = auth('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access',
+                ], 401);
+            }
+            
+            $machinery = Machinery::find($request->machineryId);
+            
+            if (!$machinery) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Machinery not found',
+                ], 404);
+            }
+            
+            if ($machinery->bid_status !== '0' || $machinery->buy_now_price <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This machinery is not available for direct purchase',
+                ], 400);
+            }
+            
+            if ($machinery->is_purchase) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This machinery has already been purchased',
+                ], 400);
+            }
+            
+            $order = Order::create([
+                'order_id' => 'ORD-' . strtoupper(Str::random(10)),
+                'machinery_id' => $machinery->id,
+                'user_id' => $user->id,
+                'price' => $machinery->buy_now_price,
+                'purchase_date' => now(),
+                'delivery_status' => 0,
+                'process_date' => now(),
+            ]);
+            
+            $machinery->update([
+                'is_purchase' => true,
+                'bid_status' => '2',
+                'won_user' => $user->id,
+                'bid_won_date' => now(),
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Machinery purchased successfully',
+                'data' => [
+                    'order_id' => $order->order_id,
+                    'machinery_id' => $machinery->id,
+                    'price' => $machinery->buy_now_price,
+                ],
+            ], 200);
+            
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

@@ -76,12 +76,10 @@ class InventoryController extends Controller
             }
         }
 
-        $machineryQuery = Machinery::with('images');
-        
         if (is_array($categoryId)) {
-            $machineryQuery->whereIn('category_id', $categoryId);
+            $machineryQuery = Machinery::whereIn('category_id', $categoryId);
         } else {
-            $machineryQuery->where('category_id', $categoryId);
+            $machineryQuery = Machinery::where('category_id', $categoryId);
         }
 
         if (!empty($search)) {
@@ -140,7 +138,8 @@ class InventoryController extends Controller
                 break;
         }
 
-        $machineryList = $machineryQuery->select([
+        $machineryList = $machineryQuery
+            ->paginate($perPage, [
                 'id',
                 'working_hours',
                 'buy_now_price',
@@ -151,10 +150,17 @@ class InventoryController extends Controller
                 'model',
                 'bid_end_time',
                 'created_at'
-            ])
-            ->paginate($perPage, ['*'], 'page', $page);
+            ], 'page', $page);
+        
+        $machineryIds = $machineryList->getCollection()->pluck('id')->toArray();
+        $images = \App\Models\MachineryFileManager::whereIn('machinery_id', $machineryIds)
+            ->where('type', 'image')
+            ->orderBy('id')
+            ->get();
+        
+        $imagesByMachineryId = $images->groupBy('machinery_id');
 
-        $machineryWithImages = $machineryList->getCollection()->map(function ($machinery) {
+        $machineryWithImages = $machineryList->getCollection()->map(function ($machinery) use ($imagesByMachineryId) {
             $year = $machinery->year ?? '';
             $make = $machinery->make ?? '';
             $model = $machinery->model ?? '';
@@ -168,19 +174,23 @@ class InventoryController extends Controller
                 $machinery->is_view = 0;
             }
 
-            if ($machinery->images && $machinery->images->count() > 0) {
-                $firstImage = $machinery->images->first();
-                $machineryImagePath = public_path('uploads/machinery/images/' . $firstImage->image_path);
-                if (file_exists($machineryImagePath)) {
-                    $machinery->first_image_url = asset('uploads/machinery/images/' . $firstImage->image_path);
+            $machineryImages = $imagesByMachineryId->get($machinery->id, collect());
+            
+            if ($machineryImages && $machineryImages->count() > 0) {
+                $firstImage = $machineryImages->first();
+                if ($firstImage && $firstImage->type === 'image') {
+                    $machineryImagePath = public_path('uploads/machinery/images/' . $firstImage->image_path);
+                    if (file_exists($machineryImagePath)) {
+                        $machinery->first_image_url = asset('uploads/machinery/images/' . $firstImage->image_path);
+                    } else {
+                        $machinery->first_image_url = null;
+                    }
                 } else {
                     $machinery->first_image_url = null;
                 }
             } else {
                 $machinery->first_image_url = null;
             }
-
-            unset($machinery->images);
 
             return $machinery;
         });

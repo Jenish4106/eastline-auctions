@@ -37,16 +37,32 @@ class SettingsController extends Controller
                 
                 case "license-verify":
                     $user = auth('api')->user();
-
-                    if($user->is_license){
+                    
+                    $hasUploaded = \App\Models\License::where('user_id', $user->id)->exists();
+                    
+                    $latestLicense = null;
+                    if ($hasUploaded) {
+                        $latestLicense = \App\Models\License::where('user_id', $user->id)->latest()->first();
+                    }
+                    
+                    $isVerified = false;
+                    if ($latestLicense) {
+                        $isVerified = ($latestLicense->status == 1);
+                    } else {
+                        $isVerified = ($user->is_license == 1);
+                    }
+                    
+                    if($hasUploaded && $isVerified) {
                         return response()->json([
                             'success' => true,
                             'is_verify' => true,
+                            'is_upload' => true,
                         ], 200);
                     } else {
                         return response()->json([
-                            'success' => false,
+                            'success' => $hasUploaded, 
                             'is_verify' => false,
+                            'is_upload' => $hasUploaded,
                         ], 200);
                     }
                     break;
