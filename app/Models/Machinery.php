@@ -44,7 +44,8 @@ class Machinery extends Model
         'bid_status' => 'string',
         'contract_status' => 'integer',
         'won_user' => 'integer',
-        'bid_won_date' => 'datetime'
+        'bid_won_date' => 'datetime',
+        'is_purchase' => 'boolean'
     ];
 
     public function category()

@@ -166,7 +166,6 @@ class InventoryController extends Controller
             $make = $machinery->make ?? '';
             $model = $machinery->model ?? '';
             $machinery->name = trim("$year $make $model");
-            $machinery->is_purchase = $machinery->is_purchase;
 
             if ($machinery->bid_end_time) {
                 $bidEndTime = new \DateTime($machinery->bid_end_time);
