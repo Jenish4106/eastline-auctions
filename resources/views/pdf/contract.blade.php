@@ -106,7 +106,7 @@
     <div class="section">
         <div class="section-title">Parties to the Contract</div>
         <p>
-            This Sales Contract ("Agreement") is entered into on 
+            This Sales Contract ("Agreement") is entered into on
             <strong>{{ $contractDate }}</strong> between:
         </p>
 
@@ -155,7 +155,12 @@
             </tr>
             <tr>
                 <th>Final Sale Price</th>
-                <td><strong>${{ number_format($highestBid->amount, 2 ?? '') ?? '0.00' }}</strong></td>
+                @php
+                    $finalPrice = $highestBid->amount ?? 0;
+                @endphp
+                <td>
+                    <strong>${{ number_format($finalPrice, 2) }}</strong>
+                </td>
             </tr>
             <tr>
                 <th>Sale Date</th>
