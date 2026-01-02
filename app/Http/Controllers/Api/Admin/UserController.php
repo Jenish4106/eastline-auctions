@@ -51,7 +51,8 @@ class UserController extends Controller
                 'is_license',
                 'created_at',
                 'updated_at',
-            ])->with('license:id,user_id,file,status');
+            ]);
+
 
             if (!empty($search)) {
                 $query->where(function($q) use ($search) {
@@ -64,6 +65,10 @@ class UserController extends Controller
             }
 
             $users = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
+
+            foreach ($users->items() as $user) {
+                $user->latest_license = $user->license()->latest()->first();
+            }
 
             $usersWithFormattedData = $users->getCollection()->map(function ($user) {
                 $user->name = $user->first_name . ' ' . $user->last_name;
@@ -82,10 +87,11 @@ class UserController extends Controller
                     1 => 'Approved',
                     2 => 'Rejected',
                 ];
-                $user->license_status = $user->license ? $user->license->status : null;
-                $user->license_status_text = $user->license ? (isset($licenseStatusMap[$user->license->status]) ? $licenseStatusMap[$user->license->status] : 'Unknown') : 'No License';
                 
-                unset($user->license);
+                $latestLicense = $user->latest_license;
+                $user->license_status = $latestLicense ? $latestLicense->status : null;
+                $user->license_status_text = $latestLicense ? (isset($licenseStatusMap[$latestLicense->status]) ? $licenseStatusMap[$latestLicense->status] : 'Unknown') : 'No License';
+                
                 return $user;
             });
 
@@ -124,7 +130,8 @@ class UserController extends Controller
     {
         try {
             $id    = $request->id;
-            $user = User::with('license')->find($id);
+            $user = User::find($id);
+            $latestLicense = $user->license()->latest()->first();
 
             if (! $user) {
                 return response()->json([
@@ -150,14 +157,16 @@ class UserController extends Controller
                 2 => 'Rejected',
             ];
             
-            if ($user->license) {
-                if ($user->license->file) {
-                    $user->license->file_url = url($user->license->file);
+            if ($latestLicense) {
+                if ($latestLicense->file) {
+                    $latestLicense->file_url = url($latestLicense->file);
                 }
                 
-                $user->license_status_text = isset($licenseStatusMap[$user->license->status]) ? $licenseStatusMap[$user->license->status] : 'Unknown';
+                $user->license_status_text = isset($licenseStatusMap[$latestLicense->status]) ? $licenseStatusMap[$latestLicense->status] : 'Unknown';
+                $user->license = $latestLicense;
             } else {
                 $user->license_status_text = 'No License';
+                $user->license = null;
             }
 
             return response()->json([
@@ -375,7 +384,9 @@ class UserController extends Controller
                 ], 404);
             }
 
-            if (!$user->license) {
+            $latestLicense = $user->license()->latest()->first();
+            
+            if (!$latestLicense) {
                 $message = $action === 'approve' ? 'User has no license to approve' : 'User has no license to decline';
                 return response()->json([
                     'status'  => false,
@@ -384,16 +395,16 @@ class UserController extends Controller
             }
 
             if ($action === 'approve') {
-                $user->license->status = 1;
+                $latestLicense->status = 1;
                 $user->is_license = 1;
                 $message = 'License approved successfully';
             } else {
-                $user->license->status = 2;
+                $latestLicense->status = 2;
                 $user->is_license = 2;
                 $message = 'License declined successfully';
             }
 
-            $user->license->save();
+            $latestLicense->save();
             $user->save();
 
             return response()->json([
