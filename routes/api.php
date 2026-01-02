@@ -62,6 +62,7 @@ Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
     });
 
     Route::prefix('orders')->group(function () {
+        Route::post('/', [OrderController::class, 'index']);
         Route::post('/update-status', [OrderController::class, 'updateOrderStatus']);
     });
 
