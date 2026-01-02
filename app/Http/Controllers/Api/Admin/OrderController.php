@@ -133,12 +133,15 @@ class OrderController extends Controller
                     $order->process_date = now();
                     break;
                 case 1: 
-                    $order->in_transit_date = now();
+                    $order->shipped_date = now();
                     break;
                 case 2: 
-                    $order->delivered_date = now();
+                    $order->in_transit_date = now();
                     break;
                 case 3: 
+                    $order->delivered_date = now();
+                    break;
+                case 4: 
                     $order->cancelled_date = now();
                     break;
             }
