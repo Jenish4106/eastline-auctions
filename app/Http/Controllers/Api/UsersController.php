@@ -157,8 +157,11 @@ class UsersController extends Controller
             }
 
             $licenseStatusText = 'Unverified';
-            if ($user->is_license !== null) {
-                switch ($user->is_license) {
+            
+            $latestLicense = $user->license()->latest()->first();
+            
+            if ($latestLicense) {
+                switch ($latestLicense->status) {
                     case 0:
                         $licenseStatusText = 'Pending';
                         break;
