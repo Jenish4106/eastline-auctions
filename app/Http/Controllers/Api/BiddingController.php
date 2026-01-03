@@ -15,6 +15,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Yajra\DataTables\DataTables;
+use Illuminate\Support\Str;
 
 class BiddingController extends Controller
 {
