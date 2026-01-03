@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\BiddingController;
 use App\Http\Controllers\Api\Frontend\InventoryController;
+use App\Http\Controllers\Api\Frontend\SettingsController as FrontendSettingsController;
 use App\Http\Controllers\Api\SettingsController as UserSettingsController;
 use App\Http\Controllers\Api\UsersController;
 use App\Http\Controllers\Api\UserDashboardController;
@@ -111,3 +112,5 @@ Route::get('/inventory/categories', [InventoryController::class, 'getCategoryLis
 Route::post('/inventory/machinery/category', [InventoryController::class, 'getMachineryByCategory']);
 Route::post('/inventory/machinery', [InventoryController::class, 'getMachineryDetails']);
 Route::post('/inventory/makes-models', [InventoryController::class, 'getMakesOrModels']);
+
+Route::post('/settings/key-wise', [FrontendSettingsController::class, 'getSettings']);
