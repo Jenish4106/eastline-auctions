@@ -307,7 +307,7 @@ class BiddingController extends Controller
             $wonMachinery = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
 
             $wonMachineryWithFormattedData = $wonMachinery->getCollection()->map(function ($machinery) {
-                $wonBidAmount = $machinery->bids()->max('amount');
+                $userWonBid = $machinery->bids()->where('user_id', auth('api')->id())->max('amount');
                 
                 $firstImage = $machinery->images->firstWhere('type', 'image');
                 
@@ -323,7 +323,7 @@ class BiddingController extends Controller
                     'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
                     'machinery_name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
                     'category' => $machinery->category ? $machinery->category->category_name : 'Uncategorized',
-                    'won_bid_amount' => $wonBidAmount,
+                    'won_bid_amount' => $userWonBid,
                     'won_date' => $machinery->bid_won_date,
                     'contract_status' => isset($contractStatusMap[$machinery->contract_status]) ? $contractStatusMap[$machinery->contract_status] : 'Unknown',
                 ];
