@@ -83,6 +83,7 @@ class BiddingController extends Controller
                     'model' => $machinery->model,
                     'bid_end_time' => $machinery->bid_end_time,
                     'bid_start_price' => $machinery->bid_start_price,
+                    'highest_bid' => $machinery->highest_bid,
                     'bid_status' => $status,
                     'bids_count' => $machinery->bids_count,
                     'name' => $name,
@@ -310,7 +311,7 @@ class BiddingController extends Controller
         try {
             $machineryId = $request->machinery_id;
             
-            $machinery = Machinery::with(['wonUser:id,first_name,last_name,phone_no', 'category:id,category_name'])
+            $machinery = Machinery::with(['wonUser:id,first_name,last_name,phone_no', 'category:id,category_name', 'bids'])
                 ->where('id', $machineryId)
                 ->whereNotNull('won_user')
                 ->where('won_user', '!=', 0)
@@ -323,7 +324,7 @@ class BiddingController extends Controller
                 ], 404);
             }
             
-            $highestBid = $machinery->bids()->max('amount');
+            $highestBid = $machinery->bids->max('amount');
             
             $contractStatusMap = [
                 0 => 'Pending',
@@ -373,7 +374,7 @@ class BiddingController extends Controller
             $machineryId = $request->machinery_id;
             $action = $request->action;
             
-            $machinery = Machinery::find($machineryId);
+            $machinery = Machinery::with('bids')->find($machineryId);
             
             if (!$machinery) {
                 return response()->json([
@@ -385,8 +386,8 @@ class BiddingController extends Controller
             if ($action === 'approve') {
                 $machinery->contract_status = 1;
                 
-                $highestBid = $machinery->bids()->max('amount');
-                $bidModel = $machinery->bids()->orderBy('amount', 'desc')->first();
+                $highestBid = $machinery->bids->max('amount');
+                $bidModel = $machinery->bids->sortByDesc('amount')->first();
                 
                 if ($bidModel && $machinery->won_user) {
                     $existingOrder = Order::where('machinery_id', $machinery->id)

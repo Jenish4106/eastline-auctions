@@ -236,6 +236,7 @@ class BiddingController extends Controller
                 'machinery_name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
                 'bid_end_time' => $machinery->bid_end_time,
                 'start_bid_price' => $machinery->bid_start_price,
+                'highest_bid' => $highestBid,
                 'my_bid' => $currentUserHighestBid,
                 'user_full_name' => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
                 'status' => $status,
@@ -290,7 +291,7 @@ class BiddingController extends Controller
             }
 
             $query = Machinery::where('won_user', $user->id)
-                ->with(['images', 'category']);
+                ->with(['images', 'category', 'bids']);
 
             if (!empty($search)) {
                 $query->where(function($q) use ($search) {
@@ -307,7 +308,7 @@ class BiddingController extends Controller
             $wonMachinery = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
 
             $wonMachineryWithFormattedData = $wonMachinery->getCollection()->map(function ($machinery) {
-                $userWonBid = $machinery->bids()->where('user_id', auth('api')->id())->max('amount');
+                $userWonBid = $machinery->bids->where('user_id', auth('api')->id())->max('amount');
                 
                 $firstImage = $machinery->images->firstWhere('type', 'image');
                 
@@ -390,7 +391,7 @@ class BiddingController extends Controller
                 ], 403);
             }
             
-            $highestBid = $machinery->bids()->max('amount');
+            $highestBid = $machinery->bids->max('amount');
             
             $contractStatusMap = [
                 0 => 'Pending',
@@ -401,7 +402,7 @@ class BiddingController extends Controller
             
             $winningUser = User::find($machinery->won_user);
             
-            $highestBidModel = $machinery->bids()->orderBy('amount', 'desc')->first();
+            $highestBidModel = $machinery->bids->sortByDesc('amount')->first();
             
             $contractDataView = [
                 'machinery' => $machinery,
