@@ -1,11 +1,10 @@
 <?php
-
 namespace App\Console\Commands;
 
-use App\Models\Machinery;
-use App\Models\Bid;
-use App\Models\User;
 use App\Mail\SendContractMail;
+use App\Models\Bid;
+use App\Models\Machinery;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -32,40 +31,47 @@ class CheckBidEndTime extends Command
     public function handle()
     {
         $this->info('Checking bid end times...');
-        
+
         $currentTime = Carbon::now();
         $machineries = Machinery::where('bid_end_time', '<', $currentTime)
             ->where('bid_status', '!=', '2')
             ->where('bid_status', '!=', 2)
             ->get();
-        
+
         foreach ($machineries as $machinery) {
             $highestBid = Bid::where('machinery_id', $machinery->id)
                 ->orderBy('amount', 'desc')
                 ->first();
-            
+
             if ($highestBid) {
                 $machinery->update([
-                    'bid_status' => '2',
-                    'won_user' => $highestBid->user_id,
-                    'bid_won_date' => Carbon::now(),
-                    'contract_status' => '0'
+                    'bid_status'      => '2',
+                    'won_user'        => $highestBid->user_id,
+                    'bid_won_date'    => Carbon::now(),
+                    'contract_status' => '0',
                 ]);
-                
+
                 $user = User::find($highestBid->user_id);
-                
+
                 if ($user) {
                     Mail::to($user->email)->send(new SendContractMail($user, $machinery, null));
-                    
+
                     $this->info("Machinery ID {$machinery->id} updated to sold status. Notification sent to user {$user->email}");
                 } else {
                     $this->info("Machinery ID {$machinery->id} updated to sold status. Won by user ID {$highestBid->user_id}, but user not found");
                 }
-            } else {
-                $this->info("Machinery ID {$machinery->id} has no bids, status not updated");
+            }
+            else {
+                $machinery->update([
+                    'bid_status'   => '3',
+                    'won_user'     => null,
+                    'bid_won_date' => null,
+                ]);
+
+                $this->info("Machinery ID {$machinery->id} expired (No bids found)");
             }
         }
-        
+
         $this->info('Bid end time check completed successfully.');
     }
 }
