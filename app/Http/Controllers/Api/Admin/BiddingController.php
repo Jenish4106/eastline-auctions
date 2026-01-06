@@ -115,6 +115,20 @@ class BiddingController extends Controller
         try {
             $machineryId = $request->input('machineryId');
             
+            $sortBy = $request->input('sort_by', 'amount');
+            $sortOrder = $request->input('sort_order', 'desc');
+            
+            $allowedSortFields = ['amount', 'created_at', 'user_full_name', 'user_email', 'user_phone'];
+            $allowedSortOrders = ['asc', 'desc'];
+            
+            if (!in_array($sortBy, $allowedSortFields)) {
+                $sortBy = 'amount';
+            }
+            
+            if (!in_array($sortOrder, $allowedSortOrders)) {
+                $sortOrder = 'desc';
+            }
+            
             $machinery = Machinery::with('bids.user:id,first_name,last_name,email,phone_no')->where('id', $machineryId)->first();
             
             if (!$machinery) {
@@ -153,7 +167,7 @@ class BiddingController extends Controller
                 'bid_status' => $bidStatusText,
             ];
             
-            $biddingDetails = $machinery->bids->sortByDesc('amount')->map(function ($bid) use ($highestBid, $machinery) {
+            $biddingDetails = $machinery->bids->map(function ($bid) use ($highestBid, $machinery) {
                 $bidData = [
                     'user_full_name' => $bid->user->first_name . ' ' . $bid->user->last_name,
                     'user_email' => $bid->user->email,
@@ -168,7 +182,30 @@ class BiddingController extends Controller
                 }
                 
                 return $bidData;
-            })->values();
+            });
+            
+            switch ($sortBy) {
+                case 'amount':
+                    $biddingDetails = $sortOrder === 'desc' ? $biddingDetails->sortByDesc('bid_amount') : $biddingDetails->sortBy('bid_amount');
+                    break;
+                case 'created_at':
+                    $biddingDetails = $sortOrder === 'desc' ? $biddingDetails->sortByDesc('bid_created_at') : $biddingDetails->sortBy('bid_created_at');
+                    break;
+                case 'user_full_name':
+                    $biddingDetails = $sortOrder === 'desc' ? $biddingDetails->sortByDesc('user_full_name') : $biddingDetails->sortBy('user_full_name');
+                    break;
+                case 'user_email':
+                    $biddingDetails = $sortOrder === 'desc' ? $biddingDetails->sortByDesc('user_email') : $biddingDetails->sortBy('user_email');
+                    break;
+                case 'user_phone':
+                    $biddingDetails = $sortOrder === 'desc' ? $biddingDetails->sortByDesc('user_phone') : $biddingDetails->sortBy('user_phone');
+                    break;
+                default:
+                    $biddingDetails = $biddingDetails->sortByDesc('bid_amount');
+                    break;
+            }
+            
+            $biddingDetails = $biddingDetails->values();
             
             return response()->json([
                 'success' => true,

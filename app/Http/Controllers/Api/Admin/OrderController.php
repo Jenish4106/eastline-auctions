@@ -105,7 +105,7 @@ class OrderController extends Controller
     public function updateOrderStatus(Request $request)
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-            'order_id' => 'required|exists:orders,order_id',
+            'order_id' => 'required|exists:orders,id',
             'status' => 'required|integer|between:0,4',
         ]);
 
@@ -117,7 +117,7 @@ class OrderController extends Controller
         }
         
         try {
-            $order = Order::where('order_id', $request->order_id)->first();
+            $order = Order::where('id', $request->order_id)->first();
             
             if (!$order) {
                 return response()->json([
@@ -148,14 +148,19 @@ class OrderController extends Controller
             
             $order->save();
             
+            $statusMessages = [
+                0 => 'Order has been successfully moved to the processing stage.',
+                1 => 'Order has been shipped successfully.',
+                2 => 'Order is currently in transit.',
+                3 => 'Order has been delivered successfully.',
+                4 => 'Order has been cancelled successfully.'
+            ];
+            
+            $message = $statusMessages[$request->status] ?? 'Order status updated successfully.';
+            
             return response()->json([
                 'success' => true,
-                'message' => 'Order status updated successfully',
-                'data' => [
-                    'order_id' => $order->order_id,
-                    'delivery_status' => $order->delivery_status,
-                    'delivery_status_text' => $order->delivery_status_text,
-                ],
+                'message' => $message
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
