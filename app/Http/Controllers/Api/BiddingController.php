@@ -258,17 +258,15 @@ class BiddingController extends Controller
                 'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
             ];
 
-            // Map bids to bidding details
             $biddingDetails = $bids->map(function ($bid) use ($user) {
                 return [
-                    'user_full_name' => trim(($bid->user->first_name ?? '') . ' ' . ($bid->user->last_name ?? '')),
+                    'user_full_name' => trim(($bid->user->first_name ?? '')),
                     'amount' => $bid->amount,
                     'bid_date_time' => $bid->created_at,
                     'my_bid' => $bid->user_id == $user->id,
                 ];
             });
             
-            // Apply sorting to bidding details
             switch ($sortBy) {
                 case 'amount':
                     $biddingDetails = $sortOrder === 'desc' ? $biddingDetails->sortByDesc('amount') : $biddingDetails->sortBy('amount');
