@@ -114,3 +114,5 @@ Route::post('/inventory/machinery', [InventoryController::class, 'getMachineryDe
 Route::post('/inventory/makes-models', [InventoryController::class, 'getMakesOrModels']);
 
 Route::post('/settings/key-wise', [FrontendSettingsController::class, 'getSettings']);
+
+Route::post('/contact-email-send', [App\Http\Controllers\Api\ContactController::class, 'sendContactEmail']);
