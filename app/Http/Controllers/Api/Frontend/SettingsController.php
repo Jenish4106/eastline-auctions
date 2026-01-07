@@ -28,7 +28,11 @@ class SettingsController extends Controller
 
         $settingsArray = [];
         foreach ($settings as $setting) {
-            $settingsArray[$setting->key] = $setting->value;
+            if ($setting->key === 'logo' && !empty($setting->value)) {
+                $settingsArray[$setting->key] = asset($setting->value);
+            } else {
+                $settingsArray[$setting->key] = $setting->value;
+            }
         }
 
         return response()->json([
