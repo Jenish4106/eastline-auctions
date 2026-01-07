@@ -28,7 +28,7 @@ class SettingsController extends Controller
 
         $settingsArray = [];
         foreach ($settings as $setting) {
-            if ($setting->key === 'logo' && !empty($setting->value)) {
+            if (in_array($setting->key, ['white_logo', 'dark_logo']) && !empty($setting->value)) {
                 $settingsArray[$setting->key] = asset($setting->value);
             } else {
                 $settingsArray[$setting->key] = $setting->value;
