@@ -27,8 +27,12 @@ class SettingsController extends Controller
                 ], 200);
             }
 
-            if (isset($settings['logo'])) {
-                $settings['logo'] = asset($settings['logo']);
+            if (isset($settings['white_logo'])) {
+                $settings['white_logo'] = asset($settings['white_logo']);
+            }
+            
+            if (isset($settings['dark_logo'])) {
+                $settings['dark_logo'] = asset($settings['dark_logo']);
             }
 
             return response()->json([
@@ -57,7 +61,8 @@ class SettingsController extends Controller
                 'email'                  => 'nullable|string|email|max:255',
                 'phone_no'               => 'nullable|string|max:20',
                 'address'                => 'nullable|string',
-                'logo'                   => 'nullable|file|mimes:jpeg,png,jpg|max:20480',
+                'white_logo'             => 'nullable|file|mimes:jpeg,png,jpg|max:20480',
+                'dark_logo'              => 'nullable|file|mimes:jpeg,png,jpg|max:20480',
                 'per_mile_delivery_cost' => 'nullable|numeric|min:0',
                 'facebook'               => 'nullable|string|max:255',
                 'twitter'                => 'nullable|string|max:255',
@@ -73,10 +78,12 @@ class SettingsController extends Controller
                 ], 422);
             }
 
-            $logoPath = null;
-            if ($request->hasFile('logo')) {
-                $file     = $request->file('logo');
-                $fileName = time() . '_logo.' . $file->getClientOriginalExtension();
+            $whiteLogoPath = null;
+            $darkLogoPath = null;
+            
+            if ($request->hasFile('white_logo')) {
+                $file     = $request->file('white_logo');
+                $fileName = time() . '_white_logo.' . $file->getClientOriginalExtension();
 
                 $destinationPath = public_path('settings');
                 if (! file_exists($destinationPath)) {
@@ -84,14 +91,35 @@ class SettingsController extends Controller
                 }
 
                 $file->move($destinationPath, $fileName);
-                $logoPath = 'settings/' . $fileName;
+                $whiteLogoPath = 'settings/' . $fileName;
 
-                $oldLogo = Settings::get('logo');
-                if ($oldLogo && file_exists(public_path($oldLogo))) {
-                    unlink(public_path($oldLogo));
+                $oldWhiteLogo = Settings::get('white_logo');
+                if ($oldWhiteLogo && file_exists(public_path($oldWhiteLogo))) {
+                    unlink(public_path($oldWhiteLogo));
+                }
+            }
+            
+            if ($request->hasFile('dark_logo')) {
+                $file     = $request->file('dark_logo');
+                $fileName = time() . '_dark_logo.' . $file->getClientOriginalExtension();
+
+                $destinationPath = public_path('settings');
+                if (! file_exists($destinationPath)) {
+                    mkdir($destinationPath, 0755, true);
+                }
+
+                $file->move($destinationPath, $fileName);
+                $darkLogoPath = 'settings/' . $fileName;
+
+                $oldDarkLogo = Settings::get('dark_logo');
+                if ($oldDarkLogo && file_exists(public_path($oldDarkLogo))) {
+                    unlink(public_path($oldDarkLogo));
                 }
             }
 
+            $existingSettings = Settings::first();
+            $isFirstTime = $existingSettings === null;
+            
             $settingsToUpdate = [
                 'company_name'           => $request->input('company_name'),
                 'email'                  => $request->input('email'),
@@ -104,13 +132,37 @@ class SettingsController extends Controller
                 'linkedin'               => $request->input('linkedin'),
             ];
 
-            if ($logoPath) {
-                $settingsToUpdate['logo'] = $logoPath;
+            if ($whiteLogoPath) {
+                $settingsToUpdate['white_logo'] = $whiteLogoPath;
+            }
+            
+            if ($darkLogoPath) {
+                $settingsToUpdate['dark_logo'] = $darkLogoPath;
             }
 
             foreach ($settingsToUpdate as $key => $value) {
                 if ($value !== null) {
                     Settings::set($key, $value);
+                }
+            }
+            
+            if ($isFirstTime) {
+                $defaultSettings = [
+                    'company_name'           => $request->input('company_name', ''),
+                    'email'                  => $request->input('email', ''),
+                    'phone_no'               => $request->input('phone_no', ''),
+                    'address'                => $request->input('address', ''),
+                    'per_mile_delivery_cost' => $request->input('per_mile_delivery_cost', 0),
+                    'facebook'               => $request->input('facebook', ''),
+                    'twitter'                => $request->input('twitter', ''),
+                    'instagram'              => $request->input('instagram', ''),
+                    'linkedin'               => $request->input('linkedin', ''),
+                ];
+                
+                foreach ($defaultSettings as $key => $value) {
+                    if (!Settings::where('key', $key)->exists()) {
+                        Settings::set($key, $value);
+                    }
                 }
             }
 
