@@ -123,7 +123,7 @@ return [
 
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'info@stiopa-equipment.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'name' => env('MAIL_FROM_NAME', 'RB EQUIPMENT SALES'),
     ],
 
 ];

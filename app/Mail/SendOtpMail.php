@@ -8,6 +8,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\View;
 
 class SendOtpMail extends Mailable
 {
@@ -46,6 +47,25 @@ class SendOtpMail extends Mailable
                 'otp' => $this->otp,
             ],
         );
+    }
+
+    /**
+     * Render the HTML content of the email for SMTP2GO service
+     */
+    public function renderHtmlContent()
+    {
+        $data = [
+            'otp' => $this->otp,
+        ];
+        return View::make('emails.otp', $data)->render();
+    }
+
+    /**
+     * Get the subject for SMTP2GO service
+     */
+    public function getSubject()
+    {
+        return 'Password Reset OTP';
     }
 
     /**

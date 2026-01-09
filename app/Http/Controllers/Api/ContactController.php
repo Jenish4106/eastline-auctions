@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\ContactMail;
 use Illuminate\Support\Facades\Log;
+use App\Mail\ContactMail;
+use App\Services\SMTP2GOService;
 
 class ContactController extends Controller
 {
@@ -46,12 +46,21 @@ class ContactController extends Controller
                 $request->message
             );
             
-            Mail::to($adminEmail)->send($mail);
+            $smtp2goService = new SMTP2GOService();
+            $htmlContent = $mail->renderHtmlContent();
+            $result = $smtp2goService->sendEmail($adminEmail, $mail->subject, $htmlContent);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Contact form submitted successfully. We will get back to you soon.'
-            ], 200);
+            if ($result) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Contact form submitted successfully. We will get back to you soon.'
+                ], 200);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to send contact form. Please try again later.',
+                ], 500);
+            }
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

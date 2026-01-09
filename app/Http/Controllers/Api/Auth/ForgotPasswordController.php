@@ -7,11 +7,11 @@ use App\Mail\SendOtpMail;
 use App\Models\User;
 use App\Models\PasswordReset;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Services\SMTP2GOService;
 
 class ForgotPasswordController extends Controller
 {
@@ -44,7 +44,18 @@ class ForgotPasswordController extends Controller
                 'expire_at' => $expireAt,
             ]);
 
-            Mail::to($request->email)->send(new SendOtpMail($otp, $request->email));
+            // Use SMTP2GO service instead of Laravel Mail facade
+            $mail = new SendOtpMail($otp, $request->email);
+            $smtp2goService = new SMTP2GOService();
+            $htmlContent = $mail->renderHtmlContent();
+            $result = $smtp2goService->sendEmail($request->email, $mail->getSubject(), $htmlContent);
+
+            if (!$result) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Failed to send OTP. Please try again.'
+                ], 500);
+            }
 
             return response()->json([
                 'status' => true,

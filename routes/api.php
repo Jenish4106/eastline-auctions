@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\Frontend\SettingsController as FrontendSettingsCont
 use App\Http\Controllers\Api\SettingsController as UserSettingsController;
 use App\Http\Controllers\Api\UsersController;
 use App\Http\Controllers\Api\UserDashboardController;
+use App\Http\Controllers\Api\DistanceController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [RegisterController::class, 'register']);
@@ -116,3 +117,6 @@ Route::post('/inventory/makes-models', [InventoryController::class, 'getMakesOrM
 Route::post('/settings/key-wise', [FrontendSettingsController::class, 'getSettings']);
 
 Route::post('/contact-email-send', [App\Http\Controllers\Api\ContactController::class, 'sendContactEmail']);
+
+// Distance calculation API
+Route::post('/calculate-distance', [DistanceController::class, 'calculateDistance']);

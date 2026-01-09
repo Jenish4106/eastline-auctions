@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'smtp2go' => [
+        'api_key' => env('SMTP2GO_API_KEY'),
+        'api_url' => env('SMTP2GO_API_URL', 'https://api.smtp2go.com/v3/email/send'),
+    ],
+
 ];

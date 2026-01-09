@@ -8,6 +8,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\View;
 
 
 class SendContractMail extends Mailable
@@ -51,6 +52,27 @@ class SendContractMail extends Mailable
                 'winningDate' => now()->format('Y-m-d'),
             ],
         );
+    }
+
+    /**
+     * Render the HTML content of the email for SMTP2GO service
+     */
+    public function renderHtmlContent()
+    {
+        $data = [
+            'machineryName' => trim($this->machinery->year . ' ' . $this->machinery->make . ' ' . $this->machinery->model),
+            'finalBidAmount' => $this->getHighestBidAmount(),
+            'winningDate' => now()->format('Y-m-d'),
+        ];
+        return View::make('emails.contract', $data)->render();
+    }
+
+    /**
+     * Get the subject for SMTP2GO service
+     */
+    public function getSubject()
+    {
+        return 'Equipment Sales Contract - ' . $this->machinery->make . ' ' . $this->machinery->model;
     }
 
     /**
