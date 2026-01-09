@@ -48,7 +48,7 @@ class ContactController extends Controller
             
             $smtp2goService = new SMTP2GOService();
             $htmlContent = $mail->renderHtmlContent();
-            $result = $smtp2goService->sendEmail($adminEmail, $mail->subject, $htmlContent);
+            $result = $smtp2goService->sendEmail($adminEmail, $mail->getSubject(), $htmlContent);
 
             if ($result) {
                 return response()->json([
