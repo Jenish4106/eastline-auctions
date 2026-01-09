@@ -88,6 +88,17 @@ return [
             'retry_after' => 60,
         ],
 
+        'smtp2go' => [
+            'transport' => 'smtp',
+            'host' => env('MAIL_HOST', 'smtp.smtp2go.com'),
+            'port' => env('MAIL_PORT', 587),
+            'encryption' => env('MAIL_ENCRYPTION', 'tls'),
+            'username' => env('MAIL_USERNAME'),
+            'password' => env('MAIL_PASSWORD'),
+            'timeout' => null,
+            'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+        ],
+
         'roundrobin' => [
             'transport' => 'roundrobin',
             'mailers' => [
@@ -111,7 +122,7 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+        'address' => env('MAIL_FROM_ADDRESS', 'info@stiopa-equipment.com'),
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
