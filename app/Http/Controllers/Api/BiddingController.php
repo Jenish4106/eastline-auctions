@@ -104,7 +104,9 @@ class BiddingController extends Controller
                 $sortOrder = 'desc';
             }
 
-            $query = Machinery::whereHas('bids')
+            $query = Machinery::whereHas('bids', function($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                })
                 ->with(['images', 'bids.user']);
 
             if (!empty($search)) {
