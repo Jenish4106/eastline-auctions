@@ -49,7 +49,7 @@ class GoogleMapsService
             ]);
 
             $data = json_decode($response->getBody(), true);
-            dd($data);
+            
             if ($data['status'] === 'OK' && !empty($data['results'])) {
                 $location = $data['results'][0]['geometry']['location'];
                 return [
@@ -60,7 +60,6 @@ class GoogleMapsService
 
             return null;
         } catch (RequestException $e) {
-            \Log::error('Geocoding error: ' . $e->getMessage());
             return null;
         }
     }
@@ -100,7 +99,6 @@ class GoogleMapsService
 
             return null;
         } catch (RequestException $e) {
-            \Log::error('Geocoding error: ' . $e->getMessage());
             return null;
         }
     }
@@ -124,7 +122,7 @@ class GoogleMapsService
                     'origins' => $origin['lat'] . ',' . $origin['lng'],
                     'destinations' => $destination['lat'] . ',' . $destination['lng'],
                     'mode' => 'driving',
-                    'units' => 'imperial', // Returns miles and feet
+                    'units' => 'imperial',
                     'key' => $this->apiKey,
                 ]
             ]);
@@ -136,7 +134,7 @@ class GoogleMapsService
                 
                 if ($element['status'] === 'OK') {
                     return [
-                        'distance_miles' => round($element['distance']['value'] / 1609.344, 2), // Convert meters to miles
+                        'distance_miles' => round($element['distance']['value'] / 1609.344, 2),
                         'distance_text' => $element['distance']['text'],
                         'duration_seconds' => $element['duration']['value'],
                         'duration_text' => $element['duration']['text']
@@ -146,7 +144,6 @@ class GoogleMapsService
 
             return null;
         } catch (RequestException $e) {
-            \Log::error('Distance calculation error: ' . $e->getMessage());
             return null;
         }
     }

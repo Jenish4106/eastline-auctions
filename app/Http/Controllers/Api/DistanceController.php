@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Settings;
 use App\Services\GoogleMapsService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -35,7 +36,6 @@ class DistanceController extends Controller
             $zipCode = $request->input('zip_code');
             $country = $request->input('country');
 
-            // Get the company address from settings
             $companyAddress = $this->googleMapsService->getCompanyAddress();
 
             if (!$companyAddress) {
@@ -45,7 +45,6 @@ class DistanceController extends Controller
                 ], 400);
             }
 
-            // Geocode the company address
             $companyLocation = $this->googleMapsService->geocodeAddress($companyAddress);
 
             if (!$companyLocation) {
@@ -55,7 +54,6 @@ class DistanceController extends Controller
                 ], 400);
             }
 
-            // Geocode the customer location using ZIP code and country
             $customerLocation = $this->googleMapsService->getCoordinatesFromZipAndCountry($zipCode, $country);
 
             if (!$customerLocation) {
@@ -65,7 +63,6 @@ class DistanceController extends Controller
                 ], 400);
             }
 
-            // Calculate the distance between the two locations
             $distanceResult = $this->googleMapsService->calculateDistance($companyLocation, $customerLocation);
 
             if (!$distanceResult) {
@@ -75,16 +72,17 @@ class DistanceController extends Controller
                 ], 400);
             }
 
-            // Return successful response
+            $perMileDeliveryCost = Settings::get('per_mile_delivery_cost', 0);
+            $totalCost = $distanceResult['distance_miles'] * $perMileDeliveryCost;
+
             return response()->json([
                 'status' => 'success',
                 'company_address' => $companyAddress,
                 'customer_zip' => $zipCode,
                 'country' => $country,
                 'distance_miles' => $distanceResult['distance_miles'],
-                'distance_text' => $distanceResult['distance_text'],
-                'duration_seconds' => $distanceResult['duration_seconds'],
-                'duration_text' => $distanceResult['duration_text']
+                'per_mile_delivery_cost' => $perMileDeliveryCost,
+                'total_cost' => $totalCost
             ], 200);
 
         } catch (ValidationException $e) {
@@ -96,7 +94,7 @@ class DistanceController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'An unexpected error occurred: ' . $e->getMessage()
+                'message' => 'Something went wrong. Please try again.'
             ], 500);
         }
     }

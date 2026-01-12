@@ -29,7 +29,7 @@ class ContactController extends Controller
         }
 
         try {
-            $adminEmail = 'jainishkanpariya@gmail.com';
+            $adminEmail = 'jenish.rising@gmail.com';
             
             if (!$adminEmail) {
                 return response()->json([
@@ -64,8 +64,7 @@ class ContactController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to send contact form. Please try again later.',
-                'error' => $e->getMessage()
+                'message' => 'Some went wrong. Please try again.',
             ], 500);
         }
     }
