@@ -3,6 +3,8 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Mail\RegistrationMail;
+use App\Services\SMTP2GOService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -54,6 +56,17 @@ class RegisterController extends Controller
                     'success' => false,
                     'message' => 'Unable to create token after registration',
                 ], 500);
+            }
+
+            // Send registration email
+            try {
+                $mail = new RegistrationMail($user);
+                $smtp2goService = new SMTP2GOService();
+                $htmlContent = $mail->renderHtmlContent();
+                $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+            } catch (\Exception $e) {
+                // Log error but don't fail registration
+                \Log::error('Failed to send registration email: ' . $e->getMessage());
             }
 
             return response()->json([

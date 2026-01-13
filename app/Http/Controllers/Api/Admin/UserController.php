@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\License;
+use App\Mail\LicenseApprovedMail;
+use App\Mail\LicenseDeclinedMail;
+use App\Services\SMTP2GOService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
@@ -398,10 +401,30 @@ class UserController extends Controller
                 $latestLicense->status = 1;
                 $user->is_license = 1;
                 $message = 'License approved successfully';
+                
+                // Send approval email
+                try {
+                    $mail = new LicenseApprovedMail($user);
+                    $smtp2goService = new SMTP2GOService();
+                    $htmlContent = $mail->renderHtmlContent();
+                    $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send license approval email: ' . $e->getMessage());
+                }
             } else {
                 $latestLicense->status = 2;
                 $user->is_license = 2;
                 $message = 'License declined successfully';
+                
+                // Send decline email
+                try {
+                    $mail = new LicenseDeclinedMail($user);
+                    $smtp2goService = new SMTP2GOService();
+                    $htmlContent = $mail->renderHtmlContent();
+                    $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send license decline email: ' . $e->getMessage());
+                }
             }
 
             $latestLicense->save();

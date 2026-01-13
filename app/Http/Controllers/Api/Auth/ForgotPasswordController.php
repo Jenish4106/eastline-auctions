@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Mail\SendOtpMail;
+use App\Mail\PasswordResetConfirmationMail;
 use App\Models\User;
 use App\Models\PasswordReset;
 use Illuminate\Http\Request;
@@ -160,6 +161,16 @@ class ForgotPasswordController extends Controller
             $user->save();
 
             $passwordReset->delete();
+
+            // Send password reset confirmation email
+            try {
+                $mail = new PasswordResetConfirmationMail($user);
+                $smtp2goService = new SMTP2GOService();
+                $htmlContent = $mail->renderHtmlContent();
+                $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send password reset confirmation email: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'status' => true,

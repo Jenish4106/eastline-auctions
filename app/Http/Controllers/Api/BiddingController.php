@@ -6,6 +6,10 @@ use App\Models\Bid;
 use App\Models\Machinery;
 use App\Models\MachineryFileManager;
 use App\Models\Order;
+use App\Mail\BiddingMail;
+use App\Mail\OutbidMail;
+use App\Mail\BuyNowOrderMail;
+use App\Services\SMTP2GOService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
@@ -45,10 +49,12 @@ class BiddingController extends Controller
 
             $machinery = Machinery::find($request->machinery_id);
             
-            $highestBid = Bid::where('machinery_id', $request->machinery_id)
-                            ->max('amount');
+            $previousHighestBid = Bid::where('machinery_id', $request->machinery_id)
+                            ->orderBy('amount', 'desc')
+                            ->first();
             
-            $minAmount = $highestBid !== null ? $highestBid : $machinery->bid_start_price;
+            $highestBidAmount = $previousHighestBid ? $previousHighestBid->amount : $machinery->bid_start_price;
+            $minAmount = $highestBidAmount;
             
             if ($request->amount <= $minAmount) {
                 return response()->json([
@@ -67,6 +73,31 @@ class BiddingController extends Controller
                 $machinery->update([
                     'bid_status' => 1
                 ]);
+            }
+
+            // Send email to user who placed the bid
+            try {
+                $mail = new BiddingMail($user, $machinery, $request->amount);
+                $smtp2goService = new SMTP2GOService();
+                $htmlContent = $mail->renderHtmlContent();
+                $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send bidding email: ' . $e->getMessage());
+            }
+
+            // Send outbid email to previous highest bidder (if different user)
+            if ($previousHighestBid && $previousHighestBid->user_id != $user->id) {
+                try {
+                    $previousBidder = User::find($previousHighestBid->user_id);
+                    if ($previousBidder) {
+                        $outbidMail = new OutbidMail($previousBidder, $machinery, $request->amount);
+                        $smtp2goService = new SMTP2GOService();
+                        $htmlContent = $outbidMail->renderHtmlContent();
+                        $smtp2goService->sendEmail($previousBidder->email, $outbidMail->getSubject(), $htmlContent);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send outbid email: ' . $e->getMessage());
+                }
             }
 
             return response()->json([
@@ -861,6 +892,16 @@ class BiddingController extends Controller
                 'won_user' => $user->id,
                 'bid_won_date' => now(),
             ]);
+            
+            // Send buy now order email
+            try {
+                $mail = new BuyNowOrderMail($user, $order, $machinery);
+                $smtp2goService = new SMTP2GOService();
+                $htmlContent = $mail->renderHtmlContent();
+                $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send buy now order email: ' . $e->getMessage());
+            }
             
             return response()->json([
                 'success' => true,

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Mail\OrderStatusChangeMail;
+use App\Services\SMTP2GOService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -117,7 +119,7 @@ class OrderController extends Controller
         }
         
         try {
-            $order = Order::where('id', $request->order_id)->first();
+            $order = Order::with(['user', 'machinery'])->where('id', $request->order_id)->first();
             
             if (!$order) {
                 return response()->json([
@@ -147,6 +149,18 @@ class OrderController extends Controller
             }
             
             $order->save();
+            
+            // Send order status change email
+            if ($order->user && $order->machinery) {
+                try {
+                    $mail = new OrderStatusChangeMail($order->user, $order, $order->machinery, $request->status);
+                    $smtp2goService = new SMTP2GOService();
+                    $htmlContent = $mail->renderHtmlContent();
+                    $smtp2goService->sendEmail($order->user->email, $mail->getSubject(), $htmlContent);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send order status change email: ' . $e->getMessage());
+                }
+            }
             
             $statusMessages = [
                 0 => 'Order has been successfully moved to the processing stage.',
