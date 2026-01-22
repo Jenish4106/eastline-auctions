@@ -41,27 +41,27 @@ class SMTP2GOService
             ])->post($this->apiUrl, $data);
 
             if ($response->successful()) {
-                Log::info('Email sent successfully via SMTP2GO', [
-                    'to' => $to,
-                    'subject' => $subject,
-                    'response' => $response->json()
-                ]);
+                // Log::info('Email sent successfully via SMTP2GO', [
+                //     'to' => $to,
+                //     'subject' => $subject,
+                //     'response' => $response->json()
+                // ]);
                 return true;
             } else {
-                Log::error('Failed to send email via SMTP2GO', [
-                    'to' => $to,
-                    'subject' => $subject,
-                    'status' => $response->status(),
-                    'response' => $response->body()
-                ]);
+                // Log::error('Failed to send email via SMTP2GO', [
+                //     'to' => $to,
+                //     'subject' => $subject,
+                //     'status' => $response->status(),
+                //     'response' => $response->body()
+                // ]);
                 return false;
             }
         } catch (\Exception $e) {
-            Log::error('Exception occurred while sending email via SMTP2GO', [
-                'to' => $to,
-                'subject' => $subject,
-                'error' => $e->getMessage()
-            ]);
+            // Log::error('Exception occurred while sending email via SMTP2GO', [
+            //     'to' => $to,
+            //     'subject' => $subject,
+            //     'error' => $e->getMessage()
+            // ]);
             return false;
         }
     }
