@@ -27,10 +27,9 @@ class DistanceController extends Controller
     public function calculateDistance(Request $request): JsonResponse
     {
         try {
-            // Validate the input
             $validator = $request->validate([
                 'zip_code' => 'required|string|max:20',
-                'country' => 'required|string|max:100',
+                'country' => 'required|in:USA,CANADA|string|max:100',
             ]);
 
             $zipCode = $request->input('zip_code');
