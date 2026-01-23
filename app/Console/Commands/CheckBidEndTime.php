@@ -69,12 +69,6 @@ class CheckBidEndTime extends Command
                 }
             }
             else {
-                $machinery->update([
-                    'bid_status'   => '3',
-                    'won_user'     => null,
-                    'bid_won_date' => null,
-                ]);
-
                 $this->info("Machinery ID {$machinery->id} expired (No bids found)");
             }
         }

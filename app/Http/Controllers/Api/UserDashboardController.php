@@ -64,7 +64,6 @@ class UserDashboardController extends Controller
 
     private function getActiveBids($userId)
     {
-        // Get all machinery where the user has placed a bid and the auction is still active
         $userBids = Bid::where('user_id', $userId)
             ->select('machinery_id', 'amount')
             ->with(['machinery' => function($query) {
@@ -75,18 +74,14 @@ class UserDashboardController extends Controller
         $activeBidCount = 0;
 
         foreach ($userBids as $bid) {
-            // Skip if the auction has ended
             if ($bid->machinery && $bid->machinery->bid_end_time < now()) {
                 continue;
             }
-            
-            // Check if this user's bid is the highest for this machinery
+
             $highestBid = Bid::where('machinery_id', $bid->machinery_id)
                 ->max('amount');
 
-            // If the user's bid amount equals the highest bid amount and the auction is still active
             if ($bid->amount == $highestBid && $bid->machinery && $bid->machinery->bid_end_time > now()) {
-                // Check if the machinery hasn't been won by someone else
                 if (!$bid->machinery->won_user || $bid->machinery->won_user == $userId) {
                     $activeBidCount++;
                 }

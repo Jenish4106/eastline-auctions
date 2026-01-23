@@ -48,7 +48,7 @@ class InventoryController extends Controller
 
     public function getMachineryByCategory(Request $request)
     {
-        $categoryId = $request->input('categoryId');
+        $categoryName = $request->input('categoryName');
         $fromYear = $request->input('from_year');
         $toYear = $request->input('to_year');
         $sortBy = $request->input('sort_by', 'newest');
@@ -58,8 +58,8 @@ class InventoryController extends Controller
         $page = $request->input('page', 1);
         $perPage = $request->input('per_page', 10);
 
-        if (is_array($categoryId)) {
-            $categories = Category::whereIn('id', $categoryId)->get();
+        if (is_array($categoryName)) {
+            $categories = Category::whereIn('category_name', $categoryName)->get();
             if ($categories->isEmpty()) {
                 return response()->json([
                     'success' => false,
@@ -67,7 +67,7 @@ class InventoryController extends Controller
                 ], 404);
             }
         } else {
-            $category = Category::find($categoryId);
+            $category = Category::where('category_name', $categoryName)->first();
             if (! $category) {
                 return response()->json([
                     'success' => false,
@@ -76,10 +76,10 @@ class InventoryController extends Controller
             }
         }
 
-        if (is_array($categoryId)) {
-            $machineryQuery = Machinery::whereIn('category_id', $categoryId);
+        if (is_array($categoryName)) {
+            $machineryQuery = Machinery::whereIn('category_id', $categories->pluck('id'));
         } else {
-            $machineryQuery = Machinery::where('category_id', $categoryId);
+            $machineryQuery = Machinery::where('category_id', $category->id);
         }
 
         if (!empty($search)) {
@@ -224,8 +224,30 @@ class InventoryController extends Controller
 
     public function getMachineryDetails(Request $request)
     {
-        $machineryId = $request->input('machineryId');
-        $machinery   = Machinery::with('category:id,category_name', 'images', 'bids')->find($machineryId);
+        $name = $request->input('name');
+        $make = $request->input('make');
+        $model = $request->input('model');
+        $year = $request->input('year');
+
+        $machineryQuery = Machinery::with('category:id,category_name', 'images', 'bids');
+
+        if ($name) {
+            $machineryQuery->where('name', $name);
+        }
+
+        if ($make) {
+            $machineryQuery->where('make', $make);
+        }
+
+        if ($model) {
+            $machineryQuery->where('model', $model);
+        }
+
+        if ($year) {
+            $machineryQuery->where('year', $year);
+        }
+
+        $machinery = $machineryQuery->first();
 
         if (! $machinery) {
             return response()->json([

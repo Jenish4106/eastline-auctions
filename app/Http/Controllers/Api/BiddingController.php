@@ -36,7 +36,7 @@ class BiddingController extends Controller
                 'message' => $validator->errors(),
             ], 400);
         }
-        
+
         try {
             $user = auth('api')->user();
 
@@ -48,14 +48,14 @@ class BiddingController extends Controller
             }
 
             $machinery = Machinery::find($request->machinery_id);
-            
+
             $previousHighestBid = Bid::where('machinery_id', $request->machinery_id)
                             ->orderBy('amount', 'desc')
                             ->first();
-            
+
             $highestBidAmount = $previousHighestBid ? $previousHighestBid->amount : $machinery->bid_start_price;
             $minAmount = $highestBidAmount;
-            
+
             if ($request->amount <= $minAmount) {
                 return response()->json([
                     'success' => false,
@@ -75,7 +75,6 @@ class BiddingController extends Controller
                 ]);
             }
 
-            // Send email to user who placed the bid
             try {
                 $mail = new BiddingMail($user, $machinery, $request->amount);
                 $smtp2goService = new SMTP2GOService();
@@ -85,7 +84,6 @@ class BiddingController extends Controller
                 \Log::error('Failed to send bidding email: ' . $e->getMessage());
             }
 
-            // Send outbid email to previous highest bidder (if different user)
             if ($previousHighestBid && $previousHighestBid->user_id != $user->id) {
                 try {
                     $previousBidder = User::find($previousHighestBid->user_id);
@@ -117,7 +115,7 @@ class BiddingController extends Controller
     {
         try {
             $user = auth('api')->user();
-            
+
             $search = $request->input('search', '');
             $perPage = $request->input('per_page', 10);
             $page = $request->input('page', 1);
@@ -126,11 +124,11 @@ class BiddingController extends Controller
 
             $allowedSortFields = ['id', 'year', 'make', 'model', 'bid_start_price', 'bid_end_time', 'created_at'];
             $allowedSortOrders = ['asc', 'desc'];
-            
+
             if (!in_array($sortBy, $allowedSortFields)) {
                 $sortBy = 'created_at';
             }
-            
+
             if (!in_array($sortOrder, $allowedSortOrders)) {
                 $sortOrder = 'desc';
             }
@@ -159,9 +157,9 @@ class BiddingController extends Controller
 
                 $currentUserBids = $bids->where('user_id', $user->id);
                 $currentUserHighestBid = $currentUserBids->max('amount');
-                
+
                 $status = 'Active';
-                
+
                 if ($machinery->bid_status === 'sold' || $machinery->won_user) {
                     if ($machinery->won_user == $user->id) {
                         $status = 'won';
@@ -223,26 +221,26 @@ class BiddingController extends Controller
     public function getMachineryBiddingDetails(Request $request)
     {
         $machineryId = $request->machineryId;
-        
+
         $sortBy = $request->input('sort_by', 'amount');
         $sortOrder = $request->input('sort_order', 'desc');
-        
+
         $allowedSortFields = ['amount', 'created_at', 'user_full_name', 'my_bid'];
         $allowedSortOrders = ['asc', 'desc'];
-        
+
         if (!in_array($sortBy, $allowedSortFields)) {
             $sortBy = 'amount';
         }
-        
+
         if (!in_array($sortOrder, $allowedSortOrders)) {
             $sortOrder = 'desc';
         }
-        
+
         try {
             $user = auth('api')->user();
 
             $machinery = Machinery::with(['images', 'bids.user'])->find($machineryId);
-            
+
             if (!$machinery) {
                 return response()->json([
                     'success' => false,
@@ -251,15 +249,15 @@ class BiddingController extends Controller
             }
 
             $bids = $machinery->bids;
-            
+
             $highestBid = $bids->max('amount');
             $lastBid = $highestBid ?: $machinery->bid_start_price;
-            
+
             $currentUserBids = $bids->where('user_id', $user->id);
             $currentUserHighestBid = $currentUserBids->max('amount');
-            
+
             $status = 'Active';
-            
+
             if ($machinery->bid_status === 'sold' || $machinery->won_user) {
                 if ($machinery->won_user == $user->id) {
                     $status = 'won';
@@ -279,7 +277,7 @@ class BiddingController extends Controller
             }
 
             $firstImage = $machinery->images->firstWhere('type', 'image');
-            
+
             $machineryDetails = [
                 'machinery_name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
                 'bid_end_time' => $machinery->bid_end_time,
@@ -299,7 +297,7 @@ class BiddingController extends Controller
                     'my_bid' => $bid->user_id == $user->id,
                 ];
             });
-            
+
             switch ($sortBy) {
                 case 'amount':
                     $biddingDetails = $sortOrder === 'desc' ? $biddingDetails->sortByDesc('amount') : $biddingDetails->sortBy('amount');
@@ -317,7 +315,7 @@ class BiddingController extends Controller
                     $biddingDetails = $biddingDetails->sortByDesc('amount');
                     break;
             }
-            
+
             $biddingDetails = $biddingDetails->values();
 
             return response()->json([
@@ -337,7 +335,7 @@ class BiddingController extends Controller
     {
         try {
             $user = auth('api')->user();
-            
+
             $search = $request->input('search', '');
             $perPage = $request->input('per_page', 10);
             $page = $request->input('page', 1);
@@ -346,11 +344,11 @@ class BiddingController extends Controller
 
             $allowedSortFields = ['id', 'year', 'make', 'model', 'won_bid_amount', 'bid_won_date', 'contract_status'];
             $allowedSortOrders = ['asc', 'desc'];
-            
+
             if (!in_array($sortBy, $allowedSortFields)) {
                 $sortBy = 'bid_won_date';
             }
-            
+
             if (!in_array($sortOrder, $allowedSortOrders)) {
                 $sortOrder = 'desc';
             }
@@ -374,16 +372,16 @@ class BiddingController extends Controller
 
             $wonMachineryWithFormattedData = $wonMachinery->getCollection()->map(function ($machinery) {
                 $userWonBid = $machinery->bids->where('user_id', auth('api')->id())->max('amount');
-                
+
                 $firstImage = $machinery->images->firstWhere('type', 'image');
-                
+
                 $contractStatusMap = [
                     0 => 'Pending',
                     1 => 'Approved',
                     3 => 'Signed',
                     4 => 'Rejected',
                 ];
-                
+
                 return [
                     'id' => $machinery->id,
                     'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
@@ -434,41 +432,41 @@ class BiddingController extends Controller
                 'message' => $validator->errors(),
             ], 400);
         }
-        
+
         try {
             $user = auth('api')->user();
 
             $machineryId = $request->machineryId;
-            
+
             $machinery = Machinery::with(['category', 'bids'])->find($machineryId);
-            
+
             if (!$machinery) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Machinery not found',
                 ], 404);
             }
-            
+
             if ($machinery->won_user != $user->id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You are not authorized to view this contract',
                 ], 403);
             }
-            
+
             $highestBid = $machinery->bids->max('amount');
-            
+
             $contractStatusMap = [
                 0 => 'Pending',
                 1 => 'Approved',
                 3 => 'Signed',
                 4 => 'Rejected',
             ];
-            
+
             $winningUser = User::find($machinery->won_user);
-            
+
             $highestBidModel = $machinery->bids->sortByDesc('amount')->first();
-            
+
             $contractDataView = [
                 'machinery' => $machinery,
                 'highestBid' => $highestBidModel,
@@ -481,9 +479,9 @@ class BiddingController extends Controller
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];
-            
+
             $contractHtml = View::make('pdf.contract', $contractDataView)->render();
-            
+
             $contractData = [
                 'id' => $machinery->id,
                 'name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
@@ -519,52 +517,52 @@ class BiddingController extends Controller
                 'message' => $validator->errors(),
             ], 400);
         }
-        
+
         try {
             $user = auth('api')->user();
 
             $machineryId = $request->machinery_id;
-            
+
             $machinery = Machinery::with(['category', 'bids'])->find($machineryId);
-            
+
             if (!$machinery) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Machinery not found',
                 ], 404);
             }
-            
+
             if ($machinery->won_user != $user->id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You are not authorized to sign this contract',
                 ], 403);
             }
-            
+
             $signatureImage = $request->file('sign_photo');
-            
+
             $signatureDirectory = public_path('uploads/signatures');
             if (!File::exists($signatureDirectory)) {
                 File::makeDirectory($signatureDirectory, 0755, true);
             }
-            
+
             $signatureFileName = time() . '_' . $signatureImage->getClientOriginalName();
             $signaturePath = 'uploads/signatures/' . $signatureFileName;
             $signatureImage->move(public_path('uploads/signatures'), $signatureFileName);
-            
+
             $highestBid = $machinery->bids()->max('amount');
-            
+
             $contractStatusMap = [
                 0 => 'Pending',
                 1 => 'Approved',
                 3 => 'Signed',
                 4 => 'Rejected',
             ];
-            
+
             $winningUser = User::find($machinery->won_user);
-            
+
             $highestBidModel = $machinery->bids()->orderBy('amount', 'desc')->first();
-            
+
             $contractDataView = [
                 'machinery' => $machinery,
                 'highestBid' => $highestBidModel,
@@ -579,34 +577,34 @@ class BiddingController extends Controller
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];
-            
+
             $pdf = Pdf::loadView('pdf.contract', $contractDataView);
             $pdfContent = $pdf->output();
-            
+
             $pdfFileName = 'contract_' . $machineryId . '_' . time() . '.pdf';
             $pdfPath = 'machinery_files/' . $pdfFileName;
-            
+
             $publicDirectory = public_path('uploads/machinery_files');
             if (!File::exists($publicDirectory)) {
                 File::makeDirectory($publicDirectory, 0755, true);
             }
-            
+
             $fullPath = public_path('uploads/machinery_files/' . $pdfFileName);
             file_put_contents($fullPath, $pdfContent);
-            
+
             $pdfPath = 'uploads/machinery_files/' . $pdfFileName;
-            
+
             $fileManager = MachineryFileManager::create([
                 'machinery_id' => $machineryId,
                 'image_path' => $pdfPath,
                 'type' => 'contract_pdf',
             ]);
-            
+
             $machinery->update([
                 'contract_status' => 3,
                 'contract_path' => $pdfPath,
             ]);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Contract signed and PDF generated successfully',
@@ -629,7 +627,7 @@ class BiddingController extends Controller
     {
         try {
             $user = auth('api')->user();
-            
+
             $search = $request->input('search', '');
             $perPage = $request->input('per_page', 10);
             $page = $request->input('page', 1);
@@ -638,11 +636,11 @@ class BiddingController extends Controller
 
             $allowedSortFields = ['order_id', 'price', 'purchase_date', 'delivery_status'];
             $allowedSortOrders = ['asc', 'desc'];
-            
+
             if (!in_array($sortBy, $allowedSortFields)) {
                 $sortBy = 'purchase_date';
             }
-            
+
             if (!in_array($sortOrder, $allowedSortOrders)) {
                 $sortOrder = 'desc';
             }
@@ -670,15 +668,15 @@ class BiddingController extends Controller
             $ordersWithFormattedData = $orders->getCollection()->map(function ($order) {
                 if ($order->machinery) {
                     $firstImage = $order->machinery->images->firstWhere('type', 'image');
-                    
+
                     $deliveryStatusMap = [
                         0 => 'Process',
-                        1 => 'Shipped', 
+                        1 => 'Shipped',
                         2 => 'In Transit',
                         3 => 'Delivered',
                         4 => 'Cancelled',
                     ];
-                    
+
                     return [
                         'id' => $order->id,
                         'order_id' => $order->order_id,
@@ -731,39 +729,39 @@ class BiddingController extends Controller
                 'message' => $validator->errors(),
             ], 400);
         }
-        
+
         try {
             $user = auth('api')->user();
-            
+
             $order = Order::where('id', $request->order_id)
                 ->where('user_id', $user->id)
                 ->with(['machinery' => function($query) {
                     $query->select('id', 'make', 'model', 'year', 'working_hours', 'weight', 'serial_number');
                 }, 'machinery.images'])
                 ->first();
-                
+
             if (!$order) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Order not found',
                 ], 404);
             }
-            
+
             $firstImage = $order->machinery->images->firstWhere('type', 'image');
-            
+
             $settings = Settings::first();
             $deliveryContact = $settings ? $settings->phone_no : null;
-            
+
             $deliveryStatusMap = [
                 0 => 'Process',
-                1 => 'Shipped', 
+                1 => 'Shipped',
                 2 => 'In Transit',
                 3 => 'Delivered',
                 4 => 'Cancelled',
             ];
-            
+
             $deliveryTimeline = [];
-            
+
             if ($order->process_date) {
                 $deliveryTimeline[] = [
                     'status' => 'Process',
@@ -771,7 +769,7 @@ class BiddingController extends Controller
                     'status_code' => 0
                 ];
             }
-            
+
             if ($order->shipped_date) {
                 $deliveryTimeline[] = [
                     'status' => 'Shipped',
@@ -779,7 +777,7 @@ class BiddingController extends Controller
                     'status_code' => 1
                 ];
             }
-            
+
             if ($order->in_transit_date) {
                 $deliveryTimeline[] = [
                     'status' => 'In Transit',
@@ -787,7 +785,7 @@ class BiddingController extends Controller
                     'status_code' => 2
                 ];
             }
-            
+
             if ($order->delivered_date) {
                 $deliveryTimeline[] = [
                     'status' => 'Delivered',
@@ -795,7 +793,7 @@ class BiddingController extends Controller
                     'status_code' => 3
                 ];
             }
-            
+
             if ($order->cancelled_date) {
                 $deliveryTimeline[] = [
                     'status' => 'Cancelled',
@@ -803,7 +801,7 @@ class BiddingController extends Controller
                     'status_code' => 4
                 ];
             }
-            
+
             $orderDetails = [
                 'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
                 'name' => $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model,
@@ -817,7 +815,7 @@ class BiddingController extends Controller
                 'current_status' => isset($deliveryStatusMap[$order->delivery_status]) ? $deliveryStatusMap[$order->delivery_status] : 'Unknown',
                 'delivery_timeline' => $deliveryTimeline,
             ];
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $orderDetails,
@@ -842,40 +840,40 @@ class BiddingController extends Controller
                 'message' => $validator->errors(),
             ], 400);
         }
-        
+
         try {
             $user = auth('api')->user();
-            
+
             if (!$user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized access',
                 ], 401);
             }
-            
+
             $machinery = Machinery::find($request->machineryId);
-            
+
             if (!$machinery) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Machinery not found',
                 ], 404);
             }
-            
+
             // if ($machinery->bid_status !== '0' || $machinery->buy_now_price <= 0) {
             //     return response()->json([
             //         'success' => false,
             //         'message' => 'This machinery is not available for direct purchase',
             //     ], 400);
             // }
-            
+
             if ($machinery->is_purchase) {
                 return response()->json([
                     'success' => false,
                     'message' => 'This machinery has already been purchased',
                 ], 400);
             }
-            
+
             $order = Order::create([
                 'order_id' => 'ORD-' . strtoupper(Str::random(10)),
                 'machinery_id' => $machinery->id,
@@ -885,14 +883,14 @@ class BiddingController extends Controller
                 'delivery_status' => 0,
                 'process_date' => now(),
             ]);
-            
+
             $machinery->update([
                 'is_purchase' => true,
                 'bid_status' => '2',
                 'won_user' => $user->id,
                 'bid_won_date' => now(),
             ]);
-            
+
             // Send buy now order email
             try {
                 $mail = new BuyNowOrderMail($user, $order, $machinery);
@@ -902,7 +900,7 @@ class BiddingController extends Controller
             } catch (\Exception $e) {
                 \Log::error('Failed to send buy now order email: ' . $e->getMessage());
             }
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Machinery purchased successfully',
@@ -912,7 +910,7 @@ class BiddingController extends Controller
                     'price' => $machinery->buy_now_price,
                 ],
             ], 200);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
