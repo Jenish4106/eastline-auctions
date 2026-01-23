@@ -100,11 +100,11 @@ Route::middleware(['auth.user'])->group(function () {
     Route::post('/user/machinery-purchase', [BiddingController::class, 'purchaseMachinery']);
     Route::post('/user/orders', [BiddingController::class, 'getUserOrders']);
     Route::post('/user/order-details', [BiddingController::class, 'getOrderDetails']);
-    
+
     Route::get('/user/dashboard', [UserDashboardController::class, 'index']);
 
     Route::post('/user/profile-update', [UsersController::class, 'updateProfile']);
-    Route::get('/user/get-profile', [UsersController::class, 'getProfile']);   
+    Route::get('/user/get-profile', [UsersController::class, 'getProfile']);
 });
 
 Route::get('/get-categories', [UsersController::class, 'getCategories']);
@@ -118,5 +118,4 @@ Route::post('/settings/key-wise', [FrontendSettingsController::class, 'getSettin
 
 Route::post('/contact-email-send', [App\Http\Controllers\Api\ContactController::class, 'sendContactEmail']);
 
-// Distance calculation API
 Route::post('/calculate-distance', [DistanceController::class, 'calculateDistance']);

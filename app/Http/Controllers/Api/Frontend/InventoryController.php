@@ -35,7 +35,7 @@ class InventoryController extends Controller
             } else {
                 $category->image_url = null;
             }
-            
+
             unset($category->image);
             return $category;
         });
@@ -139,6 +139,7 @@ class InventoryController extends Controller
         }
 
         $machineryList = $machineryQuery
+            ->with(['category:id,category_name'])
             ->paginate($perPage, [
                 'id',
                 'working_hours',
@@ -152,20 +153,24 @@ class InventoryController extends Controller
                 'bid_end_time',
                 'created_at'
             ], 'page', $page);
-        
+
         $machineryIds = $machineryList->getCollection()->pluck('id')->toArray();
         $images = \App\Models\MachineryFileManager::whereIn('machinery_id', $machineryIds)
             ->where('type', 'image')
             ->orderBy('id')
             ->get();
-        
-        $imagesByMachineryId = $images->groupBy('machinery_id');
 
+        $imagesByMachineryId = $images->groupBy('machinery_id');
         $machineryWithImages = $machineryList->getCollection()->map(function ($machinery) use ($imagesByMachineryId) {
             $year = $machinery->year ?? '';
             $make = $machinery->make ?? '';
             $model = $machinery->model ?? '';
+            $workingHours = $machinery->working_hours ?? '';
+
             $machinery->name = trim("$year $make $model");
+            $machinery->working_hours = $workingHours;
+
+            $machinery->category = $machinery->category ? $machinery->category->category_name : null;
 
             if ($machinery->bid_end_time) {
                 $bidEndTime = new \DateTime($machinery->bid_end_time);
@@ -176,7 +181,7 @@ class InventoryController extends Controller
             }
 
             $machineryImages = $imagesByMachineryId->get($machinery->id, collect());
-            
+
             if ($machineryImages && $machineryImages->count() > 0) {
                 $firstImage = $machineryImages->first();
                 if ($firstImage && $firstImage->type === 'image') {
@@ -233,7 +238,7 @@ class InventoryController extends Controller
         $make = $machinery->make ?? '';
         $model = $machinery->model ?? '';
         $machinery->name = trim("$year $make $model");
-        
+
         $highestBid = $machinery->bids->max('amount');
         $machinery->current_bid = $highestBid ?: $machinery->bid_start_price;
 
