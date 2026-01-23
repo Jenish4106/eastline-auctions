@@ -36,6 +36,14 @@ class InventoryController extends Controller
                 $category->image_url = null;
             }
 
+            $activeMachineryCount = Machinery::where('category_id', $category->id)
+                ->where('bid_status', '!=', '2')
+                ->where('bid_status', '!=', 2)
+                ->where('bid_end_time', '>', now())
+                ->count();
+
+            $category->machinery_count = $activeMachineryCount;
+
             unset($category->image);
             return $category;
         });
