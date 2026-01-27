@@ -11,6 +11,28 @@ class Machinery extends Model
 
     protected $table = 'machinery';
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($machinery) {
+            if (empty($machinery->auction_id)) {
+                $machinery->auction_id = static::generateUniqueAuctionId();
+            }
+        });
+    }
+
+    protected static function generateUniqueAuctionId()
+    {
+        do {
+            $timestamp = date('His');
+            $randomPart = str_pad(rand(0, 99), 2, '0', STR_PAD_LEFT);
+            $auctionId = substr($timestamp . rand(10, 99), 0, 6);
+        } while (static::where('auction_id', $auctionId)->exists());
+
+        return $auctionId;
+    }
+
     protected $fillable = [
         'category_id',
         'make',
@@ -33,7 +55,8 @@ class Machinery extends Model
         'description',
         'specification',
         'offer',
-        'status'
+        'status',
+        'auction_id'
     ];
 
     protected $casts = [

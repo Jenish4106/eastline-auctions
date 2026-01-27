@@ -69,6 +69,11 @@ class BiddingController extends Controller
                 'amount' => $request->amount,
             ]);
 
+            $currentOffer = $machinery->offer ? intval($machinery->offer) : 0;
+            $machinery->update([
+                'offer' => $currentOffer + 1
+            ]);
+
             if($machinery->bid_status == 0){
                 $machinery->update([
                     'bid_status' => 1
@@ -182,6 +187,7 @@ class BiddingController extends Controller
 
                 return [
                     'id' => $machinery->id,
+                    'auction_id' => $machinery->auction_id,
                     'name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
                     'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
                     'bid_start_price' => $machinery->bid_start_price,
@@ -239,7 +245,7 @@ class BiddingController extends Controller
         try {
             $user = auth('api')->user();
 
-            $machinery = Machinery::with(['images', 'bids.user'])->find($machineryId);
+            $machinery = Machinery::with(['images', 'bids.user', 'category'])->find($machineryId);
 
             if (!$machinery) {
                 return response()->json([
@@ -279,6 +285,7 @@ class BiddingController extends Controller
             $firstImage = $machinery->images->firstWhere('type', 'image');
 
             $machineryDetails = [
+                'auction_id' => $machinery->auction_id,
                 'machinery_name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
                 'bid_end_time' => $machinery->bid_end_time,
                 'start_bid_price' => $machinery->bid_start_price,
@@ -384,6 +391,7 @@ class BiddingController extends Controller
 
                 return [
                     'id' => $machinery->id,
+                    'auction_id' => $machinery->auction_id,
                     'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
                     'machinery_name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
                     'category' => $machinery->category ? $machinery->category->category_name : 'Uncategorized',
@@ -484,6 +492,7 @@ class BiddingController extends Controller
 
             $contractData = [
                 'id' => $machinery->id,
+                'auction_id' => $machinery->auction_id,
                 'name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
                 'category' => $machinery->category ? $machinery->category->category_name : 'Uncategorized',
                 'start_bid_price' => $machinery->bid_start_price,
@@ -682,6 +691,7 @@ class BiddingController extends Controller
                         'order_id' => $order->order_id,
                         'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
                         'name' => $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model,
+                        'auction_id' => $order->machinery->auction_id,
                         'price' => $order->price,
                         'purchase_date' => $order->purchase_date,
                         'delivery_status' => $order->delivery_status,
@@ -805,6 +815,7 @@ class BiddingController extends Controller
             $orderDetails = [
                 'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
                 'name' => $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model,
+                'auction_id' => $order->machinery->auction_id,
                 'working_hours' => $order->machinery->working_hours,
                 'weight' => $order->machinery->weight,
                 'year' => $order->machinery->year,
@@ -907,6 +918,7 @@ class BiddingController extends Controller
                 'data' => [
                     'order_id' => $order->order_id,
                     'machinery_id' => $machinery->id,
+                    'auction_id' => $machinery->auction_id,
                     'price' => $machinery->buy_now_price,
                 ],
             ], 200);

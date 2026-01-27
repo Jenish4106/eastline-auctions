@@ -40,6 +40,7 @@ class MachineryController extends Controller
 
             $query = Machinery::with('category:id,category_name', 'images')->select([
                 'id',
+                'auction_id',
                 'category_id',
                 'make',
                 'model',

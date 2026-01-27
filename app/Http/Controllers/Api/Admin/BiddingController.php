@@ -22,17 +22,18 @@ class BiddingController extends Controller
 
             $allowedSortFields = ['machinery.id', 'machinery.year', 'machinery.make', 'machinery.model', 'machinery.bid_end_time', 'machinery.bid_start_price', 'machinery.bid_status', 'bids_count'];
             $allowedSortOrders = ['asc', 'desc'];
-            
+
             if (!in_array($sortBy, $allowedSortFields)) {
                 $sortBy = 'machinery.created_at';
             }
-            
+
             if (!in_array($sortOrder, $allowedSortOrders)) {
                 $sortOrder = 'desc';
             }
 
             $query = Machinery::select([
                 'id',
+                'auction_id',
                 'year',
                 'make',
                 'model',
@@ -57,7 +58,7 @@ class BiddingController extends Controller
 
             $result = $machineries->getCollection()->map(function ($machinery) {
                 $name = trim($machinery->year . ' ' . $machinery->make . ' ' . $machinery->model);
-                
+
                 switch ($machinery->bid_status) {
                     case '1':
                     case 1:
@@ -75,9 +76,10 @@ class BiddingController extends Controller
                         $status = $machinery->bid_status;
                         break;
                 }
-                
+
                 return [
                     'id' => $machinery->id,
+                    'auction_id' => $machinery->auction_id,
                     'year' => $machinery->year,
                     'make' => $machinery->make,
                     'model' => $machinery->model,
@@ -114,32 +116,32 @@ class BiddingController extends Controller
     {
         try {
             $machineryId = $request->input('machineryId');
-            
+
             $sortBy = $request->input('sort_by', 'amount');
             $sortOrder = $request->input('sort_order', 'desc');
-            
+
             $allowedSortFields = ['amount', 'created_at', 'user_full_name', 'user_email', 'user_phone'];
             $allowedSortOrders = ['asc', 'desc'];
-            
+
             if (!in_array($sortBy, $allowedSortFields)) {
                 $sortBy = 'amount';
             }
-            
+
             if (!in_array($sortOrder, $allowedSortOrders)) {
                 $sortOrder = 'desc';
             }
-            
+
             $machinery = Machinery::with('bids.user:id,first_name,last_name,email,phone_no')->where('id', $machineryId)->first();
-            
+
             if (!$machinery) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Machinery not found',
                 ], 404);
             }
-            
+
             $highestBid = $machinery->bids->max('amount');
-            
+
             $bidStatusText = '';
             switch ($machinery->bid_status) {
                 case '0':
@@ -158,7 +160,7 @@ class BiddingController extends Controller
                     $bidStatusText = $machinery->bid_status;
                     break;
             }
-            
+
             $machineryInfo = [
                 'name' => trim($machinery->year . ' ' . $machinery->make . ' ' . $machinery->model),
                 'bid_start_price' => $machinery->bid_start_price,
@@ -166,7 +168,7 @@ class BiddingController extends Controller
                 'bid_end_time' => $machinery->bid_end_time,
                 'bid_status' => $bidStatusText,
             ];
-            
+
             $biddingDetails = $machinery->bids->map(function ($bid) use ($highestBid, $machinery) {
                 $bidData = [
                     'user_full_name' => $bid->user->first_name . ' ' . $bid->user->last_name,
@@ -176,14 +178,14 @@ class BiddingController extends Controller
                     'bid_created_at' => $bid->created_at,
                     'is_highest' => $bid->amount == $highestBid,
                 ];
-                
+
                 if ($machinery->bid_status == '2' || $machinery->bid_status == 2) {
                     $bidData['is_won'] = $bid->amount == $highestBid;
                 }
-                
+
                 return $bidData;
             });
-            
+
             switch ($sortBy) {
                 case 'amount':
                     $biddingDetails = $sortOrder === 'desc' ? $biddingDetails->sortByDesc('bid_amount') : $biddingDetails->sortBy('bid_amount');
@@ -204,9 +206,9 @@ class BiddingController extends Controller
                     $biddingDetails = $biddingDetails->sortByDesc('bid_amount');
                     break;
             }
-            
+
             $biddingDetails = $biddingDetails->values();
-            
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -226,7 +228,7 @@ class BiddingController extends Controller
     {
         try {
             $search = $request->input('search', '');
-            
+
             $perPage = $request->input('per_page', 10);
             $page = $request->input('page', 1);
             $sortBy = $request->input('sort_by', 'machinery.created_at');
@@ -234,17 +236,18 @@ class BiddingController extends Controller
 
             $allowedSortFields = ['machinery.id', 'machinery.year', 'machinery.make', 'machinery.model', 'machinery.contract_status', 'users.first_name', 'users.last_name', 'users.phone_no', 'categories.category_name', 'machinery.created_at', 'machinery.won_bid_amount', 'machinery_name', 'user_full_name', 'machinery.contract_path'];
             $allowedSortOrders = ['asc', 'desc'];
-            
+
             if (!in_array($sortBy, $allowedSortFields)) {
                 $sortBy = 'machinery.created_at';
             }
-            
+
             if (!in_array($sortOrder, $allowedSortOrders)) {
                 $sortOrder = 'desc';
             }
 
             $query = Machinery::select([
                 'machinery.id as machinery_id',
+                'machinery.auction_id',
                 'machinery.year',
                 'machinery.make',
                 'machinery.model',
@@ -256,7 +259,7 @@ class BiddingController extends Controller
                 'users.last_name',
                 'users.phone_no',
                 'categories.category_name',
-                
+
             ])
             ->leftJoin('users', 'machinery.won_user', '=', 'users.id')
             ->leftJoin('categories', 'machinery.category_id', '=', 'categories.id')
@@ -288,13 +291,14 @@ class BiddingController extends Controller
             $result = $wonMachineries->getCollection()->map(function ($machinery) {
                 $contractStatusMap = [
                     0 => 'Pending',
-                    1 => 'Approved', 
+                    1 => 'Approved',
                     3 => 'Signed',
                     4 => 'Rejected',
                 ];
-                
+
                 return [
                     'machinery_id' => $machinery->machinery_id,
+                    'auction_id' => $machinery->auction_id,
                     'machinery_name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
                     'contract_status' => isset($contractStatusMap[$machinery->contract_status]) ? $contractStatusMap[$machinery->contract_status] : 'Unknown',
                     'user_full_name' => trim(($machinery->first_name ?? '') . ' ' . ($machinery->last_name ?? '')),
@@ -331,7 +335,7 @@ class BiddingController extends Controller
             ], 500);
         }
     }
-    
+
     public function getMachineryWiseWonDetails(Request $request)
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
@@ -344,34 +348,35 @@ class BiddingController extends Controller
                 'message' => $validator->errors(),
             ], 400);
         }
-        
+
         try {
             $machineryId = $request->machinery_id;
-            
+
             $machinery = Machinery::with(['wonUser:id,first_name,last_name,phone_no', 'category:id,category_name', 'bids'])
                 ->where('id', $machineryId)
                 ->whereNotNull('won_user')
                 ->where('won_user', '!=', 0)
                 ->first();
-                
+
             if (!$machinery) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Machinery not found or has no winning bidder',
                 ], 404);
             }
-            
+
             $highestBid = $machinery->bids->max('amount');
-            
+
             $contractStatusMap = [
                 0 => 'Pending',
-                1 => 'Approved', 
+                1 => 'Approved',
                 3 => 'Signed',
                 4 => 'Rejected',
             ];
-            
+
             $result = [
                 'machinery_id' => $machinery->id,
+                'auction_id' => $machinery->auction_id,
                 'machinery_name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
                 'contract_status' => isset($contractStatusMap[$machinery->contract_status]) ? $contractStatusMap[$machinery->contract_status] : 'Unknown',
                 'user_full_name' => trim(($machinery->wonUser->first_name ?? '') . ' ' . ($machinery->wonUser->last_name ?? '')),
@@ -392,7 +397,7 @@ class BiddingController extends Controller
             ], 500);
         }
     }
-    
+
     public function updateContractStatus(Request $request)
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
@@ -406,31 +411,31 @@ class BiddingController extends Controller
                 'message' => $validator->errors(),
             ], 400);
         }
-        
+
         try {
             $machineryId = $request->machinery_id;
             $action = $request->action;
-            
+
             $machinery = Machinery::with('bids')->find($machineryId);
-            
+
             if (!$machinery) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Machinery not found',
                 ], 404);
             }
-            
+
             if ($action === 'approve') {
                 $machinery->contract_status = 1;
-                
+
                 $highestBid = $machinery->bids->max('amount');
                 $bidModel = $machinery->bids->sortByDesc('amount')->first();
-                
+
                 if ($bidModel && $machinery->won_user) {
                     $existingOrder = Order::where('machinery_id', $machinery->id)
                                          ->where('user_id', $machinery->won_user)
                                          ->first();
-                    
+
                     if (!$existingOrder) {
                         Order::create([
                             'order_id' => 'ORD-' . strtoupper(Str::random(10)),
@@ -446,11 +451,11 @@ class BiddingController extends Controller
             } elseif ($action === 'reject') {
                 $machinery->contract_status = 4;
             }
-            
+
             $machinery->save();
-            
+
             $actionText = $action === 'approve' ? 'approved' : 'rejected';
-            
+
             return response()->json([
                 'success' => true,
                 'message' => "Contract has been {$actionText} successfully",

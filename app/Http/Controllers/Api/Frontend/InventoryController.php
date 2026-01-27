@@ -150,6 +150,7 @@ class InventoryController extends Controller
             ->with(['category:id,category_name'])
             ->paginate($perPage, [
                 'id',
+                'auction_id',
                 'working_hours',
                 'buy_now_price',
                 'bid_start_price',
@@ -232,15 +233,18 @@ class InventoryController extends Controller
 
     public function getMachineryDetails(Request $request)
     {
-        $name = $request->input('name');
+        $category = $request->input('category');
         $make = $request->input('make');
         $model = $request->input('model');
-        $year = $request->input('year');
+        $workingHours = $request->input('working_hours');
 
         $machineryQuery = Machinery::with('category:id,category_name', 'images', 'bids');
 
-        if ($name) {
-            $machineryQuery->where('name', $name);
+        if ($category) {
+            $category = Category::where('category_name', $category)->first();
+            if ($category) {
+                $machineryQuery->where('category_id', $category->id);
+            }
         }
 
         if ($make) {
@@ -251,8 +255,8 @@ class InventoryController extends Controller
             $machineryQuery->where('model', $model);
         }
 
-        if ($year) {
-            $machineryQuery->where('year', $year);
+        if ($workingHours) {
+            $machineryQuery->where('working_hours', $workingHours);
         }
 
         $machinery = $machineryQuery->first();
@@ -271,6 +275,10 @@ class InventoryController extends Controller
 
         $highestBid = $machinery->bids->max('amount');
         $machinery->current_bid = $highestBid ?: $machinery->bid_start_price;
+
+        $existingOffer = is_numeric($machinery->offer) ? (int)$machinery->offer : 0;
+        $bidCount = $machinery->bids->count();
+        $machinery->offer = $existingOffer + $bidCount;
 
         if ($machinery->images) {
             $machinery->images = $machinery->images->map(function ($image) {

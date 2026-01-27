@@ -19,7 +19,7 @@ class DashboardController extends Controller
 
         $pendingLicenseUsers = User::where('is_license', 0)->count();
 
-        $recentBids = Bid::with(['machinery:id,make,model,year,bid_end_time'])
+        $recentBids = Bid::with(['machinery:id,auction_id,make,model,year,bid_end_time'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
@@ -28,10 +28,11 @@ class DashboardController extends Controller
                 $make = $bid->machinery->make ?? '';
                 $model = $bid->machinery->model ?? '';
                 $machineryName = trim("$year $make $model");
-                
+
                 $totalBids = Bid::where('machinery_id', $bid->machinery_id)->count();
-                
+
                 return [
+                    'auction_id' => $bid->machinery->auction_id,
                     'machinery_name' => $machineryName,
                     'total_bids' => $totalBids,
                     'bid_end_time' => $bid->machinery->bid_end_time->format('Y-m-d H:i:s') ?? null
@@ -49,7 +50,7 @@ class DashboardController extends Controller
                 $make = $machinery->make ?? '';
                 $model = $machinery->model ?? '';
                 $machineryName = trim("$year $make $model");
-                
+
                 return [
                     'machinery_name' => $machineryName,
                     'won_user_name' => $machinery->wonUser->first_name . ' ' . $machinery->wonUser->last_name ?? 'N/A',
@@ -73,7 +74,7 @@ class DashboardController extends Controller
                     default:
                         $licenseStatus = 'Pending';
                 }
-                
+
                 switch ($user->status) {
                     case 1:
                         $userStatus = 'Active';
@@ -84,7 +85,7 @@ class DashboardController extends Controller
                     default:
                         $userStatus = 'Inactive';
                 }
-                
+
                 return [
                     'full_name' => $user->first_name . ' ' . $user->last_name,
                     'email' => $user->email,
