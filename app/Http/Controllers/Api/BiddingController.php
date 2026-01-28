@@ -70,9 +70,7 @@ class BiddingController extends Controller
             ]);
 
             $currentOffer = $machinery->offer ? intval($machinery->offer) : 0;
-            $machinery->update([
-                'offer' => $currentOffer + 1
-            ]);
+            $machinery->increment('offer');
 
             try {
                 $mail = new BiddingMail($user, $machinery, $request->amount);
