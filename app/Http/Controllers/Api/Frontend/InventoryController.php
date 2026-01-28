@@ -278,7 +278,7 @@ class InventoryController extends Controller
 
         $existingOffer = is_numeric($machinery->offer) ? (int)$machinery->offer : 0;
         $bidCount = $machinery->bids->count();
-        $machinery->offer = $existingOffer + $bidCount;
+        $machinery->offer = $existingOffer;
 
         if ($machinery->images) {
             $machinery->images = $machinery->images->map(function ($image) {
