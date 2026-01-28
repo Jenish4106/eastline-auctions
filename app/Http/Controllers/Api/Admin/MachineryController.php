@@ -22,7 +22,7 @@ class MachineryController extends Controller
             $sortOrder = $request->input('sort_order', 'desc');
 
             $allowedSortFields = [
-                'id', 'category_id', 'make', 'model', 'year', 'weight',
+                'id','auction_id', 'category_id', 'make', 'model', 'year', 'weight',
                 'working_hours', 'condition', 'fuel', 'serial_number',
                 'buy_now_price', 'bid_start_price', 'bid_end_time',
                 'description', 'offer', 'video_path', 'status',
