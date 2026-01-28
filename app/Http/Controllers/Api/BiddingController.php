@@ -74,12 +74,6 @@ class BiddingController extends Controller
                 'offer' => $currentOffer + 1
             ]);
 
-            if($machinery->bid_status == 0){
-                $machinery->update([
-                    'bid_status' => 1
-                ]);
-            }
-
             try {
                 $mail = new BiddingMail($user, $machinery, $request->amount);
                 $smtp2goService = new SMTP2GOService();
