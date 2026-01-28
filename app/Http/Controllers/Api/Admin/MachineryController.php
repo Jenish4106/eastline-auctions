@@ -63,10 +63,20 @@ class MachineryController extends Controller
 
             if (! empty($search)) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('make', 'LIKE', "%{$search}%")
+                    $q->where('auction_id', 'LIKE', "%{$search}%")
+                        ->orWhere('make', 'LIKE', "%{$search}%")
                         ->orWhere('model', 'LIKE', "%{$search}%")
                         ->orWhere('year', 'LIKE', "%{$search}%")
-                        ->orWhere('description', 'LIKE', "%{$search}%");
+                        ->orWhere('weight', 'LIKE', "%{$search}%")
+                        ->orWhere('working_hours', 'LIKE', "%{$search}%")
+                        ->orWhere('condition', 'LIKE', "%{$search}%")
+                        ->orWhere('fuel', 'LIKE', "%{$search}%")
+                        ->orWhere('serial_number', 'LIKE', "%{$search}%")
+                        ->orWhere('description', 'LIKE', "%{$search}%")
+                        ->orWhere('specification', 'LIKE', "%{$search}%")
+                        ->orWhereHas('category', function ($query) use ($search) {
+                            $query->where('category_name', 'LIKE', "%{$search}%");
+                        });
                 });
             }
 
