@@ -32,7 +32,7 @@ class ExtendExpiredAuctions extends Command
         $currentTime = Carbon::now();
 
         $expiredMachinery = Machinery::where('bid_end_time', '<=', $currentTime)
-                                    ->where('status', 1)
+                                    ->whereIn('status', [0, 1])
                                     ->get();
 
         $updatedCount = 0;
