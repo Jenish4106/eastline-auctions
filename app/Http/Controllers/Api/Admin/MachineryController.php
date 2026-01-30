@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Machinery;
 use App\Models\MachineryFileManager;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -238,6 +239,9 @@ class MachineryController extends Controller
                 'condition.required'       => 'The condition field is required.',
                 'fuel.required'            => 'The fuel field is required.',
                 'buy_now_price.required'   => 'The buy now price field is required.',
+                'bid_end_days.required'    => 'The bid end days field is required.',
+                'bid_end_days.integer'     => 'The bid end days must be an integer.',
+                'bid_end_days.min'         => 'The bid end days must be at least 1.',
                 'bid_end_time.required'    => 'The bid end time field is required.',
                 'bid_end_time.date_format' => 'The bid end time must be in Y-m-d H:i:s format.',
                 'image_urls.required'      => 'At least one image URL is required.',
@@ -269,7 +273,9 @@ class MachineryController extends Controller
             $machinery->serial_number   = $request->serial_number;
             $machinery->buy_now_price   = $request->buy_now_price;
             $machinery->bid_start_price = $request->bid_start_price ?? ($request->buy_now_price * 0.9);
-            $machinery->bid_end_time    = $request->bid_end_time;
+            $machinery->bid_start_time  = now();
+            $machinery->bid_end_days    = $request->bid_end_days;
+            $machinery->bid_end_time    = Carbon::parse($machinery->bid_start_time)->addDays($request->bid_end_days);
             $machinery->description     = $request->description;
             $machinery->offer           = $request->offer;
             $machinery->status          = $request->status;
@@ -376,6 +382,7 @@ class MachineryController extends Controller
                 'serial_number'   => 'nullable|string|max:100',
                 'buy_now_price'   => 'required|numeric|min:0',
                 'bid_start_price' => 'nullable|numeric|min:0',
+                'bid_end_days'    => 'required|integer|min:1',
                 'bid_end_time'    => 'required|date_format:Y-m-d H:i:s',
                 'description'     => 'nullable|string',
                 'specification'   => 'nullable',
@@ -396,6 +403,9 @@ class MachineryController extends Controller
                 'condition.required'       => 'The condition field is required.',
                 'fuel.required'            => 'The fuel field is required.',
                 'buy_now_price.required'   => 'The buy now price field is required.',
+                'bid_end_days.required'    => 'The bid end days field is required.',
+                'bid_end_days.integer'     => 'The bid end days must be an integer.',
+                'bid_end_days.min'         => 'The bid end days must be at least 1.',
                 'bid_end_time.required'    => 'The bid end time field is required.',
                 'bid_end_time.date_format' => 'The bid end time must be in Y-m-d H:i:s format.',
                 'image_urls.array'         => 'Image URLs must be an array.',
@@ -425,7 +435,8 @@ class MachineryController extends Controller
             $machinery->serial_number   = $request->serial_number;
             $machinery->buy_now_price   = $request->buy_now_price;
             $machinery->bid_start_price = $request->bid_start_price ?? ($request->buy_now_price * 0.9);
-            $machinery->bid_end_time    = $request->bid_end_time;
+            $machinery->bid_end_days    = $request->bid_end_days;
+            $machinery->bid_end_time    = Carbon::parse($machinery->bid_start_time)->addDays($request->bid_end_days);
             $machinery->description     = $request->description;
             $machinery->offer           = $request->offer;
             $machinery->status          = $request->status;
