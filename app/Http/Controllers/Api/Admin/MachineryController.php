@@ -55,7 +55,6 @@ class MachineryController extends Controller
                 'bid_start_price',
                 'bid_end_time',
                 'description',
-                'specification',
                 'offer',
                 'status',
                 'created_at',
@@ -74,7 +73,6 @@ class MachineryController extends Controller
                         ->orWhere('fuel', 'LIKE', "%{$search}%")
                         ->orWhere('serial_number', 'LIKE', "%{$search}%")
                         ->orWhere('description', 'LIKE', "%{$search}%")
-                        ->orWhere('specification', 'LIKE', "%{$search}%")
                         ->orWhereHas('category', function ($query) use ($search) {
                             $query->where('category_name', 'LIKE', "%{$search}%");
                         });
@@ -221,7 +219,6 @@ class MachineryController extends Controller
                 'bid_start_price' => 'nullable|numeric|min:0',
                 'bid_end_days'    => 'required|integer|min:1',
                 'description'     => 'nullable|string',
-                'specification'   => 'nullable',
                 'offer'           => 'nullable|max:255',
                 'image_urls'      => 'required|array',
                 'image_urls.*'    => 'required|url',
@@ -277,15 +274,6 @@ class MachineryController extends Controller
             $machinery->description     = $request->description;
             $machinery->offer           = $request->offer;
             $machinery->status          = $request->status;
-
-            if ($request->has('specification') && $request->specification !== null) {
-                if (is_array($request->specification)) {
-                    $machinery->specification = $request->specification;
-                } elseif (is_string($request->specification)) {
-                    $decoded                  = json_decode($request->specification, true);
-                    $machinery->specification = json_last_error() === JSON_ERROR_NONE ? $decoded : $request->specification;
-                }
-            }
 
             $machinery->save();
 
@@ -382,7 +370,6 @@ class MachineryController extends Controller
                 'bid_start_price' => 'nullable|numeric|min:0',
                 'bid_end_days'    => 'required|integer|min:1',
                 'description'     => 'nullable|string',
-                'specification'   => 'nullable',
                 'offer'           => 'nullable|max:255',
                 'image_urls'      => 'sometimes|array',
                 'image_urls.*'    => 'required|url',
@@ -435,15 +422,6 @@ class MachineryController extends Controller
             $machinery->description     = $request->description;
             $machinery->offer           = $request->offer;
             $machinery->status          = $request->status;
-
-            if ($request->has('specification') && $request->specification !== null) {
-                if (is_array($request->specification)) {
-                    $machinery->specification = $request->specification;
-                } elseif (is_string($request->specification)) {
-                    $decoded                  = json_decode($request->specification, true);
-                    $machinery->specification = json_last_error() === JSON_ERROR_NONE ? $decoded : $request->specification;
-                }
-            }
 
             if ($request->has('video_urls') && $request->video_urls !== null) {
                 $existingVideos = $machinery->images()->where('type', 'video')->get();

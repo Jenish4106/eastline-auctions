@@ -55,14 +55,12 @@ class Machinery extends Model
         'contract_path',
         'contract_status',
         'description',
-        'specification',
         'offer',
         'status',
         'auction_id'
     ];
 
     protected $casts = [
-        'specification' => 'array',
         'buy_now_price' => 'decimal:2',
         'bid_start_price' => 'decimal:2',
         'bid_start_time' => 'datetime',
