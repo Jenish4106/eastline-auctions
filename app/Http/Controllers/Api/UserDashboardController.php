@@ -16,22 +16,16 @@ class UserDashboardController extends Controller
         try {
             $user = Auth::user();
 
-            // Total bids placed by the user
             $totalBidsPlaced = Bid::where('user_id', $user->id)->count();
 
-            // Active bids where user has the highest bid
             $activeBids = $this->getActiveBids($user->id);
 
-            // Items won by the user
             $itemsWon = Machinery::where('won_user', $user->id)->count();
 
-            // Items purchased by the user
             $itemsPurchased = Order::where('user_id', $user->id)->count();
 
-            // Recent bids
             $recentBids = $this->getRecentBids($user->id);
 
-            // Recent buy orders
             $recentBuyOrders = $this->getRecentBuyOrders($user->id);
 
             $dashboardData = [
@@ -121,7 +115,7 @@ class UserDashboardController extends Controller
         $orders = Order::where('user_id', $userId)
             ->with(['machinery' => function($query) {
                 $query->select('id', 'make', 'model', 'year');
-            }])
+            }, 'user:id,first_name,last_name,phone_no'])
             ->orderBy('purchase_date', 'desc')
             ->limit(5)
             ->get();
@@ -129,16 +123,24 @@ class UserDashboardController extends Controller
         $recentBuyOrders = [];
 
         foreach ($orders as $order) {
-            if ($order->machinery) {
-                $recentBuyOrders[] = [
-                    'machinery_name' => $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model,
-                    'price' => $order->price,
-                    'purchase_date' => $order->purchase_date,
-                    'status' => $order->delivery_status_text, // This uses the accessor from the Order model
-                ];
-            }
+            $year = $order->machinery->year ?? '';
+            $make = $order->machinery->make ?? '';
+            $model = $order->machinery->model ?? '';
+            $machineryName = trim("$year $make $model");
+
+            $recentBuyOrders[] = [
+                'order_id' => $order->order_id,
+                'machinery_name' => $machineryName,
+                'user_name' => ($order->user->first_name ?? '') . ' ' . ($order->user->last_name ?? ''),
+                'phone_no' => $order->user->phone_no ?? 'N/A',
+                'order_date' => $order->purchase_date ? $order->purchase_date->format('Y-m-d H:i:s') : null,
+                'amount' => $order->price,
+                'status' => $order->delivery_status_text,
+                'invoice_url' => $order->invoice_path ? asset($order->invoice_path) : null,
+            ];
         }
 
         return $recentBuyOrders;
     }
 }
+

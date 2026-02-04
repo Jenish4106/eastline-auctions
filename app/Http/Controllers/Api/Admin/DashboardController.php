@@ -108,7 +108,8 @@ class DashboardController extends Controller
                     'phone_no' => $order->user->phone_no ?? 'N/A',
                     'order_date' => $order->purchase_date->format('Y-m-d H:i:s') ?? null,
                     'amount' => $order->price,
-                    'status' => $order->delivery_status_text
+                    'status' => $order->delivery_status_text,
+                    'invoice_url' => $order->invoice_path ? asset($order->invoice_path) : null,
                 ];
             });
 
