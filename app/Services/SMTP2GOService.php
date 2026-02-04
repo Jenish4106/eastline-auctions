@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
@@ -14,10 +13,10 @@ class SMTP2GOService
 
     public function __construct()
     {
-        $this->apiKey      = env('SMTP2GO_API_KEY');
+        $this->apiKey      = env('SMTP2GO_API_KEY', 'api-FB7FBB0BD14A413DA64AFC6D86660F46');
         $this->apiUrl      = env('SMTP2GO_API_URL', 'https://api.smtp2go.com/v3/email/send');
-        $this->senderEmail = env('MAIL_FROM_ADDRESS');
-        $this->senderName  = env('MAIL_FROM_NAME');
+        $this->senderEmail = env('MAIL_FROM_ADDRESS', 'info@stiopa-equipment.com');
+        $this->senderName  = env('MAIL_FROM_NAME', 'RB EQUIPMENT SALES');
     }
 
     /**
@@ -35,14 +34,14 @@ class SMTP2GOService
         try {
 
             $payload = [
-                'api_key' => $this->apiKey,
+                'api_key'   => $this->apiKey,
 
-                'sender' => [
+                'sender'    => [
                     'email' => $this->senderEmail,
                     'name'  => $this->senderName,
                 ],
 
-                'to' => collect(is_array($to) ? $to : [$to])->map(function ($email) {
+                'to'        => collect(is_array($to) ? $to : [$to])->map(function ($email) {
                     return ['email' => $email];
                 })->toArray(),
 
@@ -54,7 +53,7 @@ class SMTP2GOService
                 $payload['text_body'] = $textBody;
             }
 
-            if (!empty($attachments)) {
+            if (! empty($attachments)) {
                 $payload['attachments'] = [];
 
                 foreach ($attachments as $attachment) {
@@ -70,7 +69,7 @@ class SMTP2GOService
                         ];
 
                         Log::info('SMTP2GO attachment added', [
-                            'file' => $attachment['path']
+                            'file' => $attachment['path'],
                         ]);
                     } else {
                         Log::warning('SMTP2GO attachment missing or not found', $attachment);
