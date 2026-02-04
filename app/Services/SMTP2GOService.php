@@ -14,20 +14,20 @@ class SMTP2GOService
 
     public function __construct()
     {
-        $this->apiKey = env('SMTP2GO_API_KEY', 'api-FB7FBB0BD14A413DA64AFC6D86660F46');
-        $this->apiUrl = env('SMTP2GO_API_URL', 'https://api.smtp2go.com/v3/email/send');
-        $this->senderEmail = env('MAIL_FROM_ADDRESS', 'info@stiopa-equipment.com');
-        $this->senderName = env('MAIL_FROM_NAME', 'RB EQUIPMENT SALES');
+        $this->apiKey      = env('SMTP2GO_API_KEY');
+        $this->apiUrl      = env('SMTP2GO_API_URL', 'https://api.smtp2go.com/v3/email/send');
+        $this->senderEmail = env('MAIL_FROM_ADDRESS');
+        $this->senderName  = env('MAIL_FROM_NAME');
     }
 
     public function sendEmail($to, $subject, $htmlBody, $attachments = [], $textBody = null)
     {
         try {
             $data = [
-                'sender' => $this->senderEmail,
-                'to' => is_array($to) ? $to : [$to],
-                'subject' => $subject,
-                'html_body' => $htmlBody,
+                'sender'     => $this->senderEmail,
+                'to'         => is_array($to) ? $to : [$to],
+                'subject'    => $subject,
+                'html_body'  => $htmlBody,
             ];
 
             if ($textBody) {
@@ -36,38 +36,35 @@ class SMTP2GOService
 
             if (!empty($attachments)) {
                 $data['attachments'] = [];
+
                 foreach ($attachments as $attachment) {
-                    if (isset($attachment['path']) && file_exists($attachment['path'])) {
+                    if (file_exists($attachment['path'])) {
                         $data['attachments'][] = [
-                            'filename' => $attachment['name'] ?? basename($attachment['path']),
-                            'file_contents' => base64_encode(file_get_contents($attachment['path'])),
-                            'content_type' => $attachment['type'] ?? mime_content_type($attachment['path'])
+                            'filename'      => $attachment['name'],
+                            'fileblob' => base64_encode(file_get_contents($attachment['path'])),
+                            'content_type'  => $attachment['type'],
                         ];
                     }
                 }
             }
 
             $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
                 'X-Smtp2go-Api-Key' => $this->apiKey,
-                'accept' => 'application/json',
+                'Content-Type'     => 'application/json',
+                'accept'           => 'application/json',
             ])->post($this->apiUrl, $data);
 
-            if ($response->successful()) {
-                Log::info('Email sent successfully', [
-                    'to' => $to,
-                    'subject' => $subject,
-                ]);
-                return true;
-            } else {
-                Log::error('Email sent failed', [
-                    'to' => $to,
-                    'subject' => $subject,
-                    'response' => $response->body(),
-                ]);
-                return false;
-            }
+            // Log::info('SMTP2GO response', [
+            //     'status' => $response->status(),
+            //     'body'   => $response->json(),
+            // ]);
+
+            return $response->successful();
+
         } catch (\Exception $e) {
+            // Log::error('SMTP2GO send failed', [
+            //     'error' => $e->getMessage()
+            // ]);
             return false;
         }
     }

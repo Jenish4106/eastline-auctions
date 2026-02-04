@@ -110,7 +110,7 @@ class OrderController extends Controller
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'order_id' => 'required|exists:orders,id',
-            'status' => 'required|integer|between:0,5',
+            'status'   => 'required|integer|between:0,5',
         ]);
 
         if ($validator->fails()) {
@@ -119,79 +119,98 @@ class OrderController extends Controller
                 'message' => $validator->errors(),
             ], 400);
         }
-        
+
         try {
-            $order = Order::with(['user', 'machinery'])->where('id', $request->order_id)->first();
-            
+            $order = Order::with(['user', 'machinery'])->find($request->order_id);
+
             if (!$order) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Order not found',
                 ], 404);
             }
-            
+
             $order->delivery_status = $request->status;
-            
-            switch($request->status) {
-                case 1:
-                    $order->process_date = now();
-                    break;
-                case 2: 
-                    $order->shipped_date = now();
-                    break;
-                case 3: 
-                    $order->in_transit_date = now();
-                    break;
-                case 4: 
-                    $order->delivered_date = now();
-                    break;
-                case 5: 
-                    $order->cancelled_date = now();
-                    break;
+
+            switch ($request->status) {
+                case 1: $order->process_date     = now(); break;
+                case 2: $order->shipped_date     = now(); break;
+                case 3: $order->in_transit_date  = now(); break;
+                case 4: $order->delivered_date   = now(); break;
+                case 5: $order->cancelled_date   = now(); break;
             }
-            
+
             $order->save();
-            
+
             if ($order->user && $order->machinery) {
                 try {
-                    $mail = new OrderStatusChangeMail($order->user, $order, $order->machinery, $request->status);
+                    $mail = new OrderStatusChangeMail(
+                        $order->user,
+                        $order,
+                        $order->machinery,
+                        $request->status
+                    );
+
                     $smtp2goService = new SMTP2GOService();
                     $htmlContent = $mail->renderHtmlContent();
-                    
+
                     $attachments = [];
-                    if ($request->status == 1 && $order->invoice_path && file_exists(public_path($order->invoice_path))) {
-                        $attachments[] = [
-                            'path' => public_path($order->invoice_path),
-                            'name' => 'Invoice-' . $order->order_id . '.pdf',
-                            'type' => 'application/pdf'
-                        ];
-                    }
                     
-                    $smtp2goService->sendEmail($order->user->email, $mail->getSubject(), $htmlContent, $attachments);
+                    if ($request->status == 1 && !empty($order->invoice_path)) {
+                        $invoiceFullPath = public_path($order->invoice_path);
+
+                        \Log::info('Invoice attachment check', [
+                            'db_path'    => $order->invoice_path,
+                            'full_path'  => $invoiceFullPath,
+                            'exists'     => file_exists($invoiceFullPath),
+                        ]);
+
+                        if (file_exists($invoiceFullPath)) {
+                            $attachments[] = [
+                                'path' => $invoiceFullPath,
+                                'name' => 'Invoice-' . $order->order_id . '.pdf',
+                                'type' => 'application/pdf',
+                            ];
+                        }
+                    }
+
+                    $smtp2goService->sendEmail(
+                        $order->user->email,
+                        $mail->getSubject(),
+                        $htmlContent,
+                        $attachments
+                    );
+
                 } catch (\Exception $e) {
-                    \Log::error('Failed to send order status change email: ' . $e->getMessage());
+                    \Log::error('Order status email failed', [
+                        'order_id' => $order->id,
+                        'error'    => $e->getMessage()
+                    ]);
                 }
             }
-            
+
             $statusMessages = [
-                0 => 'Order status has been updated to Pending.',
-                1 => 'Order has been successfully moved to the processing stage and invoice sent.',
-                2 => 'Order has been shipped successfully.',
-                3 => 'Order is currently in transit.',
-                4 => 'Order has been delivered successfully.',
-                5 => 'Order has been cancelled successfully.'
+                0 => 'Order status updated to Pending.',
+                1 => 'Order moved to processing and invoice sent.',
+                2 => 'Order shipped successfully.',
+                3 => 'Order is in transit.',
+                4 => 'Order delivered successfully.',
+                5 => 'Order cancelled successfully.'
             ];
-            
-            $message = $statusMessages[$request->status] ?? 'Order status updated successfully.';
-            
+
             return response()->json([
                 'success' => true,
-                'message' => $message
+                'message' => $statusMessages[$request->status] ?? 'Order status updated.'
             ], 200);
+
         } catch (\Exception $e) {
+            \Log::error('Order status update error', [
+                'error' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong, please try again.',
+                'message' => 'Something went wrong. Please try again.',
             ], 500);
         }
     }
