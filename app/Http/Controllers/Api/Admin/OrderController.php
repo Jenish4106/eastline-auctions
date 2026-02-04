@@ -159,11 +159,11 @@ class OrderController extends Controller
                     if ($request->status == 1 && !empty($order->invoice_path)) {
                         $invoiceFullPath = public_path($order->invoice_path);
 
-                        \Log::info('Invoice attachment check', [
-                            'db_path'    => $order->invoice_path,
-                            'full_path'  => $invoiceFullPath,
-                            'exists'     => file_exists($invoiceFullPath),
-                        ]);
+                        // \Log::info('Invoice attachment check', [
+                        //     'db_path'    => $order->invoice_path,
+                        //     'full_path'  => $invoiceFullPath,
+                        //     'exists'     => file_exists($invoiceFullPath),
+                        // ]);
 
                         if (file_exists($invoiceFullPath)) {
                             $attachments[] = [
