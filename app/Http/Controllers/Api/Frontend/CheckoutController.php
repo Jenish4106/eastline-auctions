@@ -11,9 +11,17 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
+use App\Services\GoogleMapsService;
 
 class CheckoutController extends Controller
 {
+    protected $googleMapsService;
+
+    public function __construct(GoogleMapsService $googleMapsService)
+    {
+        $this->googleMapsService = $googleMapsService;
+    }
+
     public function checkout(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -67,11 +75,35 @@ class CheckoutController extends Controller
             $shipping = $request->input('shipping_details');
             $isShippingDifferent = filter_var($shipping['is_different'], FILTER_VALIDATE_BOOLEAN);
 
+            // Calculate Shipping Cost
+            $shippingCost = 0;
+            try {
+                $shippingZip = $isShippingDifferent ? $shipping['shipping_zip'] : $billing['zip_postal_code'];
+                $shippingCountry = $isShippingDifferent ? $shipping['shipping_country'] : $billing['country'];
+                
+                $companyAddress = $this->googleMapsService->getCompanyAddress();
+                if ($companyAddress) {
+                    $companyLocation = $this->googleMapsService->geocodeAddress($companyAddress);
+                    $customerLocation = $this->googleMapsService->getCoordinatesFromZipAndCountry($shippingZip, $shippingCountry);
+                    
+                    if ($companyLocation && $customerLocation) {
+                        $distanceResult = $this->googleMapsService->calculateDistance($companyLocation, $customerLocation);
+                        if ($distanceResult) {
+                            $perMileDeliveryCost = Settings::get('per_mile_delivery_cost', 0);
+                            $shippingCost = $distanceResult['distance_miles'] * $perMileDeliveryCost;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Keep shipping cost as 0 if calculation fails
+            }
+
             $order = Order::create([
                 'order_id' => 'ORD-' . strtoupper(Str::random(10)),
                 'machinery_id' => $machinery->id,
                 'user_id' => $user->id,
                 'price' => $machinery->buy_now_price > 0 ? $machinery->buy_now_price : ($machinery->bid_start_price ?? 0),
+                'shipping_cost' => $shippingCost,
                 'purchase_date' => now(),
                 'delivery_status' => 0,
                 'process_date' => now(),

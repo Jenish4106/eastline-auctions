@@ -219,12 +219,16 @@
                     <td style="text-align: right;">{{ number_format($order->price, 2) }}</td>
                 </tr>
                 <tr>
+                    <td>Shipping Cost:</td>
+                    <td style="text-align: right;">{{ number_format($order->shipping_cost, 2) }}</td>
+                </tr>
+                <tr>
                     <td>Tax (0%):</td>
                     <td style="text-align: right;">0.00</td>
                 </tr>
                 <tr class="total-row">
                     <td>Total:</td>
-                    <td style="text-align: right;">{{ number_format($order->price, 2) }}</td>
+                    <td style="text-align: right;">{{ number_format($order->price + $order->shipping_cost, 2) }}</td>
                 </tr>
             </table>
             <div style="clear: both;"></div>

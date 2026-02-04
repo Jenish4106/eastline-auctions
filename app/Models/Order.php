@@ -13,6 +13,7 @@ class Order extends Model
         'machinery_id',
         'user_id',
         'price',
+        'shipping_cost',
         'purchase_date',
         'delivery_status',
         'process_date',
