@@ -817,6 +817,7 @@ class BiddingController extends Controller
                 'delivery_contact' => $deliveryContact,
                 'current_status' => isset($deliveryStatusMap[$order->delivery_status]) ? $deliveryStatusMap[$order->delivery_status] : 'Unknown',
                 'delivery_timeline' => $deliveryTimeline,
+                'invoice_url' => $order->invoice_path ? asset($order->invoice_path) : null,
             ];
 
             return response()->json([

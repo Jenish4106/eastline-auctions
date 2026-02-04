@@ -20,6 +20,23 @@ class Order extends Model
         'in_transit_date',
         'delivered_date',
         'cancelled_date',
+        'invoice_path',
+        'first_name',
+        'last_name',
+        'phone_number',
+        'vat_number',
+        'billing_company',
+        'billing_street',
+        'billing_city',
+        'billing_state',
+        'billing_zip',
+        'billing_country',
+        'shipping_same_as_billing',
+        'shipping_street',
+        'shipping_city',
+        'shipping_state',
+        'shipping_zip',
+        'shipping_country',
     ];
     
     protected $casts = [

@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\SettingsController as UserSettingsController;
 use App\Http\Controllers\Api\UsersController;
 use App\Http\Controllers\Api\UserDashboardController;
 use App\Http\Controllers\Api\DistanceController;
+use App\Http\Controllers\Api\Frontend\CheckoutController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [RegisterController::class, 'register']);
@@ -98,6 +99,7 @@ Route::middleware(['auth.user'])->group(function () {
 
     Route::post('/user/sign-contract', [BiddingController::class, 'addSignatureToContract']);
     Route::post('/user/machinery-purchase', [BiddingController::class, 'purchaseMachinery']);
+    Route::post('/user/checkout', [CheckoutController::class, 'checkout']);
     Route::post('/user/orders', [BiddingController::class, 'getUserOrders']);
     Route::post('/user/order-details', [BiddingController::class, 'getOrderDetails']);
 

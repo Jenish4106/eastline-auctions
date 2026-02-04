@@ -42,6 +42,7 @@ class OrderController extends Controller
                 'price',
                 'delivery_status',
                 'purchase_date',
+                'invoice_path',
             ]);
 
             if (!empty($search)) {
@@ -67,6 +68,7 @@ class OrderController extends Controller
                 $order->order_amount = $order->price;
                 $order->status = $order->delivery_status_text;
                 $order->status_code = $order->delivery_status;
+                $order->invoice_url = $order->invoice_path ? asset($order->invoice_path) : null;
 
                 unset($order->user);
                 
