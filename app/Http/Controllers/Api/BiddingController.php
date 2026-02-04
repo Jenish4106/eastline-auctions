@@ -688,6 +688,7 @@ class BiddingController extends Controller
                         'purchase_date' => $order->purchase_date,
                         'delivery_status' => $order->delivery_status,
                         'delivery_status_text' => isset($deliveryStatusMap[$order->delivery_status]) ? $deliveryStatusMap[$order->delivery_status] : 'Unknown',
+                        'invoice_url' => $order->invoice_path ? asset($order->invoice_path) : null,
                     ];
                 }
             })->filter(); // Remove null values if machinery doesn't exist
