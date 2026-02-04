@@ -63,11 +63,12 @@ class Order extends Model
     public function getDeliveryStatusTextAttribute()
     {
         $statusMap = [
-            0 => 'Process',
-            1 => 'Shipped',
-            2 => 'In Transit',
-            3 => 'Delivered',
-            4 => 'Cancelled',
+            0 => 'Pending',
+            1 => 'Process',
+            2 => 'Shipped',
+            3 => 'In Transit',
+            4 => 'Delivered',
+            5 => 'Cancelled',
         ];
         
         return $statusMap[$this->delivery_status] ?? 'Unknown';

@@ -20,7 +20,7 @@ class SMTP2GOService
         $this->senderName = env('MAIL_FROM_NAME', 'RB EQUIPMENT SALES');
     }
 
-    public function sendEmail($to, $subject, $htmlBody, $textBody = null)
+    public function sendEmail($to, $subject, $htmlBody, $attachments = [], $textBody = null)
     {
         try {
             $data = [
@@ -34,6 +34,19 @@ class SMTP2GOService
                 $data['text_body'] = $textBody;
             }
 
+            if (!empty($attachments)) {
+                $data['attachments'] = [];
+                foreach ($attachments as $attachment) {
+                    if (isset($attachment['path']) && file_exists($attachment['path'])) {
+                        $data['attachments'][] = [
+                            'filename' => $attachment['name'] ?? basename($attachment['path']),
+                            'file_contents' => base64_encode(file_get_contents($attachment['path'])),
+                            'content_type' => $attachment['type'] ?? mime_content_type($attachment['path'])
+                        ];
+                    }
+                }
+            }
+
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
                 'X-Smtp2go-Api-Key' => $this->apiKey,
@@ -41,27 +54,11 @@ class SMTP2GOService
             ])->post($this->apiUrl, $data);
 
             if ($response->successful()) {
-                // Log::info('Email sent successfully via SMTP2GO', [
-                //     'to' => $to,
-                //     'subject' => $subject,
-                //     'response' => $response->json()
-                // ]);
                 return true;
             } else {
-                // Log::error('Failed to send email via SMTP2GO', [
-                //     'to' => $to,
-                //     'subject' => $subject,
-                //     'status' => $response->status(),
-                //     'response' => $response->body()
-                // ]);
                 return false;
             }
         } catch (\Exception $e) {
-            // Log::error('Exception occurred while sending email via SMTP2GO', [
-            //     'to' => $to,
-            //     'subject' => $subject,
-            //     'error' => $e->getMessage()
-            // ]);
             return false;
         }
     }

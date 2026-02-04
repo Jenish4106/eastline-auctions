@@ -671,11 +671,12 @@ class BiddingController extends Controller
                     $firstImage = $order->machinery->images->firstWhere('type', 'image');
 
                     $deliveryStatusMap = [
-                        0 => 'Process',
-                        1 => 'Shipped',
-                        2 => 'In Transit',
-                        3 => 'Delivered',
-                        4 => 'Cancelled',
+                        0 => 'Pending',
+                        1 => 'Process',
+                        2 => 'Shipped',
+                        3 => 'In Transit',
+                        4 => 'Delivered',
+                        5 => 'Cancelled',
                     ];
 
                     return [
@@ -756,20 +757,29 @@ class BiddingController extends Controller
             $deliveryContact = $settings ? $settings->phone_no : null;
 
             $deliveryStatusMap = [
-                0 => 'Process',
-                1 => 'Shipped',
-                2 => 'In Transit',
-                3 => 'Delivered',
-                4 => 'Cancelled',
+                0 => 'Pending',
+                1 => 'Process',
+                2 => 'Shipped',
+                3 => 'In Transit',
+                4 => 'Delivered',
+                5 => 'Cancelled',
             ];
 
             $deliveryTimeline = [];
+
+            if ($order->purchase_date) {
+                $deliveryTimeline[] = [
+                    'status' => 'Pending',
+                    'date' => $order->purchase_date,
+                    'status_code' => 0
+                ];
+            }
 
             if ($order->process_date) {
                 $deliveryTimeline[] = [
                     'status' => 'Process',
                     'date' => $order->process_date,
-                    'status_code' => 0
+                    'status_code' => 1
                 ];
             }
 
@@ -777,7 +787,7 @@ class BiddingController extends Controller
                 $deliveryTimeline[] = [
                     'status' => 'Shipped',
                     'date' => $order->shipped_date,
-                    'status_code' => 1
+                    'status_code' => 2
                 ];
             }
 
@@ -785,7 +795,7 @@ class BiddingController extends Controller
                 $deliveryTimeline[] = [
                     'status' => 'In Transit',
                     'date' => $order->in_transit_date,
-                    'status_code' => 2
+                    'status_code' => 3
                 ];
             }
 
@@ -793,7 +803,7 @@ class BiddingController extends Controller
                 $deliveryTimeline[] = [
                     'status' => 'Delivered',
                     'date' => $order->delivered_date,
-                    'status_code' => 3
+                    'status_code' => 4
                 ];
             }
 
@@ -801,7 +811,7 @@ class BiddingController extends Controller
                 $deliveryTimeline[] = [
                     'status' => 'Cancelled',
                     'date' => $order->cancelled_date,
-                    'status_code' => 4
+                    'status_code' => 5
                 ];
             }
 
@@ -886,7 +896,7 @@ class BiddingController extends Controller
                 'price' => $machinery->buy_now_price,
                 'purchase_date' => now(),
                 'delivery_status' => 0,
-                'process_date' => now(),
+                // 'process_date' => now(), // Removed as it's now set on status 1 (Process)
             ]);
 
             $machinery->update([

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Machinery;
 use App\Models\Bid;
 use App\Models\Category;
+use App\Models\Order;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -96,6 +97,21 @@ class DashboardController extends Controller
                 ];
             });
 
+        $recentOrders = Order::with('user:id,first_name,last_name,phone_no')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'order_id' => $order->order_id,
+                    'user_name' => ($order->user->first_name ?? '') . ' ' . ($order->user->last_name ?? ''),
+                    'phone_no' => $order->user->phone_no ?? 'N/A',
+                    'order_date' => $order->purchase_date->format('Y-m-d H:i:s') ?? null,
+                    'amount' => $order->price,
+                    'status' => $order->delivery_status_text
+                ];
+            });
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -104,7 +120,8 @@ class DashboardController extends Controller
                 'pending_license_users' => $pendingLicenseUsers,
                 'recent_bids' => $recentBids,
                 'recent_won_users' => $recentWonUsers,
-                'recent_users' => $recentUsers
+                'recent_users' => $recentUsers,
+                'recent_orders' => $recentOrders
             ]
         ], 200);
     }

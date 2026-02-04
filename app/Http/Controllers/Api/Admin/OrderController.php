@@ -110,7 +110,7 @@ class OrderController extends Controller
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'order_id' => 'required|exists:orders,id',
-            'status' => 'required|integer|between:0,4',
+            'status' => 'required|integer|between:0,5',
         ]);
 
         if ($validator->fails()) {
@@ -133,43 +133,53 @@ class OrderController extends Controller
             $order->delivery_status = $request->status;
             
             switch($request->status) {
-                case 0:
+                case 1:
                     $order->process_date = now();
                     break;
-                case 1: 
+                case 2: 
                     $order->shipped_date = now();
                     break;
-                case 2: 
+                case 3: 
                     $order->in_transit_date = now();
                     break;
-                case 3: 
+                case 4: 
                     $order->delivered_date = now();
                     break;
-                case 4: 
+                case 5: 
                     $order->cancelled_date = now();
                     break;
             }
             
             $order->save();
             
-            // Send order status change email
             if ($order->user && $order->machinery) {
                 try {
                     $mail = new OrderStatusChangeMail($order->user, $order, $order->machinery, $request->status);
                     $smtp2goService = new SMTP2GOService();
                     $htmlContent = $mail->renderHtmlContent();
-                    $smtp2goService->sendEmail($order->user->email, $mail->getSubject(), $htmlContent);
+                    
+                    $attachments = [];
+                    if ($request->status == 1 && $order->invoice_path && file_exists(public_path($order->invoice_path))) {
+                        $attachments[] = [
+                            'path' => public_path($order->invoice_path),
+                            'name' => 'Invoice-' . $order->order_id . '.pdf',
+                            'type' => 'application/pdf'
+                        ];
+                    }
+                    
+                    $smtp2goService->sendEmail($order->user->email, $mail->getSubject(), $htmlContent, $attachments);
                 } catch (\Exception $e) {
                     \Log::error('Failed to send order status change email: ' . $e->getMessage());
                 }
             }
             
             $statusMessages = [
-                0 => 'Order has been successfully moved to the processing stage.',
-                1 => 'Order has been shipped successfully.',
-                2 => 'Order is currently in transit.',
-                3 => 'Order has been delivered successfully.',
-                4 => 'Order has been cancelled successfully.'
+                0 => 'Order status has been updated to Pending.',
+                1 => 'Order has been successfully moved to the processing stage and invoice sent.',
+                2 => 'Order has been shipped successfully.',
+                3 => 'Order is currently in transit.',
+                4 => 'Order has been delivered successfully.',
+                5 => 'Order has been cancelled successfully.'
             ];
             
             $message = $statusMessages[$request->status] ?? 'Order status updated successfully.';

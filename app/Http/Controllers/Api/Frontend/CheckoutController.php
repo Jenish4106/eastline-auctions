@@ -106,7 +106,7 @@ class CheckoutController extends Controller
                 'shipping_cost' => $shippingCost,
                 'purchase_date' => now(),
                 'delivery_status' => 0,
-                'process_date' => now(),
+                // 'process_date' => now(), // Removed as it's now set on status 1 (Process)
 
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
