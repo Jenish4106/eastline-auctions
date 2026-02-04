@@ -54,17 +54,17 @@ class SMTP2GOService
                 'accept'           => 'application/json',
             ])->post($this->apiUrl, $data);
 
-            // Log::info('SMTP2GO response', [
-            //     'status' => $response->status(),
-            //     'body'   => $response->json(),
-            // ]);
+            Log::info('SMTP2GO response', [
+                'status' => $response->status(),
+                'body'   => $response->json(),
+            ]);
 
             return $response->successful();
 
         } catch (\Exception $e) {
-            // Log::error('SMTP2GO send failed', [
-            //     'error' => $e->getMessage()
-            // ]);
+            Log::error('SMTP2GO send failed', [
+                'error' => $e->getMessage()
+            ]);
             return false;
         }
     }
