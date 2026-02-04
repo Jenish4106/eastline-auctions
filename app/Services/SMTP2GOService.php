@@ -54,8 +54,17 @@ class SMTP2GOService
             ])->post($this->apiUrl, $data);
 
             if ($response->successful()) {
+                Log::info('Email sent successfully', [
+                    'to' => $to,
+                    'subject' => $subject,
+                ]);
                 return true;
             } else {
+                Log::error('Email sent failed', [
+                    'to' => $to,
+                    'subject' => $subject,
+                    'response' => $response->body(),
+                ]);
                 return false;
             }
         } catch (\Exception $e) {

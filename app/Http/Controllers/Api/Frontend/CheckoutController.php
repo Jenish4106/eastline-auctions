@@ -188,7 +188,15 @@ class CheckoutController extends Controller
                 'message' => 'Checkout successful',
                 'data' => [
                     'order_id' => $order->order_id,
-                    'invoice_url' => asset($path)
+                    'invoice_url' => asset($path),
+                    'user_email' => $user->email,
+                    'shipping_address' => [
+                        'street' => $order->shipping_same_as_billing ? $order->billing_street : $order->shipping_street,
+                        'city' => $order->shipping_same_as_billing ? $order->billing_city : $order->shipping_city,
+                        'state' => $order->shipping_same_as_billing ? $order->billing_state : $order->shipping_state,
+                        'zip' => $order->shipping_same_as_billing ? $order->billing_zip : $order->shipping_zip,
+                        'country' => $order->shipping_same_as_billing ? $order->billing_country : $order->shipping_country,
+                    ]
                 ]
             ]);
 
