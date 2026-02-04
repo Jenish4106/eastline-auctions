@@ -35,16 +35,8 @@ class SMTP2GOService
 
             $payload = [
                 'api_key'   => $this->apiKey,
-
-                'sender'    => [
-                    'email' => $this->senderEmail,
-                    'name'  => $this->senderName,
-                ],
-
-                'to'        => collect(is_array($to) ? $to : [$to])->map(function ($email) {
-                    return ['email' => $email];
-                })->toArray(),
-
+                'sender'    => "{$this->senderName} <{$this->senderEmail}>",
+                'to'        => is_array($to) ? $to : [$to],
                 'subject'   => $subject,
                 'html_body' => $htmlBody,
             ];
@@ -63,9 +55,9 @@ class SMTP2GOService
                         file_exists($attachment['path'])
                     ) {
                         $payload['attachments'][] = [
-                            'filename'     => $attachment['name'],
-                            'fileblob'     => base64_encode(file_get_contents($attachment['path'])),
-                            'content_type' => $attachment['type'],
+                            'filename'      => $attachment['name'],
+                            'fileblob'      => base64_encode(file_get_contents($attachment['path'])),
+                            'mimetype'  => $attachment['type'],
                         ];
 
                         Log::info('SMTP2GO attachment added', [
