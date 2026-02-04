@@ -22,14 +22,14 @@ class CheckoutController extends Controller
             'last_name' => 'required|string|max:255',
             'phone_number' => 'required|string|max:20',
             'vat_number' => 'nullable|string|max:50',
-            
+
             'billing_details.legal_company_name' => 'nullable|string|max:255',
             'billing_details.street_and_number' => 'required|string|max:255',
             'billing_details.city' => 'required|string|max:255',
             'billing_details.state_province' => 'nullable|string|max:255',
             'billing_details.zip_postal_code' => 'required|string|max:20',
             'billing_details.country' => 'required|string|max:255',
-            
+
             'shipping_details.is_different' => 'required|boolean',
             'shipping_details.shipping_street' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
             'shipping_details.shipping_city' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
@@ -55,10 +55,10 @@ class CheckoutController extends Controller
             if (!$machinery) {
                 return response()->json(['success' => false, 'message' => 'Machinery not found'], 404);
             }
-            
+
             if ($machinery->is_purchase || $machinery->bid_status == '2' || $machinery->bid_status === 'sold') {
                  return response()->json([
-                     'success' => false, 
+                     'success' => false,
                      'message' => 'This machinery has already been purchased.'
                  ], 400);
             }
@@ -75,19 +75,19 @@ class CheckoutController extends Controller
                 'purchase_date' => now(),
                 'delivery_status' => 0,
                 'process_date' => now(),
-                
+
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'phone_number' => $request->phone_number,
                 'vat_number' => $request->vat_number ?? null,
-                
+
                 'billing_company' => $billing['legal_company_name'] ?? null,
                 'billing_street' => $billing['street_and_number'],
                 'billing_city' => $billing['city'],
                 'billing_state' => $billing['state_province'] ?? null,
                 'billing_zip' => $billing['zip_postal_code'],
                 'billing_country' => $billing['country'],
-                
+
                 'shipping_same_as_billing' => !$isShippingDifferent,
                 'shipping_street' => $isShippingDifferent ? ($shipping['shipping_street'] ?? null) : null,
                 'shipping_city' => $isShippingDifferent ? ($shipping['shipping_city'] ?? null) : null,
@@ -102,13 +102,13 @@ class CheckoutController extends Controller
                 'won_user' => $user->id,
                 'bid_won_date' => now(),
             ]);
-            
+
             $companyName = Settings::get('company_name') ?? 'RB Equipment Sales';
             $companyAddress = Settings::get('address') ?? '';
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';
-            
-            $companyLogo = Settings::get('logo');
+
+            $companyLogo = Settings::get('white_logo');
             $companyLogoPath = null;
             if ($companyLogo && File::exists(public_path($companyLogo))) {
                 $companyLogoPath = public_path($companyLogo);
@@ -139,12 +139,12 @@ class CheckoutController extends Controller
             $pdf = Pdf::loadView('pdf.invoice', $data);
             $fileName = 'invoice_' . $order->order_id . '.pdf';
             $path = 'uploads/invoices/' . $fileName;
-            
+
             $publicDir = public_path('uploads/invoices');
             if (!File::exists($publicDir)) {
                 File::makeDirectory($publicDir, 0755, true);
             }
-            
+
             $pdf->save(public_path($path));
 
             $order->update([
