@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Log;
 
 class SMTP2GOService
 {
-    private $apiKey;
-    private $apiUrl;
-    private $senderEmail;
-    private $senderName;
+    protected string $apiKey;
+    protected string $apiUrl;
+    protected string $senderEmail;
+    protected string $senderName;
 
     public function __construct()
     {
@@ -20,39 +20,68 @@ class SMTP2GOService
         $this->senderName  = env('MAIL_FROM_NAME');
     }
 
-    public function sendEmail($to, $subject, $htmlBody, $attachments = [], $textBody = null)
+    /**
+     * Send email using SMTP2GO API
+     *
+     * @param string|array $to
+     * @param string $subject
+     * @param string $htmlBody
+     * @param array $attachments
+     * @param string|null $textBody
+     * @return bool
+     */
+    public function sendEmail($to, string $subject, string $htmlBody, array $attachments = [], ?string $textBody = null): bool
     {
         try {
-            $data = [
-                'sender'     => $this->senderEmail,
-                'to'         => is_array($to) ? $to : [$to],
-                'subject'    => $subject,
-                'html_body'  => $htmlBody,
+
+            $payload = [
+                'api_key' => $this->apiKey,
+
+                'sender' => [
+                    'email' => $this->senderEmail,
+                    'name'  => $this->senderName,
+                ],
+
+                'to' => collect(is_array($to) ? $to : [$to])->map(function ($email) {
+                    return ['email' => $email];
+                })->toArray(),
+
+                'subject'   => $subject,
+                'html_body' => $htmlBody,
             ];
 
             if ($textBody) {
-                $data['text_body'] = $textBody;
+                $payload['text_body'] = $textBody;
             }
 
             if (!empty($attachments)) {
-                $data['attachments'] = [];
+                $payload['attachments'] = [];
 
                 foreach ($attachments as $attachment) {
-                    if (file_exists($attachment['path'])) {
-                        $data['attachments'][] = [
-                            'filename'      => $attachment['name'],
-                            'fileblob' => base64_encode(file_get_contents($attachment['path'])),
-                            'content_type'  => $attachment['type'],
+
+                    if (
+                        isset($attachment['path'], $attachment['name'], $attachment['type']) &&
+                        file_exists($attachment['path'])
+                    ) {
+                        $payload['attachments'][] = [
+                            'filename'     => $attachment['name'],
+                            'fileblob'     => base64_encode(file_get_contents($attachment['path'])),
+                            'content_type' => $attachment['type'],
                         ];
+
+                        Log::info('SMTP2GO attachment added', [
+                            'file' => $attachment['path']
+                        ]);
+                    } else {
+                        Log::warning('SMTP2GO attachment missing or not found', $attachment);
                     }
                 }
             }
 
             $response = Http::withHeaders([
-                'X-Smtp2go-Api-Key' => $this->apiKey,
-                'Content-Type'     => 'application/json',
-                'accept'           => 'application/json',
-            ])->post($this->apiUrl, $data);
+                'Content-Type' => 'application/json',
+                'Accept'       => 'application/json',
+            ])->post($this->apiUrl, $payload);
 
             Log::info('SMTP2GO response', [
                 'status' => $response->status(),
@@ -61,10 +90,13 @@ class SMTP2GOService
 
             return $response->successful();
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
             Log::error('SMTP2GO send failed', [
-                'error' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
             ]);
+
             return false;
         }
     }
