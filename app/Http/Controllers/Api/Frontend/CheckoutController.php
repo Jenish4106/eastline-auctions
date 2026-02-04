@@ -108,7 +108,7 @@ class CheckoutController extends Controller
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';
 
-            $companyLogo = Settings::get('white_logo');
+            $companyLogo = Settings::get('dark_logo');
             $companyLogoPath = null;
             if ($companyLogo && File::exists(public_path($companyLogo))) {
                 $companyLogoPath = public_path($companyLogo);
