@@ -107,6 +107,7 @@ Route::middleware(['auth.user'])->group(function () {
 
     Route::post('/user/profile-update', [UsersController::class, 'updateProfile']);
     Route::get('/user/get-profile', [UsersController::class, 'getProfile']);
+    Route::post('/user/get-details', [UsersController::class, 'getUserDetails']);
 });
 
 Route::get('/get-categories', [UsersController::class, 'getCategories']);

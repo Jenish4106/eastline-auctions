@@ -189,4 +189,28 @@ class UsersController extends Controller
             ], 500);
         }
     }
+
+    public function getUserDetails(Request $request) {
+        try {
+            $user = auth('api')->user();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized access. Please provide a valid token.',
+                ], 401);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'User details retrieved successfully',
+                'data' => $user,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong, please try again.',
+            ], 500);
+        }
+    }
 }
