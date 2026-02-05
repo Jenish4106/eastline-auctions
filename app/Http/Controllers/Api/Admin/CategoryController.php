@@ -17,7 +17,7 @@ class CategoryController extends Controller
         try {
             $search = $request->input('search', '');
             
-            $perPage = $request->input('per_page', 10);
+            $perPage = $request->input('per_page');
             $page = $request->input('page', 1);
             $sortBy = $request->input('sort_by', 'created_at');
             $sortOrder = $request->input('sort_order', 'desc');
