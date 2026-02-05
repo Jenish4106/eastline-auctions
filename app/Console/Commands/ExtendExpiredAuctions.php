@@ -39,6 +39,11 @@ class ExtendExpiredAuctions extends Command
 
         foreach ($expiredMachinery as $machinery) {
             try {
+                if ($machinery->bids()->exists()) {
+                    $this->info("Skipping machinery ID {$machinery->id}: Already has bids.");
+                    continue;
+                }
+
                 $bidEndDays = $machinery->bid_end_days ?? 7;
 
                 $newStartTime = $currentTime;

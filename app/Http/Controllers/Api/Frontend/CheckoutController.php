@@ -75,7 +75,6 @@ class CheckoutController extends Controller
             $shipping = $request->input('shipping_details');
             $isShippingDifferent = filter_var($shipping['is_different'], FILTER_VALIDATE_BOOLEAN);
 
-            // Calculate Shipping Cost
             $shippingCost = 0;
             try {
                 $shippingZip = $isShippingDifferent ? $shipping['shipping_zip'] : $billing['zip_postal_code'];
@@ -95,7 +94,6 @@ class CheckoutController extends Controller
                     }
                 }
             } catch (\Exception $e) {
-                // Keep shipping cost as 0 if calculation fails
             }
 
             $order = Order::create([

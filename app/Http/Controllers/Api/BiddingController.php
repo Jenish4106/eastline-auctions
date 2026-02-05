@@ -20,9 +20,19 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Str;
+use App\Services\GoogleMapsService;
+use App\Mail\SendContractMail;
+use Carbon\Carbon;
 
 class BiddingController extends Controller
 {
+    protected $googleMapsService;
+
+    public function __construct(GoogleMapsService $googleMapsService)
+    {
+        $this->googleMapsService = $googleMapsService;
+    }
+
     public function placeBid(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -49,6 +59,20 @@ class BiddingController extends Controller
 
             $machinery = Machinery::find($request->machinery_id);
 
+            if ($machinery->bid_status == '2') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This machinery has already been sold.',
+                ], 400);
+            }
+
+            if ($machinery->bid_end_time && Carbon::now()->greaterThan($machinery->bid_end_time)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The bidding for this machinery has ended.',
+                ], 400);
+            }
+
             $previousHighestBid = Bid::where('machinery_id', $request->machinery_id)
                             ->orderBy('amount', 'desc')
                             ->first();
@@ -63,22 +87,44 @@ class BiddingController extends Controller
                 ], 400);
             }
 
+            $isWon = false;
+            if ($machinery->buy_now_price > 0 && $request->amount >= $machinery->buy_now_price) {
+                $isWon = true;
+            }
+
             $bid = Bid::create([
                 'user_id' => $user->id,
                 'machinery_id' => $request->machinery_id,
                 'amount' => $request->amount,
             ]);
 
-            $currentOffer = $machinery->offer ? intval($machinery->offer) : 0;
             $machinery->increment('offer');
 
-            try {
-                $mail = new BiddingMail($user, $machinery, $request->amount);
-                $smtp2goService = new SMTP2GOService();
-                $htmlContent = $mail->renderHtmlContent();
-                $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
-            } catch (\Exception $e) {
-                \Log::error('Failed to send bidding email: ' . $e->getMessage());
+            if ($isWon) {
+                $machinery->update([
+                    'bid_status'      => '2',
+                    'won_user'        => $user->id,
+                    'bid_won_date'    => Carbon::now(),
+                    'contract_status' => '0',
+                ]);
+
+                try {
+                    $mail = new SendContractMail($user, $machinery, null);
+                    $smtp2goService = new SMTP2GOService();
+                    $htmlContent = $mail->renderHtmlContent();
+                    $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send winning bid notification: ' . $e->getMessage());
+                }
+            } else {
+                try {
+                    $mail = new BiddingMail($user, $machinery, $request->amount);
+                    $smtp2goService = new SMTP2GOService();
+                    $htmlContent = $mail->renderHtmlContent();
+                    $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send bidding email: ' . $e->getMessage());
+                }
             }
 
             if ($previousHighestBid && $previousHighestBid->user_id != $user->id) {
@@ -97,8 +143,9 @@ class BiddingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Bid placed successfully.',
+                'message' => $isWon ? 'Congratulations! You have won this auction.' : 'Bid placed successfully.',
                 'bid' => $bid,
+                'won' => $isWon
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -513,6 +560,20 @@ class BiddingController extends Controller
         $validator = Validator::make($request->all(), [
             'machinery_id' => 'required|exists:machinery,id',
             'sign_photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240',
+
+            'billing_details.legal_company_name' => 'nullable|string|max:255',
+            'billing_details.street_and_number' => 'required|string|max:255',
+            'billing_details.city' => 'required|string|max:255',
+            'billing_details.state_province' => 'nullable|string|max:255',
+            'billing_details.zip_postal_code' => 'required|string|max:20',
+            'billing_details.country' => 'required|string|max:255',
+
+            'shipping_details.is_different' => 'required|boolean',
+            'shipping_details.shipping_street' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
+            'shipping_details.shipping_city' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
+            'shipping_details.shipping_state' => 'nullable|string|max:255',
+            'shipping_details.shipping_zip' => 'required_if:shipping_details.is_different,true|nullable|string|max:20',
+            'shipping_details.shipping_country' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -543,6 +604,33 @@ class BiddingController extends Controller
                 ], 403);
             }
 
+            $billing = $request->input('billing_details');
+            $shipping = $request->input('shipping_details');
+            $isShippingDifferent = filter_var($shipping['is_different'], FILTER_VALIDATE_BOOLEAN);
+
+            // Calculate Shipping Cost
+            $shippingCost = 0;
+            try {
+                $shippingZip = $isShippingDifferent ? $shipping['shipping_zip'] : $billing['zip_postal_code'];
+                $shippingCountry = $isShippingDifferent ? $shipping['shipping_country'] : $billing['country'];
+                
+                $companyAddress = $this->googleMapsService->getCompanyAddress();
+                if ($companyAddress) {
+                    $companyLocation = $this->googleMapsService->geocodeAddress($companyAddress);
+                    $customerLocation = $this->googleMapsService->getCoordinatesFromZipAndCountry($shippingZip, $shippingCountry);
+                    
+                    if ($companyLocation && $customerLocation) {
+                        $distanceResult = $this->googleMapsService->calculateDistance($companyLocation, $customerLocation);
+                        if ($distanceResult) {
+                            $perMileDeliveryCost = Settings::get('per_mile_delivery_cost', 0);
+                            $shippingCost = $distanceResult['distance_miles'] * $perMileDeliveryCost;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Keep shipping cost as 0 if calculation fails
+            }
+
             $signatureImage = $request->file('sign_photo');
 
             $signatureDirectory = public_path('uploads/signatures');
@@ -555,17 +643,60 @@ class BiddingController extends Controller
             $signatureImage->move(public_path('uploads/signatures'), $signatureFileName);
 
             $highestBid = $machinery->bids()->max('amount');
+            $highestBidModel = $machinery->bids()->orderBy('amount', 'desc')->first();
 
-            $contractStatusMap = [
-                0 => 'Pending',
-                1 => 'Approved',
-                3 => 'Signed',
-                4 => 'Rejected',
-            ];
+            $order = Order::where('machinery_id', $machineryId)->where('user_id', $user->id)->latest()->first();
+
+            if ($order) {
+                $order->update([
+                    'price' => $highestBid,
+                    'shipping_cost' => $shippingCost,
+                    'billing_company' => $billing['legal_company_name'] ?? null,
+                    'billing_street' => $billing['street_and_number'],
+                    'billing_city' => $billing['city'],
+                    'billing_state' => $billing['state_province'] ?? null,
+                    'billing_zip' => $billing['zip_postal_code'],
+                    'billing_country' => $billing['country'],
+
+                    'shipping_same_as_billing' => !$isShippingDifferent,
+                    'shipping_street' => $isShippingDifferent ? ($shipping['shipping_street'] ?? null) : null,
+                    'shipping_city' => $isShippingDifferent ? ($shipping['shipping_city'] ?? null) : null,
+                    'shipping_state' => $isShippingDifferent ? ($shipping['shipping_state'] ?? null) : null,
+                    'shipping_zip' => $isShippingDifferent ? ($shipping['shipping_zip'] ?? null) : null,
+                    'shipping_country' => $isShippingDifferent ? ($shipping['shipping_country'] ?? null) : null,
+                ]);
+            } else {
+                $order = Order::create([
+                    'order_id' => 'ORD-' . strtoupper(Str::random(10)),
+                    'machinery_id' => $machineryId,
+                    'user_id' => $user->id,
+                    'price' => $highestBid,
+                    'shipping_cost' => $shippingCost,
+                    'purchase_date' => now(),
+                    'delivery_status' => 0,
+
+                    'billing_company' => $billing['legal_company_name'] ?? null,
+                    'billing_street' => $billing['street_and_number'],
+                    'billing_city' => $billing['city'],
+                    'billing_state' => $billing['state_province'] ?? null,
+                    'billing_zip' => $billing['zip_postal_code'],
+                    'billing_country' => $billing['country'],
+
+                    'shipping_same_as_billing' => !$isShippingDifferent,
+                    'shipping_street' => $isShippingDifferent ? ($shipping['shipping_street'] ?? null) : null,
+                    'shipping_city' => $isShippingDifferent ? ($shipping['shipping_city'] ?? null) : null,
+                    'shipping_state' => $isShippingDifferent ? ($shipping['shipping_state'] ?? null) : null,
+                    'shipping_zip' => $isShippingDifferent ? ($shipping['shipping_zip'] ?? null) : null,
+                    'shipping_country' => $isShippingDifferent ? ($shipping['shipping_country'] ?? null) : null,
+                ]);
+            }
 
             $winningUser = User::find($machinery->won_user);
 
-            $highestBidModel = $machinery->bids()->orderBy('amount', 'desc')->first();
+            $companyName = Settings::get('company_name') ?? 'RB Equipment Sales';
+            $companyAddress = Settings::get('address') ?? '';
+            $companyPhone = Settings::get('phone_no') ?? '';
+            $companyEmail = Settings::get('email') ?? '';
 
             $contractDataView = [
                 'machinery' => $machinery,
@@ -574,10 +705,10 @@ class BiddingController extends Controller
                 'signaturePath' => $signaturePath,
                 'absoluteSignaturePath' => public_path($signaturePath),
                 'companyInfo' => [
-                    'name' => Settings::get('company_name',),
-                    'address' => Settings::get('address'),
-                    'phone' => Settings::get('phone_no'),
-                    'email' => Settings::get('email'),
+                    'name' => $companyName,
+                    'address' => $companyAddress,
+                    'phone' => $companyPhone,
+                    'email' => $companyEmail,
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];
@@ -596,13 +727,57 @@ class BiddingController extends Controller
             $fullPath = public_path($pdfPath);
             file_put_contents($fullPath, $pdfContent);
 
-            $order = Order::where('machinery_id', $machineryId)->where('user_id', $user->id)->latest()->first();
-
             $fileManager = MachineryFileManager::create([
                 'machinery_id' => $machineryId,
                 'order_id' => $order ? $order->id : null,
                 'image_path' => $pdfPath,
                 'type' => 'contract_pdf',
+            ]);
+
+            $companyLogo = Settings::get('dark_logo');
+            $companyLogoPath = null;
+            if ($companyLogo && File::exists(public_path($companyLogo))) {
+                $companyLogoPath = public_path($companyLogo);
+            }
+
+            $machinery->load('images');
+            $firstImage = $machinery->images->firstWhere('type', 'image');
+            $machineryImage = null;
+            if ($firstImage) {
+                 $imagePath = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
+                 if (File::exists(public_path($imagePath))) {
+                     $machineryImage = public_path($imagePath);
+                 }
+            }
+
+            $invoiceData = [
+                'order' => $order,
+                'machineryImage' => $machineryImage,
+                'companyInfo' => [
+                    'name' => $companyName,
+                    'address' => $companyAddress,
+                    'phone' => $companyPhone,
+                    'email' => $companyEmail,
+                    'logo' => $companyLogoPath,
+                ]
+            ];
+
+            $invoicePdf = Pdf::loadView('pdf.invoice', $invoiceData);
+            $invoiceFileName = 'invoice_' . $order->order_id . '.pdf';
+            $invoicePath = 'uploads/invoices/' . $invoiceFileName;
+
+            $invoicePublicDir = public_path('uploads/invoices');
+            if (!File::exists($invoicePublicDir)) {
+                File::makeDirectory($invoicePublicDir, 0755, true);
+            }
+
+            $invoicePdf->save(public_path($invoicePath));
+
+            MachineryFileManager::create([
+                'machinery_id' => $machinery->id,
+                'order_id' => $order->id,
+                'image_path' => $invoicePath,
+                'type' => 'invoice',
             ]);
 
             $machinery->update([
@@ -611,10 +786,11 @@ class BiddingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Contract signed and PDF generated successfully',
+                'message' => 'Contract signed, PDF and Invoice generated successfully',
                 'data' => [
                     'contract_file_id' => $fileManager->id,
                     'contract_file_path' => asset($pdfPath),
+                    'invoice_url' => asset($invoicePath),
                     'signature_path' => asset($signaturePath),
                     'machinery_id' => $machineryId,
                 ]
@@ -901,7 +1077,6 @@ class BiddingController extends Controller
                 'price' => $machinery->buy_now_price,
                 'purchase_date' => now(),
                 'delivery_status' => 0,
-                // 'process_date' => now(), // Removed as it's now set on status 1 (Process)
             ]);
 
             $machinery->update([
@@ -911,7 +1086,6 @@ class BiddingController extends Controller
                 'bid_won_date' => now(),
             ]);
 
-            // Send buy now order email
             try {
                 $mail = new BuyNowOrderMail($user, $order, $machinery);
                 $smtp2goService = new SMTP2GOService();

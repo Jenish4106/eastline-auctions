@@ -48,7 +48,7 @@ class CheckBidEndTime extends Command
                     'bid_status'      => '2',
                     'won_user'        => $highestBid->user_id,
                     'bid_won_date'    => Carbon::now(),
-                    'contract_status' => '0',
+                    'contract_status' => '0'
                 ]);
 
                 $user = User::find($highestBid->user_id);

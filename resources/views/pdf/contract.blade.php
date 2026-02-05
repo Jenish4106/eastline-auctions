@@ -234,7 +234,7 @@
 
     <div class="footer">
         <div class="bold" style="font-size: 13pt; margin-bottom: 10px;">IN WITNESS WHEREOF</div>
-        <div class="content">The parties have executed this Sales Agreement as follows:</div>
+        <div class="content">The parties have executed this Sales Agreement` as follows:</div>
 
         <div class="signature-row" style="margin-top: 30px;">
             <span class="bold">Buyer's Signature:</span>
@@ -250,7 +250,7 @@
         <div class="signature-row" style="margin-top: 15px;">
             <span class="bold">Seller's Signature:</span> <span style="margin-left: 5px;">{{ $companyInfo['name'] }}</span>
             <div class="signature-line">
-                <img src="{{ asset('uploads/signatures/seller_signature.png') }}" alt="Seller Signature" class="signature-img">
+                <img src="{{ asset('uploads/signatures/seller_signature.png') }}" class="signature-img">
             </div>
         </div>
     </div>
