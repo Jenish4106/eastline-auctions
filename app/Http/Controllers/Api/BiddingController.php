@@ -559,7 +559,7 @@ class BiddingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'machinery_id' => 'required|exists:machinery,id',
-            'sign_photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:10240',
+            'sign_photo' => 'required|string',
 
             'billing_details.legal_company_name' => 'nullable|string|max:255',
             'billing_details.street_and_number' => 'required|string|max:255',
@@ -631,16 +631,32 @@ class BiddingController extends Controller
                 // Keep shipping cost as 0 if calculation fails
             }
 
-            $signatureImage = $request->file('sign_photo');
-
+            $signatureData = $request->input('sign_photo');
             $signatureDirectory = public_path('uploads/signatures');
             if (!File::exists($signatureDirectory)) {
                 File::makeDirectory($signatureDirectory, 0755, true);
             }
 
-            $signatureFileName = time() . '_' . $signatureImage->getClientOriginalName();
-            $signaturePath = 'uploads/signatures/' . $signatureFileName;
-            $signatureImage->move(public_path('uploads/signatures'), $signatureFileName);
+            if (preg_match('/^data:image\/(\w+);base64,/', $signatureData, $type)) {
+                $signatureData = substr($signatureData, strpos($signatureData, ',') + 1);
+                $type = strtolower($type[1]);
+
+                if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
+                    throw new \Exception('invalid image type');
+                }
+                $signatureData = str_replace(' ', '+', $signatureData);
+                $signatureData = base64_decode($signatureData);
+
+                if ($signatureData === false) {
+                    throw new \Exception('base64_decode failed');
+                }
+                
+                $signatureFileName = time() . '_signature.' . $type;
+                $signaturePath = 'uploads/signatures/' . $signatureFileName;
+                File::put(public_path($signaturePath), $signatureData);
+            } else {
+                throw new \Exception('Invalid signature format');
+            }
 
             $highestBid = $machinery->bids()->max('amount');
             $highestBidModel = $machinery->bids()->orderBy('amount', 'desc')->first();
