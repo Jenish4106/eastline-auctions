@@ -52,7 +52,6 @@ class Machinery extends Model
         'won_user',
         'bid_won_date',
         'is_purchase',
-        'contract_path',
         'contract_status',
         'description',
         'offer',
@@ -73,6 +72,10 @@ class Machinery extends Model
         'is_purchase' => 'boolean'
     ];
 
+    protected $appends = [
+        'contract_url',
+    ];
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -81,6 +84,22 @@ class Machinery extends Model
     public function images()
     {
         return $this->hasMany(MachineryFileManager::class);
+    }
+
+    public function invoice()
+    {
+        return $this->hasOne(MachineryFileManager::class)->where('type', 'invoice')->latest();
+    }
+
+    public function contract()
+    {
+        return $this->hasOne(MachineryFileManager::class)->where('type', 'contract_pdf')->latest();
+    }
+
+    public function getContractUrlAttribute()
+    {
+        $contract = $this->contract;
+        return $contract ? asset($contract->image_path) : null;
     }
 
     public function bids()

@@ -583,27 +583,27 @@ class BiddingController extends Controller
             $pdfContent = $pdf->output();
 
             $pdfFileName = 'contract_' . $machineryId . '_' . time() . '.pdf';
-            $pdfPath = 'machinery_files/' . $pdfFileName;
+            $pdfPath = 'uploads/machinery_files/' . $pdfFileName;
 
             $publicDirectory = public_path('uploads/machinery_files');
             if (!File::exists($publicDirectory)) {
                 File::makeDirectory($publicDirectory, 0755, true);
             }
 
-            $fullPath = public_path('uploads/machinery_files/' . $pdfFileName);
+            $fullPath = public_path($pdfPath);
             file_put_contents($fullPath, $pdfContent);
 
-            $pdfPath = 'uploads/machinery_files/' . $pdfFileName;
+            $order = Order::where('machinery_id', $machineryId)->where('user_id', $user->id)->latest()->first();
 
             $fileManager = MachineryFileManager::create([
                 'machinery_id' => $machineryId,
+                'order_id' => $order ? $order->id : null,
                 'image_path' => $pdfPath,
                 'type' => 'contract_pdf',
             ]);
 
             $machinery->update([
                 'contract_status' => 3,
-                'contract_path' => $pdfPath,
             ]);
 
             return response()->json([
@@ -689,10 +689,11 @@ class BiddingController extends Controller
                         'purchase_date' => $order->purchase_date,
                         'delivery_status' => $order->delivery_status,
                         'delivery_status_text' => isset($deliveryStatusMap[$order->delivery_status]) ? $deliveryStatusMap[$order->delivery_status] : 'Unknown',
-                        'invoice_url' => $order->invoice_path ? asset($order->invoice_path) : null,
+                        'invoice_url' => $order->invoice_url,
+                        'contract_url' => $order->contract_url,
                     ];
                 }
-            })->filter(); // Remove null values if machinery doesn't exist
+            })->filter();
 
             if ($ordersWithFormattedData->isEmpty()) {
                 return response()->json([
@@ -828,7 +829,8 @@ class BiddingController extends Controller
                 'delivery_contact' => $deliveryContact,
                 'current_status' => isset($deliveryStatusMap[$order->delivery_status]) ? $deliveryStatusMap[$order->delivery_status] : 'Unknown',
                 'delivery_timeline' => $deliveryTimeline,
-                'invoice_url' => $order->invoice_path ? asset($order->invoice_path) : null,
+                'invoice_url' => $order->invoice_url,
+                'contract_url' => $order->contract_url,
             ];
 
             return response()->json([

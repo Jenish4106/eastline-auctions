@@ -234,7 +234,7 @@ class BiddingController extends Controller
             $sortBy = $request->input('sort_by', 'machinery.created_at');
             $sortOrder = $request->input('sort_order', 'desc');
 
-            $allowedSortFields = ['machinery.id', 'machinery.year', 'machinery.make', 'machinery.model', 'machinery.contract_status', 'users.first_name', 'users.last_name', 'users.phone_no', 'categories.category_name', 'machinery.created_at', 'machinery.won_bid_amount', 'machinery_name', 'user_full_name', 'machinery.contract_path'];
+            $allowedSortFields = ['machinery.id', 'machinery.year', 'machinery.make', 'machinery.model', 'machinery.contract_status', 'users.first_name', 'users.last_name', 'users.phone_no', 'categories.category_name', 'machinery.created_at', 'machinery.won_bid_amount', 'machinery_name', 'user_full_name'];
             $allowedSortOrders = ['asc', 'desc'];
 
             if (!in_array($sortBy, $allowedSortFields)) {
@@ -252,7 +252,6 @@ class BiddingController extends Controller
                 'machinery.make',
                 'machinery.model',
                 'machinery.contract_status',
-                'machinery.contract_path',
                 'machinery.won_user',
                 'machinery.created_at',
                 'users.first_name',
@@ -305,7 +304,7 @@ class BiddingController extends Controller
                     'phone_no' => $machinery->phone_no ?? '',
                     'category' => $machinery->category_name ?? 'Uncategorized',
                     'won_bid_amount' => $machinery->won_bid_amount,
-                    'contract_file_url' => $machinery->contract_path ? asset($machinery->contract_path) : null,
+                    'contract_file_url' => $machinery->contract_url,
                 ];
             });
 
@@ -383,7 +382,7 @@ class BiddingController extends Controller
                 'phone_no' => $machinery->wonUser->phone_no ?? '',
                 'category' => $machinery->category ? $machinery->category->category_name : 'Uncategorized',
                 'won_bid_amount' => $highestBid,
-                'contract_file_url' => $machinery->contract_path ? asset($machinery->contract_path) : null,
+                'contract_file_url' => $machinery->contract_url,
             ];
 
             return response()->json([

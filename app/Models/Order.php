@@ -21,11 +21,6 @@ class Order extends Model
         'in_transit_date',
         'delivered_date',
         'cancelled_date',
-        'invoice_path',
-        'first_name',
-        'last_name',
-        'phone_number',
-        'vat_number',
         'billing_company',
         'billing_street',
         'billing_city',
@@ -40,6 +35,11 @@ class Order extends Model
         'shipping_country',
     ];
     
+    protected $appends = [
+        'invoice_url',
+        'contract_url',
+    ];
+
     protected $casts = [
         'purchase_date' => 'date',
         'process_date' => 'datetime',
@@ -58,6 +58,28 @@ class Order extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function invoice()
+    {
+        return $this->hasOne(MachineryFileManager::class, 'order_id', 'id')->where('type', 'invoice');
+    }
+
+    public function contract()
+    {
+        return $this->hasOne(MachineryFileManager::class, 'order_id', 'id')->where('type', 'contract_pdf');
+    }
+
+    public function getInvoiceUrlAttribute()
+    {
+        $invoice = $this->invoice;
+        return $invoice ? asset($invoice->image_path) : null;
+    }
+
+    public function getContractUrlAttribute()
+    {
+        $contract = $this->contract;
+        return $contract ? asset($contract->image_path) : null;
     }
     
     public function getDeliveryStatusTextAttribute()

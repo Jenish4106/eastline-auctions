@@ -1,219 +1,266 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Equipment Sales Contract</title>
+    <meta charset="utf-8" />
+    <title>Sales Agreement</title>
     <style>
+        @page {
+            margin: 1.2cm 1.5cm;
+        }
         body {
-            font-family: DejaVu Sans, Arial, sans-serif;
-            font-size: 13px;
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 11pt;
+            line-height: 1.35;
             color: #000;
-            line-height: 1.6;
-            margin: 30px;
-        }
-
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
-            margin-bottom: 25px;
-        }
-
-        .header h1 {
             margin: 0;
-            font-size: 22px;
-            letter-spacing: 1px;
+            padding: 0;
         }
-
-        .company-info {
-            font-size: 12px;
-            margin-top: 8px;
+        .header {
+            text-align: right;
+            margin-bottom: 30px;
         }
-
-        .section {
-            margin-bottom: 20px;
+        .header-title {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #000;
         }
-
         .section-title {
-            font-size: 15px;
+            font-size: 12.5pt;
             font-weight: bold;
+            margin-top: 18px;
             margin-bottom: 8px;
-            text-transform: uppercase;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 4px;
+            color: #000;
         }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
+        .content {
+            margin-bottom: 12px;
+            text-align: left;
         }
-
-        table th, table td {
-            border: 1px solid #333;
-            padding: 8px;
-            vertical-align: top;
+        .party-block {
+            margin-bottom: 15px;
+            text-align: left;
         }
-
-        table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-            width: 35%;
-        }
-
-        .terms ol {
-            padding-left: 18px;
-        }
-
-        .terms li {
-            margin-bottom: 6px;
-        }
-
-        .signature-table {
-            width: 100%;
-            margin-top: 40px;
-            border: none;
-        }
-
-        .signature-table td {
-            border: none;
-            padding-top: 40px;
-            width: 50%;
-        }
-
-        .footer {
+        .center-text {
             text-align: center;
-            font-size: 11px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .bold {
+            font-weight: bold;
+        }
+        ul {
+            margin: 8px 0 12px 25px;
+            padding: 0;
+            list-style-type: disc;
+        }
+        li {
+            margin-bottom: 3px;
+        }
+        .footer {
             margin-top: 40px;
-            color: #555;
+        }
+        .signature-row {
+            margin-top: 30px;
+        }
+        .signature-line {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            width: 350px;
+            margin-left: 10px;
+            height: 25px;
+            vertical-align: bottom;
+            position: relative;
+        }
+        .signature-name {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-style: italic;
+            font-size: 13pt;
+            color: #000;
+            position: absolute;
+            bottom: 2px;
+            left: 5px;
+        }
+        .signature-img {
+            max-height: 45px;
+            position: absolute;
+            bottom: -5px;
+            left: 5px;
+        }
+        .page-break {
+            page-break-after: always;
         }
     </style>
 </head>
 <body>
-
-    <!-- HEADER -->
+    <!-- Page 1 -->
     <div class="header">
-        <h1>SALES CONTRACT</h1>
-        <div class="company-info">
-            <strong>RB Equipment Sales</strong><br>
-            123 Industrial Road, Montgomery Village, USA<br>
-            Sales: +34 520-900-1307 | Email: rb@equipmentsales.com
+        <div class="header-title">Sales Agreement</div>
+    </div>
+
+    <div class="content">
+        THIS SALES AGREEMENT (the "Agreement") is dated this <span class="bold">{{ \Carbon\Carbon::parse($contractDate)->format('jS \o\f F, Y') }}</span> <span class="bold">BETWEEN:</span>
+    </div>
+
+    <div class="party-block">
+        <span class="bold">{{ $companyInfo['name'] }}</span>, {{ $companyInfo['address'] }} (the <span class="bold">"Seller"</span>)<br>
+        <span class="bold">OF THE FIRST PART</span>
+    </div>
+
+    <div class="center-text">- AND -</div>
+
+    <div class="party-block" style="text-align: right;">
+        <span class="bold">{{ $user->first_name }} {{ $user->last_name }}</span>, 
+        Email: {{ $user->email }} 
+        {{ $user->phone_no ? ', Phone: ' . $user->phone_no : '' }} 
+        (the <span class="bold">"Buyer"</span>)<br>
+        <span class="bold">OF THE SECOND PART</span>
+    </div>
+
+    <div class="content" style="margin-top: 20px;">
+        IN CONSIDERATION of the covenants and agreements contained in this Agreement, the parties agree as follows:
+    </div>
+
+    <div class="section-title">1. Sale of Goods</div>
+    <div class="content">
+        The Seller agrees to sell, transfer, and deliver to the Buyer the following goods within 14 days after the payment is processed:
+        <ul>
+            <li class="bold">{{ trim($machinery->year . ' ' . $machinery->make . ' ' . $machinery->model) }}</li>
+            <li>Hours: {{ $machinery->working_hours }}</li>
+            <li>Serial No.: {{ $machinery->serial_number }}</li>
+        </ul>
+    </div>
+
+    <div class="section-title">2. Purchase Price</div>
+    <div class="content">
+        The Buyer shall pay the sum of <span class="bold">${{ number_format($highestBid->amount ?? 0, 2) }}</span> (the "Purchase Price") by bank wire transfer as required in Clause 5, which includes the following:
+        <ul>
+            <li><span class="bold">Equipment Cost:</span> ${{ number_format($highestBid->amount ?? 0, 2) }}</li>
+            <li><span class="bold">Delivery Cost:</span> $0.00</li>
+        </ul>
+    </div>
+    <div class="content">
+        The Seller and Buyer acknowledge the sufficiency of this consideration. Any applicable taxes will be paid by the Seller unless the Buyer provides a valid tax exemption certificate acceptable to the relevant taxing authorities.
+    </div>
+
+    <div class="section-title">3. Payment</div>
+    <div class="content">
+        The Buyer commits to paying for the Goods in accordance with the terms of this Agreement.
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Page 2 -->
+    <div class="header">
+        <div class="header-title">Sales Agreement</div>
+    </div>
+
+    <div class="section-title">4. Delivery of Goods</div>
+    <div class="content">
+        The Goods will be deemed received by the Buyer when delivered to the provided delivery address. The Seller is fully responsible for the shipping process.
+    </div>
+
+    <div class="section-title">5. Risk of Loss</div>
+    <div class="content">
+        The risk of loss or damage to the Goods remains with the Seller until the Goods are received by the Buyer. The Buyer shall provide insurance covering both parties' interests until full payment is made to the Seller.
+    </div>
+
+    <div class="section-title">6. Warranties</div>
+    <div class="content">
+        The Goods are sold with a <span class="bold">6-month warranty on the engine and drivetrain</span>. The Seller disclaims all other warranties, except any applicable manufacturer warranties.
+    </div>
+
+    <div class="section-title">7. Inspection</div>
+    <div class="content">
+        The Buyer has a 30-day inspection period from the date of receipt. If the Goods are damaged or defective, the Buyer may return the Goods at the Seller's expense for a full refund.
+    </div>
+
+    <div class="section-title">8. Title and Documents</div>
+    <div class="content">
+        The Seller shall deliver all necessary title documents to the Buyer with the Goods.
+    </div>
+
+    <div class="section-title">9. Security Interest</div>
+    <div class="content">
+        The Seller retains the Purchase Price in escrow until the 30-day inspection period expires.
+    </div>
+
+    <div class="section-title">10. Claims</div>
+    <div class="content">
+        Failure by the Buyer to notify the Seller of any claim within 35 days from delivery constitutes acceptance of the Goods and waives all claims.
+    </div>
+
+    <div class="section-title">11. Excuse for Delay or Failure</div>
+    <div class="content">
+        The Seller is not liable for delays or defaults due to causes beyond its control, including labor disputes, transportation issues, or accidents. If delivery cannot occur within the agreed time, the Seller may terminate this Agreement with a full refund.
+    </div>
+
+    <div class="section-title">12. Remedies</div>
+    <div class="content">
+        The Buyer's exclusive remedy for defective Goods or other losses is limited to the Purchase Price paid, plus any actual transportation charges.
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Page 3 -->
+    <div class="header">
+        <div class="header-title">Sales Agreement</div>
+    </div>
+
+    <div class="section-title">13. Cancellation</div>
+    <div class="content">
+        The Seller may cancel this Agreement if:
+        <ul>
+            <li>The Buyer fails to pay for any shipment when due</li>
+            <li>The Buyer becomes insolvent or bankrupt</li>
+            <li>The Seller deems payment prospects impaired</li>
+        </ul>
+    </div>
+
+    <div class="section-title">14. Notices</div>
+    <div class="content">
+        Any notices under this Agreement shall be delivered personally or by prepaid registered mail to the addresses below:
+        <div style="margin-top: 10px;">
+            <div class="bold">Seller: <span style="font-weight: normal;">{{ $companyInfo['name'] }}, {{ $companyInfo['address'] }}</span></div>
+            <div class="bold" style="margin-top: 5px;">Buyer: <span style="font-weight: normal;">{{ $user->first_name }} {{ $user->last_name }}, Email: {{ $user->email }} {{ $user->phone_no ? ', Phone: ' . $user->phone_no : '' }}</span></div>
         </div>
-        <p><strong>Contract Date:</strong> {{ $contractDate }}</p>
     </div>
 
-    <!-- PARTIES -->
-    <div class="section">
-        <div class="section-title">Parties to the Contract</div>
-        <p>
-            This Sales Contract ("Agreement") is entered into on
-            <strong>{{ $contractDate }}</strong> between:
-        </p>
-
-        <p>
-            <strong>Seller:</strong><br>
-            RB Equipment Sales<br>
-            123 Industrial Road, Montgomery Village, USA
-        </p>
-
-        <p>
-            <strong>Buyer:</strong><br>
-            {{ $user->first_name }} {{ $user->last_name }}<br>
-            Email: {{ $user->email }}<br>
-            Phone: {{ $user->phone_no ?? 'N/A' }}
-        </p>
+    <div class="section-title">15. General Provisions</div>
+    <div class="content">
+        <ul>
+            <li>Headings are for convenience and do not affect interpretation.</li>
+            <li>All representations and warranties survive the closing of this Agreement.</li>
+            <li>Neither party may assign obligations without written consent.</li>
+            <li>Modifications must be in writing and signed by both parties.</li>
+            <li>This Agreement is governed by the laws of Missouri and the Missouri Uniform Commercial Code.</li>
+            <li>If any clause is unenforceable, the remainder remains in effect.</li>
+            <li>This Agreement benefits and binds the parties and their successors.</li>
+            <li>Execution in counterparts and facsimile signatures are valid.</li>
+            <li>Time is of the essence.</li>
+            <li>This Agreement constitutes the entire understanding between the parties.</li>
+        </ul>
     </div>
 
-    <!-- EQUIPMENT DETAILS -->
-    <div class="section">
-        <div class="section-title">Equipment Details</div>
-
-        <table>
-            <tr>
-                <th>Equipment Name</th>
-                <td>{{ trim($machinery->year . ' ' . $machinery->make . ' ' . $machinery->model) }}</td>
-            </tr>
-            <tr>
-                <th>Year</th>
-                <td>{{ $machinery->year }}</td>
-            </tr>
-            <tr>
-                <th>Make</th>
-                <td>{{ $machinery->make }}</td>
-            </tr>
-            <tr>
-                <th>Model</th>
-                <td>{{ $machinery->model }}</td>
-            </tr>
-            <tr>
-                <th>Serial Number</th>
-                <td>{{ $machinery->serial_number }}</td>
-            </tr>
-            <tr>
-                <th>Working Hours</th>
-                <td>{{ $machinery->working_hours }}</td>
-            </tr>
-            <tr>
-                <th>Final Sale Price</th>
-                @php
-                    $finalPrice = $highestBid->amount ?? 0;
-                @endphp
-                <td>
-                    <strong>${{ number_format($finalPrice, 2) }}</strong>
-                </td>
-            </tr>
-            <tr>
-                <th>Sale Date</th>
-                <td>{{ $contractDate }}</td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- TERMS -->
-    <div class="section terms">
-        <div class="section-title">Terms and Conditions</div>
-        <ol>
-            <li>Buyer shall complete full payment within seven (7) days from the contract date.</li>
-            <li>The equipment is sold strictly on an <strong>“AS-IS, WHERE-IS”</strong> basis without any warranties.</li>
-            <li>Buyer is solely responsible for transportation, loading, and insurance.</li>
-            <li>Equipment must be collected within thirty (30) days from the contract date.</li>
-            <li>All sales are final. No cancellations or refunds shall be permitted.</li>
-            <li>This Agreement shall be governed by and construed under applicable local laws.</li>
-        </ol>
-    </div>
-
-    <!-- SIGNATURES -->
-    <div class="section">
-        <div class="section-title">Signatures</div>
-
-        <table class="signature-table">
-            <tr>
-                <td>
-                    Buyer Signature:<br>
-                    @if(isset($absoluteSignaturePath) && file_exists($absoluteSignaturePath))
-                        <img src="{{ $absoluteSignaturePath }}" alt="Buyer Signature" style="max-width: 200px; max-height: 60px;"><br>
-                    @else
-                        _______________________________<br>
-                    @endif
-                    Name: {{ $user->first_name }} {{ $user->last_name }}<br>
-                    Date: {{ $contractDate }}
-                </td>
-                <td>
-                    Seller Signature:<br>
-                    _______________________________<br>
-                    Authorized Representative<br>
-                    RB Equipment Sales<br>
-                    Date: {{ $contractDate }}
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- FOOTER -->
     <div class="footer">
-        This document constitutes a legally binding agreement upon signature by both parties.<br>
-        © RB Equipment Sales – Professional Equipment Sales Since 2025
-    </div>
+        <div class="bold" style="font-size: 13pt; margin-bottom: 10px;">IN WITNESS WHEREOF</div>
+        <div class="content">The parties have executed this Sales Agreement as follows:</div>
 
+        <div class="signature-row" style="margin-top: 30px;">
+            <span class="bold">Buyer's Signature:</span>
+            <div class="signature-line">
+                @if(isset($absoluteSignaturePath) && file_exists($absoluteSignaturePath))
+                    <img src="{{ $absoluteSignaturePath }}" class="signature-img">
+                @else
+                    <span class="signature-name">{{ $user->first_name }} {{ $user->last_name }}</span>
+                @endif
+            </div>
+        </div>
+
+        <div class="signature-row" style="margin-top: 15px;">
+            <span class="bold">Seller's Signature:</span> <span style="margin-left: 5px;">{{ $companyInfo['name'] }}</span>
+            <div class="signature-line"></div>
+        </div>
+    </div>
 </body>
 </html>
+
+

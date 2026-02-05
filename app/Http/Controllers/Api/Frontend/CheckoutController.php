@@ -12,6 +12,9 @@ use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use App\Services\GoogleMapsService;
+use App\Models\MachineryFileManager;
+use App\Models\User;
+use Illuminate\Support\Facades\View;
 
 class CheckoutController extends Controller
 {
@@ -26,10 +29,7 @@ class CheckoutController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'machinery_id' => 'required|exists:machinery,id',
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'phone_number' => 'required|string|max:20',
-            'vat_number' => 'nullable|string|max:50',
+            'sign_photo' => 'required|string',
 
             'billing_details.legal_company_name' => 'nullable|string|max:255',
             'billing_details.street_and_number' => 'required|string|max:255',
@@ -106,12 +106,6 @@ class CheckoutController extends Controller
                 'shipping_cost' => $shippingCost,
                 'purchase_date' => now(),
                 'delivery_status' => 0,
-                // 'process_date' => now(), // Removed as it's now set on status 1 (Process)
-
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
-                'phone_number' => $request->phone_number,
-                'vat_number' => $request->vat_number ?? null,
 
                 'billing_company' => $billing['legal_company_name'] ?? null,
                 'billing_street' => $billing['street_and_number'],
@@ -179,8 +173,84 @@ class CheckoutController extends Controller
 
             $pdf->save(public_path($path));
 
-            $order->update([
-                'invoice_path' => $path
+            MachineryFileManager::create([
+                'machinery_id' => $machinery->id,
+                'order_id' => $order->id,
+                'image_path' => $path,
+                'type' => 'invoice',
+            ]);
+
+            $signatureData = $request->input('sign_photo');
+            $signatureDirectory = public_path('uploads/signatures');
+            if (!File::exists($signatureDirectory)) {
+                File::makeDirectory($signatureDirectory, 0755, true);
+            }
+            
+            $signatureFileName = time() . '_signature.png';
+            $signaturePath = 'uploads/signatures/' . $signatureFileName;
+            
+            if (preg_match('/^data:image\/(\w+);base64,/', $signatureData, $type)) {
+                $signatureData = substr($signatureData, strpos($signatureData, ',') + 1);
+                $type = strtolower($type[1]);
+
+                if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
+                    throw new \Exception('invalid image type');
+                }
+                $signatureData = str_replace(' ', '+', $signatureData);
+                $signatureData = base64_decode($signatureData);
+
+                if ($signatureData === false) {
+                    throw new \Exception('base64_decode failed');
+                }
+                
+                $signatureFileName = time() . '_signature.' . $type;
+                $signaturePath = 'uploads/signatures/' . $signatureFileName;
+                File::put(public_path($signaturePath), $signatureData);
+            } else {
+                throw new \Exception('Invalid signature format');
+            }
+
+            $winningUser = $user;
+            
+            $pseudoBid = (object)['amount' => $order->price];
+
+            $contractDataView = [
+                'machinery' => $machinery,
+                'highestBid' => $pseudoBid,
+                'user' => $winningUser,
+                'signaturePath' => $signaturePath,
+                'absoluteSignaturePath' => public_path($signaturePath),
+                'companyInfo' => [
+                    'name' => $companyName,
+                    'address' => $companyAddress,
+                    'phone' => $companyPhone,
+                    'email' => $companyEmail,
+                ],
+                'contractDate' => now()->format('Y-m-d'),
+            ];
+
+            $contractPdf = Pdf::loadView('pdf.contract', $contractDataView);
+            $contractPdfContent = $contractPdf->output();
+
+            $contractFileName = 'contract_' . $order->order_id . '_' . time() . '.pdf';
+            $contractPublicDir = public_path('uploads/machinery_files');
+            if (!File::exists($contractPublicDir)) {
+                File::makeDirectory($contractPublicDir, 0755, true);
+            }
+
+            $contractFullPath = $contractPublicDir . '/' . $contractFileName;
+            file_put_contents($contractFullPath, $contractPdfContent);
+            $finalContractPath = 'uploads/machinery_files/' . $contractFileName;
+
+            MachineryFileManager::create([
+                'machinery_id' => $machinery->id,
+                'order_id' => $order->id,
+                'image_path' => $finalContractPath,
+                'type' => 'contract_pdf',
+            ]);
+
+            $machinery->update([
+                'contract_status' => 3,
             ]);
 
             return response()->json([
@@ -189,6 +259,7 @@ class CheckoutController extends Controller
                 'data' => [
                     'order_id' => $order->order_id,
                     'invoice_url' => asset($path),
+                    'contract_url' => asset($finalContractPath),
                     'user_email' => $user->email,
                     'shipping_address' => [
                         'street' => $order->shipping_same_as_billing ? $order->billing_street : $order->shipping_street,

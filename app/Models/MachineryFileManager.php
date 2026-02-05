@@ -13,12 +13,14 @@ class MachineryFileManager extends Model
 
     protected $fillable = [
         'machinery_id',
+        'order_id',
         'image_path',
         'type'
     ];
 
     protected $casts = [
-        'machinery_id' => 'integer'
+        'machinery_id' => 'integer',
+        'order_id' => 'integer'
     ];
 
     public function machinery()

@@ -42,7 +42,6 @@ class OrderController extends Controller
                 'price',
                 'delivery_status',
                 'purchase_date',
-                'invoice_path',
             ]);
 
             if (!empty($search)) {
@@ -68,7 +67,8 @@ class OrderController extends Controller
                 $order->order_amount = $order->price;
                 $order->status = $order->delivery_status_text;
                 $order->status_code = $order->delivery_status;
-                $order->invoice_url = $order->invoice_path ? asset($order->invoice_path) : null;
+                $order->invoice_url = $order->invoice_url;
+                $order->contract_url = $order->contract_url;
 
                 unset($order->user);
                 
@@ -156,19 +156,21 @@ class OrderController extends Controller
 
                     $attachments = [];
                     
-                    if ($request->status == 1 && !empty($order->invoice_path)) {
-                        $invoiceFullPath = public_path($order->invoice_path);
-
-                        // \Log::info('Invoice attachment check', [
-                        //     'db_path'    => $order->invoice_path,
-                        //     'full_path'  => $invoiceFullPath,
-                        //     'exists'     => file_exists($invoiceFullPath),
-                        // ]);
-
-                        if (file_exists($invoiceFullPath)) {
+                    if ($request->status == 1) {
+                        $invoice = $order->invoice;
+                        if ($invoice && file_exists(public_path($invoice->image_path))) {
                             $attachments[] = [
-                                'path' => $invoiceFullPath,
+                                'path' => public_path($invoice->image_path),
                                 'name' => 'Invoice-' . $order->order_id . '.pdf',
+                                'type' => 'application/pdf',
+                            ];
+                        }
+
+                        $contract = $order->contract;
+                        if ($contract && file_exists(public_path($contract->image_path))) {
+                            $attachments[] = [
+                                'path' => public_path($contract->image_path),
+                                'name' => 'Contract-' . $order->order_id . '.pdf',
                                 'type' => 'application/pdf',
                             ];
                         }

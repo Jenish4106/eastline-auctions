@@ -136,7 +136,8 @@ class UserDashboardController extends Controller
                 'order_date' => $order->purchase_date ? $order->purchase_date->format('Y-m-d H:i:s') : null,
                 'amount' => $order->price,
                 'status' => $order->delivery_status_text,
-                'invoice_url' => $order->invoice_path ? asset($order->invoice_path) : null,
+                'invoice_url' => $order->invoice_url,
+                'contract_url' => $order->contract_url,
             ];
         }
 

@@ -158,21 +158,20 @@
                 <td>
                     <div class="section-title">Bill To</div>
                     <div class="address-box">
-                        <strong>{{ $order->first_name }} {{ $order->last_name }}</strong><br>
+                        <strong>{{ $order->user->first_name }} {{ $order->user->last_name }}</strong><br>
                         @if($order->billing_company) {{ $order->billing_company }}<br> @endif
                         {{ $order->billing_street }}<br>
                         {{ $order->billing_city }}, {{ $order->billing_state }} {{ $order->billing_zip }}<br>
                         {{ $order->billing_country }}<br>
                         <br>
-                        @if($order->vat_number) <strong>VAT:</strong> {{ $order->vat_number }}<br> @endif
-                        <strong>Phone:</strong> {{ $order->phone_number }}
+                        <strong>Phone:</strong> {{ $order->user->phone_no }}
                     </div>
                 </td>
                 <td>
                     <div class="section-title">Ship To</div>
                     <div class="address-box">
                         @if(!$order->shipping_same_as_billing)
-                            <strong>{{ $order->first_name }} {{ $order->last_name }}</strong><br>
+                            <strong>{{ $order->user->first_name }} {{ $order->user->last_name }}</strong><br>
                             {{ $order->shipping_street }}<br>
                             {{ $order->shipping_city }}, {{ $order->shipping_state }} {{ $order->shipping_zip }}<br>
                             {{ $order->shipping_country }}
