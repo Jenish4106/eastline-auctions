@@ -257,7 +257,9 @@
 
         <div class="signature-row" style="margin-top: 15px;">
             <span class="bold">Seller's Signature:</span> <span style="margin-left: 5px;">{{ $companyInfo['name'] }}</span>
-            <div class="signature-line"></div>
+            <div class="signature-line">
+                <img src="{{ public_path('uploads/signatures/buyer_signature.png') }}" class="signature-img">
+            </div>
         </div>
     </div>
 </body>
