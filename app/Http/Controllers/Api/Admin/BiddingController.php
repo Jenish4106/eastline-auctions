@@ -262,6 +262,7 @@ class BiddingController extends Controller
             ])
             ->leftJoin('users', 'machinery.won_user', '=', 'users.id')
             ->leftJoin('categories', 'machinery.category_id', '=', 'categories.id')
+            ->whereHas('bids')
             ->whereNotNull('machinery.won_user')
             ->where('machinery.won_user', '!=', 0);
 
@@ -352,6 +353,7 @@ class BiddingController extends Controller
             $machineryId = $request->machinery_id;
 
             $machinery = Machinery::with(['wonUser:id,first_name,last_name,phone_no', 'category:id,category_name', 'bids'])
+                ->whereHas('bids')
                 ->where('id', $machineryId)
                 ->whereNotNull('won_user')
                 ->where('won_user', '!=', 0)
