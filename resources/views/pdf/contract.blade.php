@@ -149,10 +149,6 @@
     <div class="page-break"></div>
 
     <!-- Page 2 -->
-    <div class="header">
-        <div class="header-title">Sales Agreement</div>
-    </div>
-
     <div class="section-title">4. Delivery of Goods</div>
     <div class="content">
         The Goods will be deemed received by the Buyer when delivered to the provided delivery address. The Seller is fully responsible for the shipping process.
@@ -201,10 +197,6 @@
     <div class="page-break"></div>
 
     <!-- Page 3 -->
-    <div class="header">
-        <div class="header-title">Sales Agreement</div>
-    </div>
-
     <div class="section-title">13. Cancellation</div>
     <div class="content">
         The Seller may cancel this Agreement if:
@@ -258,11 +250,9 @@
         <div class="signature-row" style="margin-top: 15px;">
             <span class="bold">Seller's Signature:</span> <span style="margin-left: 5px;">{{ $companyInfo['name'] }}</span>
             <div class="signature-line">
-                <img src="{{ public_path('uploads/signatures/buyer_signature.png') }}" class="signature-img">
+                <img src="{{ asset('uploads/signatures/seller_signature.png') }}" alt="Seller Signature" class="signature-img">
             </div>
         </div>
     </div>
 </body>
 </html>
-
-

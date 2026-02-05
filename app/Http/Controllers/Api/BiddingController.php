@@ -353,6 +353,9 @@ class BiddingController extends Controller
             }
 
             $query = Machinery::where('won_user', $user->id)
+                ->whereHas('bids', function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                })
                 ->with(['images', 'category', 'bids']);
 
             if (!empty($search)) {
