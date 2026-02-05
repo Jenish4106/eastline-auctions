@@ -100,6 +100,7 @@ Route::middleware(['auth.user'])->group(function () {
     Route::post('/user/sign-contract', [BiddingController::class, 'addSignatureToContract']);
     Route::post('/user/machinery-purchase', [BiddingController::class, 'purchaseMachinery']);
     Route::post('/user/checkout', [CheckoutController::class, 'checkout']);
+    Route::post('/user/get-contract', [CheckoutController::class, 'getContract']);
     Route::post('/user/orders', [BiddingController::class, 'getUserOrders']);
     Route::post('/user/order-details', [BiddingController::class, 'getOrderDetails']);
 

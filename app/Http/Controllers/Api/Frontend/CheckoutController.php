@@ -278,4 +278,69 @@ class CheckoutController extends Controller
             ], 500);
         }
     }
+
+    public function getContract(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'machinery_id' => 'required|exists:machinery,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors(),
+            ], 400);
+        }
+
+        try {
+            $user = auth('api')->user();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            $machinery = Machinery::find($request->machinery_id);
+            if (!$machinery) {
+                return response()->json(['success' => false, 'message' => 'Machinery not found'], 404);
+            }
+
+            $companyName = Settings::get('company_name') ?? 'RB Equipment Sales';
+            $companyAddress = Settings::get('address') ?? '';
+            $companyPhone = Settings::get('phone_no') ?? '';
+            $companyEmail = Settings::get('email') ?? '';
+
+            $price = $machinery->buy_now_price > 0 ? $machinery->buy_now_price : ($machinery->bid_start_price ?? 0);
+            
+            $highestBidModel = $machinery->bids()->orderBy('amount', 'desc')->first();
+            if ($highestBidModel) {
+                $price = $highestBidModel->amount;
+            } else {
+                $highestBidModel = (object)['amount' => $price];
+            }
+
+            $contractDataView = [
+                'machinery' => $machinery,
+                'highestBid' => $highestBidModel,
+                'user' => $user,
+                'companyInfo' => [
+                    'name' => $companyName,
+                    'address' => $companyAddress,
+                    'phone' => $companyPhone,
+                    'email' => $companyEmail,
+                ],
+                'contractDate' => now()->format('Y-m-d'),
+            ];
+
+            $contractHtml = View::make('pdf.contract', $contractDataView)->render();
+
+            return response()->json([
+                'success' => true,
+                'data' => $contractHtml
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong, please try again.'
+            ], 500);
+        }
+    }
 }
