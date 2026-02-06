@@ -237,6 +237,7 @@ class InventoryController extends Controller
         $make = $request->input('make');
         $model = $request->input('model');
         $workingHours = $request->input('working_hours');
+        $auctionId = $request->input('auction_id');
 
         $machineryQuery = Machinery::with('category:id,category_name', 'images', 'bids');
 
@@ -257,6 +258,10 @@ class InventoryController extends Controller
 
         if ($workingHours) {
             $machineryQuery->where('working_hours', $workingHours);
+        }
+
+        if ($auctionId) {
+            $machineryQuery->where('auction_id', $auctionId);
         }
 
         $machinery = $machineryQuery->first();
