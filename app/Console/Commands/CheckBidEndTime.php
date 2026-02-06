@@ -40,6 +40,7 @@ class CheckBidEndTime extends Command
 
         foreach ($machineries as $machinery) {
             $highestBid = Bid::where('machinery_id', $machinery->id)
+                ->where('auction_id', $machinery->auction_id)
                 ->orderBy('amount', 'desc')
                 ->first();
 

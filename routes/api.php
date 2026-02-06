@@ -54,6 +54,7 @@ Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
         Route::post('/store', [AdminMachineryController::class, 'store']);
         Route::post('/update', [AdminMachineryController::class, 'update']);
         Route::post('/delete', [AdminMachineryController::class, 'delete']);
+        Route::post('/regenerate-auction-id', [AdminMachineryController::class, 'regenerateAuctionId']);
     });
 
     Route::prefix('bidding')->group(function () {

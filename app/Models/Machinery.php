@@ -34,6 +34,7 @@ class Machinery extends Model
     }
 
     protected $fillable = [
+        'auction_id',
         'category_id',
         'make',
         'model',
@@ -55,8 +56,7 @@ class Machinery extends Model
         'contract_status',
         'description',
         'offer',
-        'status',
-        'auction_id'
+        'status'
     ];
 
     protected $casts = [

@@ -59,7 +59,7 @@ class ExtendExpiredAuctions extends Command
                 $this->info("Updated machinery ID {$machinery->id}: Start time set to {$newStartTime->format('Y-m-d H:i:s')}, End time set to {$newEndTime->format('Y-m-d H:i:s')}");
 
             } catch (\Exception $e) {
-                $this->error("Failed to update machinery ID {$machinery->id}: " . $e->getMessage());
+                $this->error("Failed to update machinery ID {$machinery->id}: ");
             }
         }
 

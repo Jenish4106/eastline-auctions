@@ -308,7 +308,7 @@ class CheckoutController extends Controller
 
             $price = $machinery->buy_now_price > 0 ? $machinery->buy_now_price : ($machinery->bid_start_price ?? 0);
             
-            $highestBidModel = $machinery->bids()->orderBy('amount', 'desc')->first();
+            $highestBidModel = $machinery->bids()->where('auction_id', $machinery->auction_id)->orderBy('amount', 'desc')->first();
             if ($highestBidModel) {
                 $price = $highestBidModel->amount;
             } else {

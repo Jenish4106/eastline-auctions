@@ -1,10 +1,9 @@
 <?php
-
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
 use App\Mail\OrderStatusChangeMail;
+use App\Models\Order;
 use App\Services\SMTP2GOService;
 use Illuminate\Http\Request;
 
@@ -17,20 +16,20 @@ class OrderController extends Controller
     {
         try {
             $search = $request->input('search', '');
-            
-            $perPage = $request->input('per_page', 10);
-            $page = $request->input('page', 1);
-            $sortBy = $request->input('sort_by', 'created_at');
+
+            $perPage   = $request->input('per_page', 10);
+            $page      = $request->input('page', 1);
+            $sortBy    = $request->input('sort_by', 'created_at');
             $sortOrder = $request->input('sort_order', 'desc');
 
             $allowedSortFields = ['id', 'order_id', 'machinery_id', 'user_id', 'price', 'delivery_status', 'created_at'];
             $allowedSortOrders = ['asc', 'desc'];
-            
-            if (!in_array($sortBy, $allowedSortFields)) {
+
+            if (! in_array($sortBy, $allowedSortFields)) {
                 $sortBy = 'created_at';
             }
-            
-            if (!in_array($sortOrder, $allowedSortOrders)) {
+
+            if (! in_array($sortOrder, $allowedSortOrders)) {
                 $sortOrder = 'desc';
             }
 
@@ -44,17 +43,17 @@ class OrderController extends Controller
                 'purchase_date',
             ]);
 
-            if (!empty($search)) {
-                $query->where(function($q) use ($search) {
+            if (! empty($search)) {
+                $query->where(function ($q) use ($search) {
                     $q->where('order_id', 'LIKE', "%{$search}%")
-                      ->orWhereHas('user', function($q) use ($search) {
-                          $q->where('first_name', 'LIKE', "%{$search}%")
-                            ->orWhere('last_name', 'LIKE', "%{$search}%")
-                            ->orWhere('phone_no', 'LIKE', "%{$search}%");
-                      })
-                      ->orWhereHas('machinery', function($q) use ($search) {
-                          $q->where('id', 'LIKE', "%{$search}%");
-                      });
+                        ->orWhereHas('user', function ($q) use ($search) {
+                            $q->where('first_name', 'LIKE', "%{$search}%")
+                                ->orWhere('last_name', 'LIKE', "%{$search}%")
+                                ->orWhere('phone_no', 'LIKE', "%{$search}%");
+                        })
+                        ->orWhereHas('machinery', function ($q) use ($search) {
+                            $q->where('id', 'LIKE', "%{$search}%");
+                        });
                 });
             }
 
@@ -62,16 +61,16 @@ class OrderController extends Controller
 
             $ordersWithFormattedData = $orders->getCollection()->map(function ($order) {
                 $order->user_full_name = $order->user ? $order->user->first_name . ' ' . $order->user->last_name : 'N/A';
-                $order->phone_no = $order->user ? $order->user->phone_no : 'N/A';
-                $order->order_date = $order->purchase_date->format('M d, Y h:i A');
-                $order->order_amount = $order->price;
-                $order->status = $order->delivery_status_text;
-                $order->status_code = $order->delivery_status;
-                $order->invoice_url = $order->invoice_url;
-                $order->contract_url = $order->contract_url;
+                $order->phone_no       = $order->user ? $order->user->phone_no : 'N/A';
+                $order->order_date     = $order->purchase_date->format('M d, Y h:i A');
+                $order->order_amount   = $order->price;
+                $order->status         = $order->delivery_status_text;
+                $order->status_code    = $order->delivery_status;
+                $order->invoice_url    = $order->invoice_url;
+                $order->contract_url   = $order->contract_url;
 
                 unset($order->user);
-                
+
                 return $order;
             });
 
@@ -102,7 +101,7 @@ class OrderController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * Update order status
      */
@@ -123,7 +122,7 @@ class OrderController extends Controller
         try {
             $order = Order::with(['user', 'machinery'])->find($request->order_id);
 
-            if (!$order) {
+            if (! $order) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Order not found',
@@ -133,14 +132,23 @@ class OrderController extends Controller
             $order->delivery_status = $request->status;
 
             switch ($request->status) {
-                case 1: $order->process_date     = now(); break;
-                case 2: $order->shipped_date     = now(); break;
-                case 3: $order->in_transit_date  = now(); break;
-                case 4: $order->delivered_date   = now(); break;
-                case 5: $order->cancelled_date   = now(); break;
+                case 1:$order->process_date = now();
+                    break;
+                case 2:$order->shipped_date = now();
+                    break;
+                case 3:$order->in_transit_date = now();
+                    break;
+                case 4:$order->delivered_date = now();
+                    break;
+                case 5:$order->cancelled_date = now();
+                    break;
             }
 
             $order->save();
+
+            if ($request->status == 1 && $order->machinery) {
+                $order->machinery->update(['status' => 2]);
+            }
 
             if ($order->user && $order->machinery) {
                 try {
@@ -152,10 +160,10 @@ class OrderController extends Controller
                     );
 
                     $smtp2goService = new SMTP2GOService();
-                    $htmlContent = $mail->renderHtmlContent();
+                    $htmlContent    = $mail->renderHtmlContent();
 
                     $attachments = [];
-                    
+
                     if ($request->status == 1) {
                         $invoice = $order->invoice;
                         if ($invoice && file_exists(public_path($invoice->image_path))) {
@@ -184,10 +192,10 @@ class OrderController extends Controller
                     );
 
                 } catch (\Exception $e) {
-                    \Log::error('Order status email failed', [
-                        'order_id' => $order->id,
-                        'error'    => $e->getMessage()
-                    ]);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Order status updated but failed to send email notification.',
+                    ], 200);
                 }
             }
 
@@ -197,19 +205,14 @@ class OrderController extends Controller
                 2 => 'Order shipped successfully.',
                 3 => 'Order is in transit.',
                 4 => 'Order delivered successfully.',
-                5 => 'Order cancelled successfully.'
+                5 => 'Order cancelled successfully.',
             ];
 
             return response()->json([
                 'success' => true,
-                'message' => $statusMessages[$request->status] ?? 'Order status updated.'
+                'message' => $statusMessages[$request->status] ?? 'Order status updated.',
             ], 200);
-
         } catch (\Exception $e) {
-            \Log::error('Order status update error', [
-                'error' => $e->getMessage()
-            ]);
-
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong. Please try again.',

@@ -162,14 +162,16 @@ class ForgotPasswordController extends Controller
 
             $passwordReset->delete();
 
-            // Send password reset confirmation email
             try {
                 $mail = new PasswordResetConfirmationMail($user);
                 $smtp2goService = new SMTP2GOService();
                 $htmlContent = $mail->renderHtmlContent();
                 $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
             } catch (\Exception $e) {
-                \Log::error('Failed to send password reset confirmation email: ' . $e->getMessage());
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Password reset successfully but failed to send confirmation email.',
+                ], 200);
             }
 
             return response()->json([

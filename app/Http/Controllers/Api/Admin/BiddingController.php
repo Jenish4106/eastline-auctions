@@ -50,8 +50,13 @@ class BiddingController extends Controller
                 });
             }
 
-            $machineries = $query->withCount('bids')
-                    ->leftJoin(\Illuminate\Support\Facades\DB::raw('(SELECT machinery_id, MAX(amount) as highest_bid FROM bids GROUP BY machinery_id) as bid_max'), 'machinery.id', '=', 'bid_max.machinery_id')
+            $machineries = $query->withCount(['bids' => function ($q) {
+                        $q->whereColumn('bids.auction_id', 'machinery.auction_id');
+                    }])
+                    ->leftJoin(\Illuminate\Support\Facades\DB::raw('(SELECT machinery_id, auction_id, MAX(amount) as highest_bid FROM bids GROUP BY machinery_id, auction_id) as bid_max'), function ($join) {
+                        $join->on('machinery.id', '=', 'bid_max.machinery_id')
+                             ->on('machinery.auction_id', '=', 'bid_max.auction_id');
+                    })
                     ->selectRaw('machinery.*, bid_max.highest_bid')
                     ->orderBy($sortBy === 'bids_count' ? 'bids_count' : $sortBy, $sortOrder)
                     ->paginate($perPage, ['*'], 'page', $page);
@@ -140,7 +145,7 @@ class BiddingController extends Controller
                 ], 404);
             }
 
-            $highestBid = $machinery->bids->max('amount');
+            $highestBid = $machinery->bids->where('auction_id', $machinery->auction_id)->max('amount');
 
             $bidStatusText = '';
             switch ($machinery->bid_status) {
@@ -169,12 +174,15 @@ class BiddingController extends Controller
                 'bid_status' => $bidStatusText,
             ];
 
-            $biddingDetails = $machinery->bids->map(function ($bid) use ($highestBid, $machinery) {
+            $biddingDetails = $machinery->bids->filter(function($bid) use ($machinery) {
+                return $bid->auction_id === $machinery->auction_id;
+            })->map(function ($bid) use ($highestBid, $machinery) {
                 $bidData = [
                     'user_full_name' => $bid->user->first_name . ' ' . $bid->user->last_name,
                     'user_email' => $bid->user->email,
                     'user_phone' => $bid->user->phone_no,
                     'bid_amount' => $bid->amount,
+                    'auction_id' => $bid->auction_id,
                     'bid_created_at' => $bid->created_at,
                     'is_highest' => $bid->amount == $highestBid,
                 ];
@@ -278,7 +286,7 @@ class BiddingController extends Controller
                 });
             }
 
-            $query->selectRaw('(SELECT MAX(amount) FROM bids WHERE bids.machinery_id = machinery.id) as won_bid_amount');
+            $query->selectRaw('(SELECT MAX(amount) FROM bids WHERE bids.machinery_id = machinery.id AND bids.auction_id = machinery.auction_id) as won_bid_amount');
 
             if ($sortBy === 'machinery_name') {
                 $wonMachineries = $query->orderByRaw('CONCAT(machinery.year, " ", machinery.make, " ", machinery.model) ' . $sortOrder)->paginate($perPage, ['*'], 'page', $page);
@@ -353,7 +361,9 @@ class BiddingController extends Controller
             $machineryId = $request->machinery_id;
 
             $machinery = Machinery::with(['wonUser:id,first_name,last_name,phone_no', 'category:id,category_name', 'bids'])
-                ->whereHas('bids')
+                ->whereHas('bids', function($q) {
+                    $q->whereColumn('bids.auction_id', 'machinery.auction_id');
+                })
                 ->where('id', $machineryId)
                 ->whereNotNull('won_user')
                 ->where('won_user', '!=', 0)
@@ -366,7 +376,7 @@ class BiddingController extends Controller
                 ], 404);
             }
 
-            $highestBid = $machinery->bids->max('amount');
+            $highestBid = $machinery->bids->where('auction_id', $machinery->auction_id)->max('amount');
 
             $contractStatusMap = [
                 0 => 'Pending',
@@ -429,8 +439,8 @@ class BiddingController extends Controller
             if ($action === 'approve') {
                 $machinery->contract_status = 1;
 
-                $highestBid = $machinery->bids->max('amount');
-                $bidModel = $machinery->bids->sortByDesc('amount')->first();
+                $highestBid = $machinery->bids->where('auction_id', $machinery->auction_id)->max('amount');
+                $bidModel = $machinery->bids->where('auction_id', $machinery->auction_id)->sortByDesc('amount')->first();
 
                 if ($bidModel && $machinery->won_user) {
                     $existingOrder = Order::where('machinery_id', $machinery->id)

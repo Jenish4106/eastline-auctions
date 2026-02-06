@@ -37,6 +37,7 @@ class BiddingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'machinery_id' => 'required|exists:machinery,id',
+            'auction_id' => 'required',
             'amount' => 'required|numeric|min:0',
         ]);
 
@@ -74,6 +75,7 @@ class BiddingController extends Controller
             }
 
             $previousHighestBid = Bid::where('machinery_id', $request->machinery_id)
+                            ->where('auction_id', $request->auction_id)
                             ->orderBy('amount', 'desc')
                             ->first();
 
@@ -95,6 +97,7 @@ class BiddingController extends Controller
             $bid = Bid::create([
                 'user_id' => $user->id,
                 'machinery_id' => $request->machinery_id,
+                'auction_id' => $request->auction_id,
                 'amount' => $request->amount,
             ]);
 
@@ -114,7 +117,10 @@ class BiddingController extends Controller
                     $htmlContent = $mail->renderHtmlContent();
                     $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
                 } catch (\Exception $e) {
-                    \Log::error('Failed to send winning bid notification: ' . $e->getMessage());
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Congratulations! You have won this auction, but failed to send contract email.',
+                    ], 200);
                 }
             } else {
                 try {
@@ -123,7 +129,10 @@ class BiddingController extends Controller
                     $htmlContent = $mail->renderHtmlContent();
                     $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
                 } catch (\Exception $e) {
-                    \Log::error('Failed to send bidding email: ' . $e->getMessage());
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Bid placed successfully but failed to send bid confirmation email.',
+                    ], 200);
                 }
             }
 
@@ -137,7 +146,10 @@ class BiddingController extends Controller
                         $smtp2goService->sendEmail($previousBidder->email, $outbidMail->getSubject(), $htmlContent);
                     }
                 } catch (\Exception $e) {
-                    \Log::error('Failed to send outbid email: ' . $e->getMessage());
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Bid placed successfully but failed to send outbid notification to previous highest bidder.',
+                    ], 200);
                 }
             }
 
@@ -178,7 +190,8 @@ class BiddingController extends Controller
             }
 
             $query = Machinery::whereHas('bids', function($q) use ($user) {
-                    $q->where('user_id', $user->id);
+                    $q->where('user_id', $user->id)
+                      ->whereColumn('bids.auction_id', 'machinery.auction_id');
                 })
                 ->with(['images', 'bids.user']);
 
@@ -195,7 +208,7 @@ class BiddingController extends Controller
             $machineries = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
 
             $machineriesWithFormattedData = $machineries->getCollection()->map(function ($machinery) use ($user) {
-                $bids = $machinery->bids;
+                $bids = $machinery->bids->where('auction_id', $machinery->auction_id);
                 $highestBid = $bids->max('amount');
                 $lastBid = $highestBid ?: $machinery->bid_start_price;
 
@@ -293,7 +306,8 @@ class BiddingController extends Controller
                 ], 404);
             }
 
-            $bids = $machinery->bids;
+            $bids = $machinery->bids->where('auction_id', $machinery->auction_id);
+            // $bids = $machinery->bids;
 
             $highestBid = $bids->max('amount');
             $lastBid = $highestBid ?: $machinery->bid_start_price;
@@ -339,6 +353,7 @@ class BiddingController extends Controller
                 return [
                     'user_full_name' => trim(($bid->user->first_name ?? '')),
                     'amount' => $bid->amount,
+                    'auction_id' => $bid->auction_id,
                     'bid_date_time' => $bid->created_at,
                     'my_bid' => $bid->user_id == $user->id,
                 ];
@@ -401,7 +416,8 @@ class BiddingController extends Controller
 
             $query = Machinery::where('won_user', $user->id)
                 ->whereHas('bids', function ($q) use ($user) {
-                    $q->where('user_id', $user->id);
+                    $q->where('user_id', $user->id)
+                      ->whereColumn('bids.auction_id', 'machinery.auction_id');
                 })
                 ->with(['images', 'category', 'bids']);
 
@@ -420,7 +436,9 @@ class BiddingController extends Controller
             $wonMachinery = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
 
             $wonMachineryWithFormattedData = $wonMachinery->getCollection()->map(function ($machinery) {
-                $userWonBid = $machinery->bids->where('user_id', auth('api')->id())->max('amount');
+                $userWonBid = $machinery->bids->where('user_id', auth('api')->id())
+                                              ->where('auction_id', $machinery->auction_id)
+                                              ->max('amount');
 
                 $firstImage = $machinery->images->firstWhere('type', 'image');
 
@@ -504,7 +522,7 @@ class BiddingController extends Controller
                 ], 403);
             }
 
-            $highestBid = $machinery->bids->max('amount');
+            $highestBid = $machinery->bids->where('auction_id', $machinery->auction_id)->max('amount');
 
             $contractStatusMap = [
                 0 => 'Pending',
@@ -515,7 +533,7 @@ class BiddingController extends Controller
 
             $winningUser = User::find($machinery->won_user);
 
-            $highestBidModel = $machinery->bids->sortByDesc('amount')->first();
+            $highestBidModel = $machinery->bids->where('auction_id', $machinery->auction_id)->sortByDesc('amount')->first();
 
             $contractDataView = [
                 'machinery' => $machinery,
@@ -658,8 +676,8 @@ class BiddingController extends Controller
                 throw new \Exception('Invalid signature format');
             }
 
-            $highestBid = $machinery->bids()->max('amount');
-            $highestBidModel = $machinery->bids()->orderBy('amount', 'desc')->first();
+            $highestBid = $machinery->bids()->where('auction_id', $machinery->auction_id)->max('amount');
+            $highestBidModel = $machinery->bids()->where('auction_id', $machinery->auction_id)->orderBy('amount', 'desc')->first();
 
             $order = Order::where('machinery_id', $machineryId)->where('user_id', $user->id)->latest()->first();
 
@@ -1108,7 +1126,10 @@ class BiddingController extends Controller
                 $htmlContent = $mail->renderHtmlContent();
                 $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
             } catch (\Exception $e) {
-                \Log::error('Failed to send buy now order email: ' . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order placed successfully, but failed to send confirmation email.',
+                ], 200);
             }
 
             return response()->json([

@@ -82,7 +82,6 @@ class SMTP2GOService
             return $response->successful();
 
         } catch (\Throwable $e) {
-
             // Log::error('SMTP2GO send failed', [
             //     'message' => $e->getMessage(),
             //     'trace'   => $e->getTraceAsString(),

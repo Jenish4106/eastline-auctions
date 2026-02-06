@@ -59,23 +59,29 @@ class UserDashboardController extends Controller
     private function getActiveBids($userId)
     {
         $userBids = Bid::where('user_id', $userId)
-            ->select('machinery_id', 'amount')
+            ->select('machinery_id', 'amount', 'auction_id')
             ->with(['machinery' => function($query) {
-                $query->select('id', 'bid_end_time', 'bid_status', 'won_user');
+                $query->select('id', 'bid_end_time', 'bid_status', 'won_user', 'auction_id');
             }])
             ->get();
 
         $activeBidCount = 0;
 
         foreach ($userBids as $bid) {
-            if ($bid->machinery && $bid->machinery->bid_end_time < now()) {
+            if (!$bid->machinery || $bid->machinery->bid_end_time < now()) {
+                continue;
+            }
+
+            // Check if bid is for the current auction
+            if ($bid->auction_id !== $bid->machinery->auction_id) {
                 continue;
             }
 
             $highestBid = Bid::where('machinery_id', $bid->machinery_id)
+                ->where('auction_id', $bid->machinery->auction_id)
                 ->max('amount');
 
-            if ($bid->amount == $highestBid && $bid->machinery && $bid->machinery->bid_end_time > now()) {
+            if ($bid->amount == $highestBid) {
                 if (!$bid->machinery->won_user || $bid->machinery->won_user == $userId) {
                     $activeBidCount++;
                 }
@@ -101,6 +107,7 @@ class UserDashboardController extends Controller
             if ($bid->machinery) {
                 $recentBids[] = [
                     'machinery_name' => $bid->machinery->year . ' ' . $bid->machinery->make . ' ' . $bid->machinery->model,
+                    'auction_id' => $bid->auction_id,
                     'bid_amount' => $bid->amount,
                     'bid_end_time' => $bid->machinery->bid_end_time,
                 ];

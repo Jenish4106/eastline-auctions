@@ -278,11 +278,11 @@ class InventoryController extends Controller
         $model = $machinery->model ?? '';
         $machinery->name = trim("$year $make $model");
 
-        $highestBid = $machinery->bids->max('amount');
+        $highestBid = $machinery->bids->where('auction_id', $machinery->auction_id)->max('amount');
         $machinery->current_bid = $highestBid ?: $machinery->bid_start_price;
 
         $existingOffer = is_numeric($machinery->offer) ? (int)$machinery->offer : 0;
-        $bidCount = $machinery->bids->count();
+        $bidCount = $machinery->bids->where('auction_id', $machinery->auction_id)->count();
         $machinery->offer = $existingOffer;
 
         if ($machinery->images) {

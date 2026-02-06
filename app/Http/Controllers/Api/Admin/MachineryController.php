@@ -599,4 +599,57 @@ class MachineryController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Regenerate Auction ID for machinery
+     */
+    public function regenerateAuctionId(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'machinery_id' => 'required|exists:machinery,id',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => $validator->errors(),
+                ], 400);
+            }
+
+            $machineryId = $request->machinery_id;
+            $machinery = Machinery::find($machineryId);
+
+            if (!$machinery) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Machinery not found',
+                ], 404);
+            }
+
+            do {
+                $timestamp = date('His');
+                $auctionId = substr($timestamp . rand(10, 99), 0, 6);
+            } while (Machinery::where('auction_id', $auctionId)->exists());
+
+            $machinery->auction_id = $auctionId;
+            $machinery->save();
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Auction ID regenerated successfully',
+                'data'    => [
+                    'machinery_id' => $machinery->id,
+                    'new_auction_id' => $machinery->auction_id
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong, please try again.',
+            ], 500);
+        }
+    }
+
 }

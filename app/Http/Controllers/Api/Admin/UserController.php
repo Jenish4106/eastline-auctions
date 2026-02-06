@@ -402,28 +402,32 @@ class UserController extends Controller
                 $user->is_license = 1;
                 $message = 'License approved successfully';
                 
-                // Send approval email
                 try {
                     $mail = new LicenseApprovedMail($user);
                     $smtp2goService = new SMTP2GOService();
                     $htmlContent = $mail->renderHtmlContent();
                     $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
                 } catch (\Exception $e) {
-                    \Log::error('Failed to send license approval email: ' . $e->getMessage());
+                    return response()->json([
+                        'status'  => true,
+                        'message' => 'License approved but failed to send email notification.',
+                    ], 200);
                 }
             } else {
                 $latestLicense->status = 2;
                 $user->is_license = 2;
                 $message = 'License declined successfully';
                 
-                // Send decline email
                 try {
                     $mail = new LicenseDeclinedMail($user);
                     $smtp2goService = new SMTP2GOService();
                     $htmlContent = $mail->renderHtmlContent();
                     $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
                 } catch (\Exception $e) {
-                    \Log::error('Failed to send license decline email: ' . $e->getMessage());
+                    return response()->json([
+                        'status'  => true,
+                        'message' => 'License declined but failed to send email notification.',
+                    ], 200);
                 }
             }
 
