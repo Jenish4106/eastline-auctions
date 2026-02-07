@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\View;
+use App\Models\Settings;
 
 class LicenseDeclinedMail extends Mailable
 {
@@ -20,7 +21,7 @@ class LicenseDeclinedMail extends Mailable
 
     public function build()
     {
-        return $this->subject('License Declined - RB Equipment Sales')
+        return $this->subject('License Declined - ' . Settings::get('company_name', 'Stiopa Equipment'))
                     ->view('emails.license-declined')
                     ->with(['user' => $this->user]);
     }
@@ -32,6 +33,6 @@ class LicenseDeclinedMail extends Mailable
 
     public function getSubject()
     {
-        return 'License Declined - RB Equipment Sales';
+        return 'License Declined - ' . Settings::get('company_name', 'Stiopa Equipment');
     }
 }

@@ -29,15 +29,15 @@ class ContactController extends Controller
         }
 
         try {
-            $adminEmail = 'jenish.rising@gmail.com';
-            
+            $adminEmail = 'sales@stiopa-equipment.com';
+
             if (!$adminEmail) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Contact form is not properly configured. Please contact the administrator.'
                 ], 500);
             }
-            
+
             $mail = new ContactMail(
                 $request->first_name,
                 $request->last_name,
@@ -45,7 +45,7 @@ class ContactController extends Controller
                 $request->phone,
                 $request->message
             );
-            
+
             $smtp2goService = new SMTP2GOService();
             $htmlContent = $mail->renderHtmlContent();
             $result = $smtp2goService->sendEmail($adminEmail, $mail->getSubject(), $htmlContent);

@@ -9,6 +9,6 @@
     <p><strong>Equipment:</strong> {{ $machineryName }}</p>
     <p><strong>Current Highest Bid:</strong> ${{ number_format($currentBid, 2) }}</p>
     <p>You can place a new bid if you would like to continue bidding on this equipment.</p>
-    <p>Best regards,<br>RB Equipment Sales Team</p>
+    <p>Best regards,<br>{{ \App\Models\Settings::get('company_name', 'Stiopa Equipment') }} Team</p>
 </body>
 </html>

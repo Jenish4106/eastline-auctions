@@ -5,9 +5,9 @@ use App\Mail\SendContractMail;
 use App\Models\Bid;
 use App\Models\Machinery;
 use App\Models\User;
+use App\Services\SMTP2GOService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use App\Services\SMTP2GOService;
 
 class CheckBidEndTime extends Command
 {
@@ -49,16 +49,17 @@ class CheckBidEndTime extends Command
                     'bid_status'      => '2',
                     'won_user'        => $highestBid->user_id,
                     'bid_won_date'    => Carbon::now(),
-                    'contract_status' => '0'
+                    'contract_status' => '0',
+                    'status'          => 2,
                 ]);
 
                 $user = User::find($highestBid->user_id);
 
                 if ($user) {
-                    $mail = new SendContractMail($user, $machinery, null);
+                    $mail           = new SendContractMail($user, $machinery, null);
                     $smtp2goService = new SMTP2GOService();
-                    $htmlContent = $mail->renderHtmlContent();
-                    $result = $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+                    $htmlContent    = $mail->renderHtmlContent();
+                    $result         = $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
 
                     if ($result) {
                         $this->info("Machinery ID {$machinery->id} updated to sold status. Notification sent to user {$user->email}");
@@ -68,8 +69,7 @@ class CheckBidEndTime extends Command
                 } else {
                     $this->info("Machinery ID {$machinery->id} updated to sold status. Won by user ID {$highestBid->user_id}, but user not found");
                 }
-            }
-            else {
+            } else {
                 $this->info("Machinery ID {$machinery->id} expired (No bids found)");
             }
         }

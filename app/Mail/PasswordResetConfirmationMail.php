@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\View;
+use App\Models\Settings;
 
 class PasswordResetConfirmationMail extends Mailable
 {
@@ -20,7 +21,7 @@ class PasswordResetConfirmationMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Password Reset Successful - RB Equipment Sales')
+        return $this->subject('Password Reset Successful - ' . Settings::get('company_name', 'Stiopa Equipment'))
                     ->view('emails.password-reset-confirmation')
                     ->with(['user' => $this->user]);
     }
@@ -32,6 +33,6 @@ class PasswordResetConfirmationMail extends Mailable
 
     public function getSubject()
     {
-        return 'Password Reset Successful - RB Equipment Sales';
+        return 'Password Reset Successful - ' . Settings::get('company_name', 'Stiopa Equipment');
     }
 }

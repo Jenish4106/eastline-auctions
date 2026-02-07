@@ -10,6 +10,6 @@
     <p><strong>Final Bid Amount:</strong> ${{ number_format($finalBidAmount, 2) }}</p>
     <p><strong>Winning Date:</strong> {{ $winningDate }}</p>
     <p>We have sent you the contract. Please log in to the dashboard, review it, sign it, and submit it.</p>
-    <p>Best regards,<br>RB Equipment Sales Team</p>
+    <p>Best regards,<br>{{ \App\Models\Settings::get('company_name', 'Stiopa Equipment') }} Team</p>
 </body>
 </html>

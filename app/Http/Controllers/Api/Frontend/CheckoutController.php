@@ -79,12 +79,12 @@ class CheckoutController extends Controller
             try {
                 $shippingZip = $isShippingDifferent ? $shipping['shipping_zip'] : $billing['zip_postal_code'];
                 $shippingCountry = $isShippingDifferent ? $shipping['shipping_country'] : $billing['country'];
-                
+
                 $companyAddress = $this->googleMapsService->getCompanyAddress();
                 if ($companyAddress) {
                     $companyLocation = $this->googleMapsService->geocodeAddress($companyAddress);
                     $customerLocation = $this->googleMapsService->getCoordinatesFromZipAndCountry($shippingZip, $shippingCountry);
-                    
+
                     if ($companyLocation && $customerLocation) {
                         $distanceResult = $this->googleMapsService->calculateDistance($companyLocation, $customerLocation);
                         if ($distanceResult) {
@@ -125,9 +125,11 @@ class CheckoutController extends Controller
                 'bid_status' => '2',
                 'won_user' => $user->id,
                 'bid_won_date' => now(),
+                'contract_status' => '3',
+                'status' => 2,
             ]);
 
-            $companyName = Settings::get('company_name') ?? 'RB Equipment Sales';
+            $companyName = Settings::get('company_name', 'Stiopa Equipment');
             $companyAddress = Settings::get('address') ?? '';
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';
@@ -183,10 +185,10 @@ class CheckoutController extends Controller
             if (!File::exists($signatureDirectory)) {
                 File::makeDirectory($signatureDirectory, 0755, true);
             }
-            
+
             $signatureFileName = time() . '_signature.png';
             $signaturePath = 'uploads/signatures/' . $signatureFileName;
-            
+
             if (preg_match('/^data:image\/(\w+);base64,/', $signatureData, $type)) {
                 $signatureData = substr($signatureData, strpos($signatureData, ',') + 1);
                 $type = strtolower($type[1]);
@@ -200,7 +202,7 @@ class CheckoutController extends Controller
                 if ($signatureData === false) {
                     throw new \Exception('base64_decode failed');
                 }
-                
+
                 $signatureFileName = time() . '_signature.' . $type;
                 $signaturePath = 'uploads/signatures/' . $signatureFileName;
                 File::put(public_path($signaturePath), $signatureData);
@@ -209,13 +211,36 @@ class CheckoutController extends Controller
             }
 
             $winningUser = $user;
-            
+
             $pseudoBid = (object)['amount' => $order->price];
+
+            $sellerAddress = $companyAddress;
+
+            $buyerAddress = trim(($order->billing_street ?? '') . ', ' .
+                            ($order->billing_city ?? '') . ', ' .
+                            ($order->billing_state ?? '') . ' ' .
+                            ($order->billing_zip ?? '') . ', ' .
+                            ($order->billing_country ?? ''));
+            $buyerAddress = trim(str_replace(',  ', ', ', $buyerAddress), ', ');
+
+            $shippingAddress = $buyerAddress;
+            if (!$order->shipping_same_as_billing) {
+                $shippingAddress = trim(($order->shipping_street ?? '') . ', ' .
+                                       ($order->shipping_city ?? '') . ', ' .
+                                       ($order->shipping_state ?? '') . ' ' .
+                                       ($order->shipping_zip ?? '') . ', ' .
+                                       ($order->shipping_country ?? ''));
+                $shippingAddress = trim(str_replace(',  ', ', ', $shippingAddress), ', ');
+            }
 
             $contractDataView = [
                 'machinery' => $machinery,
                 'highestBid' => $pseudoBid,
                 'user' => $winningUser,
+                'order' => $order,
+                'sellerAddress' => $sellerAddress,
+                'buyerAddress' => $buyerAddress,
+                'shippingAddress' => $shippingAddress,
                 'signaturePath' => $signaturePath,
                 'absoluteSignaturePath' => public_path($signaturePath),
                 'companyInfo' => [
@@ -223,6 +248,7 @@ class CheckoutController extends Controller
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
+                    'logo' => Settings::get('dark_logo') ?? '',
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];
@@ -301,13 +327,22 @@ class CheckoutController extends Controller
                 return response()->json(['success' => false, 'message' => 'Machinery not found'], 404);
             }
 
-            $companyName = Settings::get('company_name') ?? 'RB Equipment Sales';
+            $order = Order::where('machinery_id', $machinery->id)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if (!$order) {
+                return response()->json(['success' => false, 'message' => 'Order not found'], 404);
+            }
+
+            $companyName = Settings::get('company_name', 'Stiopa Equipment');
             $companyAddress = Settings::get('address') ?? '';
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';
+            $companyLogo = Settings::get('dark_logo') ?? '';
 
             $price = $machinery->buy_now_price > 0 ? $machinery->buy_now_price : ($machinery->bid_start_price ?? 0);
-            
+
             $highestBidModel = $machinery->bids()->where('auction_id', $machinery->auction_id)->orderBy('amount', 'desc')->first();
             if ($highestBidModel) {
                 $price = $highestBidModel->amount;
@@ -315,15 +350,39 @@ class CheckoutController extends Controller
                 $highestBidModel = (object)['amount' => $price];
             }
 
+            $sellerAddress = $companyAddress;
+
+            $buyerAddress = trim(($order->billing_street ?? '') . ', ' .
+                            ($order->billing_city ?? '') . ', ' .
+                            ($order->billing_state ?? '') . ' ' .
+                            ($order->billing_zip ?? '') . ', ' .
+                            ($order->billing_country ?? ''));
+            $buyerAddress = trim(str_replace(',  ', ', ', $buyerAddress), ', ');
+
+            $shippingAddress = $buyerAddress;
+            if (!$order->shipping_same_as_billing) {
+                $shippingAddress = trim(($order->shipping_street ?? '') . ', ' .
+                                       ($order->shipping_city ?? '') . ', ' .
+                                       ($order->shipping_state ?? '') . ' ' .
+                                       ($order->shipping_zip ?? '') . ', ' .
+                                       ($order->shipping_country ?? ''));
+                $shippingAddress = trim(str_replace(',  ', ', ', $shippingAddress), ', ');
+            }
+
             $contractDataView = [
                 'machinery' => $machinery,
                 'highestBid' => $highestBidModel,
                 'user' => $user,
+                'order' => $order,
+                'sellerAddress' => $sellerAddress,
+                'buyerAddress' => $buyerAddress,
+                'shippingAddress' => $shippingAddress,
                 'companyInfo' => [
                     'name' => $companyName,
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
+                    'logo' => $companyLogo,
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];

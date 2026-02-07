@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\View;
+use App\Models\Settings;
 
 class RegistrationMail extends Mailable
 {
@@ -20,7 +21,7 @@ class RegistrationMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Welcome to RB Equipment Sales')
+        return $this->subject('Welcome to ' . Settings::get('company_name', 'Stiopa Equipment'))
                     ->view('emails.registration')
                     ->with(['user' => $this->user]);
     }
@@ -32,6 +33,6 @@ class RegistrationMail extends Mailable
 
     public function getSubject()
     {
-        return 'Welcome to RB Equipment Sales';
+        return 'Welcome to ' . Settings::get('company_name', 'Stiopa Equipment');
     }
 }

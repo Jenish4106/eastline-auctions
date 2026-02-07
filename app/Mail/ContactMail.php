@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\View;
+use App\Models\Settings;
 
 class ContactMail extends Mailable
 {
@@ -28,7 +29,7 @@ class ContactMail extends Mailable
     {
         $fullName = $this->contactData['firstName'] . ' ' . $this->contactData['lastName'];
         
-        return $this->subject('New Contact Form Submission - ' . config('app.name', 'RB Equipment Sales'))
+        return $this->subject('New Contact Form Submission - ' . Settings::get('company_name', 'Stiopa Equipment'))
                     ->view('emails.contact')
                     ->with(array_merge($this->contactData, ['fullName' => $fullName]));
     }
@@ -48,6 +49,6 @@ class ContactMail extends Mailable
      */
     public function getSubject()
     {
-        return 'New Contact Form Submission - ' . config('app.name', 'RB Equipment Sales');
+        return 'New Contact Form Submission - ' . Settings::get('company_name', 'Stiopa Equipment');
     }
 }

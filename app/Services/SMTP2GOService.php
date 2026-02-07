@@ -16,7 +16,7 @@ class SMTP2GOService
         $this->apiKey      = env('SMTP2GO_API_KEY', 'api-FB7FBB0BD14A413DA64AFC6D86660F46');
         $this->apiUrl      = env('SMTP2GO_API_URL', 'https://api.smtp2go.com/v3/email/send');
         $this->senderEmail = env('MAIL_FROM_ADDRESS', 'info@stiopa-equipment.com');
-        $this->senderName  = env('MAIL_FROM_NAME', 'RB EQUIPMENT SALES');
+        $this->senderName  = env('MAIL_FROM_NAME', 'Stiopa Equipment');
     }
 
     /**

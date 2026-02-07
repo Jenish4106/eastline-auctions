@@ -16,13 +16,30 @@
             padding: 0;
         }
         .header {
-            text-align: right;
-            margin-bottom: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+        }
+        .logo {
+            max-height: 60px;
+            margin-bottom: 10px;
+        }
+        .company-info {
+            font-size: 10pt;
+            color: #333;
+            margin-bottom: 8px;
         }
         .header-title {
-            font-size: 20pt;
+            font-size: 22pt;
             font-weight: bold;
             color: #000;
+            margin: 10px 0 5px 0;
+        }
+        .header-subtitle {
+            font-size: 10pt;
+            color: #666;
+            margin: 0;
         }
         .section-title {
             font-size: 12.5pt;
@@ -35,14 +52,30 @@
             margin-bottom: 12px;
             text-align: left;
         }
+        .parties-section {
+            margin: 20px 0 25px 0;
+        }
         .party-block {
-            margin-bottom: 15px;
-            text-align: left;
+            margin-bottom: 12px;
+            display: inline-block;
+            width: 48%;
+            vertical-align: top;
+        }
+        .party-label {
+            font-weight: bold;
+            font-size: 10pt;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .party-info {
+            font-size: 10pt;
+            line-height: 1.5;
         }
         .center-text {
             text-align: center;
             font-weight: bold;
-            margin: 15px 0;
+            margin: 8px 0;
+            font-size: 11pt;
         }
         .bold {
             font-weight: bold;
@@ -88,34 +121,80 @@
         .page-break {
             page-break-after: always;
         }
+        .agreement-intro {
+            text-align: center;
+            font-weight: bold;
+            margin: 15px 0 15px 0;
+            font-size: 11pt;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        td {
+            padding: 8px;
+            vertical-align: top;
+        }
+        .address-label {
+            font-weight: bold;
+            width: 30%;
+        }
+        .address-content {
+            font-size: 10pt;
+        }
     </style>
 </head>
 <body>
     <!-- Page 1 -->
     <div class="header">
-        <div class="header-title">Sales Agreement</div>
+        @if(isset($companyInfo['logo']) && !empty($companyInfo['logo']))
+            <img src="{{ asset($companyInfo['logo']) }}" class="logo" alt="Company Logo">
+        @endif
+        <div class="header-title">{{ $companyInfo['name'] }}</div>
+        <div class="company-info">
+            {{ $companyInfo['address'] }}<br>
+            {{ $companyInfo['phone'] }} | {{ $companyInfo['email'] }}
+        </div>
     </div>
 
-    <div class="content">
-        THIS SALES AGREEMENT (the "Agreement") is dated this <span class="bold">{{ \Carbon\Carbon::parse($contractDate)->format('jS \o\f F, Y') }}</span> <span class="bold">BETWEEN:</span>
+    <div class="header-title" style="text-align: center; font-size: 18pt; margin-bottom: 15px;">SALES AGREEMENT</div>
+
+    <div class="agreement-intro">
+        THIS SALES AGREEMENT (the "Agreement") is dated this {{ \Carbon\Carbon::parse($contractDate)->format('jS \o\f F, Y') }}
     </div>
 
-    <div class="party-block">
-        <span class="bold">{{ $companyInfo['name'] }}</span>, {{ $companyInfo['address'] }} (the <span class="bold">"Seller"</span>)<br>
-        <span class="bold">OF THE FIRST PART</span>
+    <div class="parties-section">
+        <div class="center-text" style="margin-bottom: 15px;">BETWEEN:</div>
+
+        <table>
+            <tr>
+                <td class="party-label address-label">SELLER:</td>
+                <td class="address-content">
+                    <strong>{{ $companyInfo['name'] }}</strong><br>
+                    {{ $sellerAddress ?? $companyInfo['address'] }}<br>
+                    Phone: {{ $companyInfo['phone'] }}<br>
+                    Email: {{ $companyInfo['email'] }}
+                </td>
+            </tr>
+        </table>
+
+        <div class="center-text" style="margin: 12px 0;">AND</div>
+
+        <table>
+            <tr>
+                <td class="party-label address-label">BUYER:</td>
+                <td class="address-content">
+                    <strong>{{ $user->first_name }} {{ $user->last_name }}</strong><br>
+                    {{ $buyerAddress ?? $user->email }}<br>
+                    Phone: {{ $user->phone_no ?? '' }}<br>
+                    Email: {{ $user->email }}
+                </td>
+            </tr>
+        </table>
     </div>
 
-    <div class="center-text">- AND -</div>
-
-    <div class="party-block" style="text-align: right;">
-        <span class="bold">{{ $user->first_name }} {{ $user->last_name }}</span>, 
-        Email: {{ $user->email }} 
-        {{ $user->phone_no ? ', Phone: ' . $user->phone_no : '' }} 
-        (the <span class="bold">"Buyer"</span>)<br>
-        <span class="bold">OF THE SECOND PART</span>
-    </div>
-
-    <div class="content" style="margin-top: 20px;">
+    <div class="content" style="margin-top: 20px; text-align: center; font-weight: bold;">
         IN CONSIDERATION of the covenants and agreements contained in this Agreement, the parties agree as follows:
     </div>
 
@@ -129,13 +208,23 @@
         </ul>
     </div>
 
-    <div class="section-title">2. Purchase Price</div>
+    <div class="section-title">2. Purchase Price & Delivery Cost</div>
     <div class="content">
         The Buyer shall pay the sum of <span class="bold">${{ number_format($highestBid->amount ?? 0, 2) }}</span> (the "Purchase Price") by bank wire transfer as required in Clause 5, which includes the following:
-        <ul>
-            <li><span class="bold">Equipment Cost:</span> ${{ number_format($highestBid->amount ?? 0, 2) }}</li>
-            <li><span class="bold">Delivery Cost:</span> $0.00</li>
-        </ul>
+        <table>
+            <tr>
+                <td style="width: 50%;">Equipment Cost:</td>
+                <td style="font-weight: bold;">${{ number_format($highestBid->amount ?? 0, 2) }}</td>
+            </tr>
+            <tr>
+                <td>Delivery Cost:</td>
+                <td style="font-weight: bold;">${{ number_format(isset($order) && $order->shipping_cost ? $order->shipping_cost : 0, 2) }}</td>
+            </tr>
+            <tr style="border-top: 1px solid #000; font-weight: bold;">
+                <td>Total Amount:</td>
+                <td style="font-weight: bold;">${{ number_format((isset($order) && $order->shipping_cost ? $order->shipping_cost : 0) + ($highestBid->amount ?? 0), 2) }}</td>
+            </tr>
+        </table>
     </div>
     <div class="content">
         The Seller and Buyer acknowledge the sufficiency of this consideration. Any applicable taxes will be paid by the Seller unless the Buyer provides a valid tax exemption certificate acceptable to the relevant taxing authorities.
@@ -151,7 +240,16 @@
     <!-- Page 2 -->
     <div class="section-title">4. Delivery of Goods</div>
     <div class="content">
-        The Goods will be deemed received by the Buyer when delivered to the provided delivery address. The Seller is fully responsible for the shipping process.
+        The Goods will be delivered to the following address:
+        <table>
+            <tr>
+                <td class="address-label">Shipping Address:</td>
+                <td class="address-content">
+                    {{ $shippingAddress ?? $buyerAddress }}<br>
+                </td>
+            </tr>
+        </table>
+        The Goods will be deemed received by the Buyer when delivered to the above address. The Seller is fully responsible for the shipping process.
     </div>
 
     <div class="section-title">5. Risk of Loss</div>
