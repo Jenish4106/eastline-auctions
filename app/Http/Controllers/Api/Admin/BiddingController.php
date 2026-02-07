@@ -32,14 +32,14 @@ class BiddingController extends Controller
             }
 
             $query = Machinery::select([
-                'id',
-                'auction_id',
-                'year',
-                'make',
-                'model',
-                'bid_end_time',
-                'bid_start_price',
-                'bid_status'
+                'machinery.id',
+                'machinery.auction_id',
+                'machinery.year',
+                'machinery.make',
+                'machinery.model',
+                'machinery.bid_end_time',
+                'machinery.bid_start_price',
+                'machinery.bid_status'
             ]);
 
             if (!empty($search)) {
