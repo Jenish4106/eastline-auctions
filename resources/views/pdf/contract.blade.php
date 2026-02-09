@@ -147,9 +147,9 @@
 </head>
 <body>
     <!-- Page 1 -->
-    <div class="header">
+        <div class="header">
         @if(isset($companyInfo['logo']) && !empty($companyInfo['logo']))
-            <img src="{{ public_path($companyInfo['logo']) }}" class="logo" alt="Company Logo">
+            <img src="{{ asset($companyInfo['logo']) }}" class="logo" alt="Company Logo">
         @endif
         <div class="header-title">{{ $companyInfo['name'] }}</div>
         <div class="company-info">
@@ -338,10 +338,11 @@
             <span class="bold">Buyer's Signature:</span>
             <div class="signature-line">
                 @if(isset($signaturePath) && !empty($signaturePath))
-                     <!-- If relative path provided, use public_path -->
-                    <img src="{{ public_path($signaturePath) }}" class="signature-img">
+                     <!-- If relative path provided, use asset -->
+                    <img src="{{ asset($signaturePath) }}" class="signature-img">
                 @elseif(isset($absoluteSignaturePath) && file_exists($absoluteSignaturePath))
-                    <img src="{{ $absoluteSignaturePath }}" class="signature-img">
+                    <!-- WARNING: This will expose local path, user likely wants asset($signaturePath) here too but kept existing logic for fallback if variable exists -->
+                     <img src="{{ asset(str_replace(public_path(), '', $absoluteSignaturePath)) }}" class="signature-img">
                 @else
                     <span class="signature-name">{{ $user->first_name }} {{ $user->last_name }}</span>
                 @endif
@@ -351,7 +352,7 @@
         <div class="signature-row" style="margin-top: 15px;">
             <span class="bold">Seller's Signature:</span> <span style="margin-left: 5px;">{{ $companyInfo['name'] }}</span>
             <div class="signature-line">
-                <img src="{{ public_path('uploads/signatures/seller_signature.png') }}" class="signature-img">
+                <img src="{{ asset('uploads/signatures/seller_signature.png') }}" class="signature-img">
             </div>
         </div>
     </div>

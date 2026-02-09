@@ -142,7 +142,7 @@ class CheckoutController extends Controller
             if ($firstImage) {
                  $imagePath = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
                  if (File::exists(public_path($imagePath))) {
-                     $machineryImage = public_path($imagePath);
+                     $machineryImage = asset($imagePath);
                  }
             }
 

@@ -127,7 +127,7 @@
             <tr>
                 <td style="width: 50%;">
                     @if(isset($companyInfo['logo']) && !empty($companyInfo['logo']))
-                        <img src="{{ public_path($companyInfo['logo']) }}" class="logo">
+                        <img src="{{ asset($companyInfo['logo']) }}" class="logo">
                     @else
                          <h2 style="margin:0; color:#2c3e50;">{{ $companyInfo['name'] }}</h2>
                     @endif
