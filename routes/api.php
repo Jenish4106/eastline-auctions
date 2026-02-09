@@ -68,6 +68,7 @@ Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
     Route::prefix('orders')->group(function () {
         Route::post('/', [OrderController::class, 'index']);
         Route::post('/update-status', [OrderController::class, 'updateOrderStatus']);
+        Route::post('/update-payment-slip-status', [OrderController::class, 'updatePaymentSlipStatus']);
     });
 
     Route::prefix('users')->group(function () {
@@ -101,6 +102,7 @@ Route::middleware(['auth.user'])->group(function () {
     Route::post('/user/sign-contract', [BiddingController::class, 'addSignatureToContract']);
     Route::post('/user/machinery-purchase', [BiddingController::class, 'purchaseMachinery']);
     Route::post('/user/checkout', [CheckoutController::class, 'checkout']);
+    Route::post('/user/upload-payment-slip', [BiddingController::class, 'uploadPaymentSlip']);
     Route::post('/user/get-contract', [CheckoutController::class, 'getContract']);
     Route::post('/user/orders', [BiddingController::class, 'getUserOrders']);
 

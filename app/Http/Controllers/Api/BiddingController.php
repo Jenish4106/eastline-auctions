@@ -863,31 +863,35 @@ class BiddingController extends Controller
 
                 $deliveryStatusMap = [
                     0 => 'Pending',
-                    1 => 'Process',
-                    2 => 'Shipped',
-                    3 => 'In Transit',
-                    4 => 'Delivered',
-                    5 => 'Cancelled',
+                    1 => 'Confirmed',
+                    2 => 'Process',
+                    3 => 'Shipped',
+                    4 => 'In Transit',
+                    5 => 'Delivered',
+                    6 => 'Cancelled',
                 ];
 
                 $deliveryTimeline = [];
                 if ($order->purchase_date) {
                     $deliveryTimeline[] = ['status' => 'Pending', 'date' => $order->purchase_date, 'status_code' => 0];
                 }
+                if ($order->confirmed_date) {
+                    $deliveryTimeline[] = ['status' => 'Confirmed', 'date' => $order->confirmed_date, 'status_code' => 1];
+                }
                 if ($order->process_date) {
-                    $deliveryTimeline[] = ['status' => 'Process', 'date' => $order->process_date, 'status_code' => 1];
+                    $deliveryTimeline[] = ['status' => 'Process', 'date' => $order->process_date, 'status_code' => 2];
                 }
                 if ($order->shipped_date) {
-                    $deliveryTimeline[] = ['status' => 'Shipped', 'date' => $order->shipped_date, 'status_code' => 2];
+                    $deliveryTimeline[] = ['status' => 'Shipped', 'date' => $order->shipped_date, 'status_code' => 3];
                 }
                 if ($order->in_transit_date) {
-                    $deliveryTimeline[] = ['status' => 'In Transit', 'date' => $order->in_transit_date, 'status_code' => 3];
+                    $deliveryTimeline[] = ['status' => 'In Transit', 'date' => $order->in_transit_date, 'status_code' => 4];
                 }
                 if ($order->delivered_date) {
-                    $deliveryTimeline[] = ['status' => 'Delivered', 'date' => $order->delivered_date, 'status_code' => 4];
+                    $deliveryTimeline[] = ['status' => 'Delivered', 'date' => $order->delivered_date, 'status_code' => 5];
                 }
                 if ($order->cancelled_date) {
-                    $deliveryTimeline[] = ['status' => 'Cancelled', 'date' => $order->cancelled_date, 'status_code' => 5];
+                    $deliveryTimeline[] = ['status' => 'Cancelled', 'date' => $order->cancelled_date, 'status_code' => 6];
                 }
 
                 return [
@@ -1096,6 +1100,99 @@ class BiddingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong, please try again.',
+            ], 500);
+        }
+    }
+
+    public function uploadPaymentSlip(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'order_id' => 'required',
+            'payment_slip' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors(),
+            ], 400);
+        }
+
+        try {
+            $user = auth('api')->user();
+            $order = Order::where('order_id', $request->order_id)->where('user_id', $user->id)->first();
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found or you are not authorized.',
+                ], 404);
+            }
+
+            $paymentSlipData = $request->input('payment_slip');
+            $extension = 'jpg';
+            
+            if (preg_match('/^data:image\/(\w+);base64,/', $paymentSlipData, $type)) {
+                $paymentSlipData = substr($paymentSlipData, strpos($paymentSlipData, ',') + 1);
+                $type = strtolower($type[1]);
+                if (!in_array($type, ['jpg', 'jpeg', 'png', 'gif'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid image type. Only jpg, jpeg, png, gif are allowed.',
+                    ], 400);
+                }
+                $extension = $type;
+            } elseif (preg_match('/^data:application\/pdf;base64,/', $paymentSlipData, $type)) {
+                $paymentSlipData = substr($paymentSlipData, strpos($paymentSlipData, ',') + 1);
+                $extension = 'pdf';
+            } else {
+                 return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid payment slip format.',
+                ], 400);
+            }
+            
+            if(strpos($paymentSlipData, 'data:image') === 0 || strpos($paymentSlipData, 'data:application') === 0) {
+                 $paymentSlipData = explode(',', $paymentSlipData)[1];
+            }
+
+            $decodedData = base64_decode($paymentSlipData);
+
+            if ($decodedData === false) {
+                 return response()->json([
+                    'success' => false,
+                    'message' => 'Base64 decode failed.',
+                ], 400);
+            }
+
+            $fileName = 'payment_slip_' . $order->order_id . '_' . time() . '.' . $extension;
+            $directoryPath = 'uploads/payment_slips';
+            $directory = public_path($directoryPath);
+
+            if (!File::exists($directory)) {
+                File::makeDirectory($directory, 0755, true);
+            }
+
+            File::put($directory . '/' . $fileName, $decodedData);
+
+            $order->payment_slip_path = $directoryPath . '/' . $fileName;
+            $order->payment_slip_status = 0;
+            $order->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment slip uploaded successfully.',
+                'data' => [
+                    'payment_slip_url' => asset($order->payment_slip_path),
+                    'status' => 'Pending',
+                    'status_code' => 0
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong: ' . $e->getMessage(),
             ], 500);
         }
     }

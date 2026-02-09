@@ -41,6 +41,8 @@ class OrderController extends Controller
                 'price',
                 'delivery_status',
                 'purchase_date',
+                'payment_slip_path',
+                'payment_slip_status',
             ]);
 
             if (! empty($search)) {
@@ -68,6 +70,9 @@ class OrderController extends Controller
                 $order->status_code    = $order->delivery_status;
                 $order->invoice_url    = $order->invoice_url;
                 $order->contract_url   = $order->contract_url;
+                $order->payment_slip_url = $order->payment_slip_url;
+                $order->payment_slip_status = $order->payment_slip_status;
+                $order->payment_slip_status_text = $order->payment_slip_status_text;
 
                 unset($order->user);
 
@@ -105,11 +110,14 @@ class OrderController extends Controller
     /**
      * Update order status
      */
+    /**
+     * Update order status
+     */
     public function updateOrderStatus(Request $request)
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'order_id' => 'required|exists:orders,id',
-            'status'   => 'required|integer|between:0,5',
+            'status'   => 'required|integer|between:0,6',
         ]);
 
         if ($validator->fails()) {
@@ -132,15 +140,17 @@ class OrderController extends Controller
             $order->delivery_status = $request->status;
 
             switch ($request->status) {
-                case 1:$order->process_date = now();
+                case 1:$order->confirmed_date = now();
                     break;
-                case 2:$order->shipped_date = now();
+                case 2:$order->process_date = now();
                     break;
-                case 3:$order->in_transit_date = now();
+                case 3:$order->shipped_date = now();
                     break;
-                case 4:$order->delivered_date = now();
+                case 4:$order->in_transit_date = now();
                     break;
-                case 5:$order->cancelled_date = now();
+                case 5:$order->delivered_date = now();
+                    break;
+                case 6:$order->cancelled_date = now();
                     break;
             }
 
@@ -201,17 +211,121 @@ class OrderController extends Controller
 
             $statusMessages = [
                 0 => 'Order status updated to Pending.',
-                1 => 'Order moved to processing and invoice sent.',
-                2 => 'Order shipped successfully.',
-                3 => 'Order is in transit.',
-                4 => 'Order delivered successfully.',
-                5 => 'Order cancelled successfully.',
+                1 => 'Order confirmed and invoice sent.',
+                2 => 'Order moved to processing.',
+                3 => 'Order shipped successfully.',
+                4 => 'Order is in transit.',
+                5 => 'Order delivered successfully.',
+                6 => 'Order cancelled successfully.',
             ];
 
             return response()->json([
                 'success' => true,
                 'message' => $statusMessages[$request->status] ?? 'Order status updated.',
             ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong. Please try again.',
+            ], 500);
+        }
+    }
+    public function updatePaymentSlipStatus(Request $request) 
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'order_id' => 'required|exists:orders,id',
+            'status'   => 'required|integer|in:0,1,2'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors(),
+            ], 400);
+        }
+
+        try {
+            $order = Order::with(['user', 'machinery', 'invoice', 'contract'])->find($request->order_id);
+
+            if (! $order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found',
+                ], 404);
+            }
+
+            $order->payment_slip_status = $request->status;
+            $order->save();
+            
+            $message = 'Payment slip status updated.';
+
+            if ($request->status == 1) {
+                $order->delivery_status = 1;
+                $order->confirmed_date = now();
+                $order->save();
+                
+                if ($order->machinery) {
+                    $order->machinery->update(['status' => 2]);
+                }
+                
+                if ($order->user && $order->machinery) {
+                    try {
+                        $mail = new OrderStatusChangeMail(
+                            $order->user,
+                            $order,
+                            $order->machinery,
+                            1
+                        );
+
+                        $smtp2goService = new SMTP2GOService();
+                        $htmlContent    = $mail->renderHtmlContent();
+
+                        $attachments = [];
+                        
+                        $invoice = $order->invoice;
+                        if ($invoice && file_exists(public_path($invoice->image_path))) {
+                            $attachments[] = [
+                                'path' => public_path($invoice->image_path),
+                                'name' => 'Invoice-' . $order->order_id . '.pdf',
+                                'type' => 'application/pdf',
+                            ];
+                        }
+
+                        
+                        $contract = $order->contract;
+                        if ($contract && file_exists(public_path($contract->image_path))) {
+                            $attachments[] = [
+                                'path' => public_path($contract->image_path),
+                                'name' => 'Contract-' . $order->order_id . '.pdf',
+                                'type' => 'application/pdf',
+                            ];
+                        }
+
+                        $smtp2goService->sendEmail(
+                            $order->user->email,
+                            $mail->getSubject(),
+                            $htmlContent,
+                            $attachments
+                        );
+
+                    } catch (\Exception $e) {
+                         return response()->json([
+                            'success' => false,
+                            'message' => 'Something went wrong. Please try again.',
+                        ], 500);
+                    }
+                }
+                
+                $message = 'Payment slip approved and order confirmed.';
+            } elseif ($request->status == 2) {
+                $message = 'Payment slip declined.';
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+            ], 200);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

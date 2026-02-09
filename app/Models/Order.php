@@ -33,11 +33,14 @@ class Order extends Model
         'shipping_state',
         'shipping_zip',
         'shipping_country',
+        'payment_slip_path',
+        'payment_slip_status',
     ];
     
     protected $appends = [
         'invoice_url',
         'contract_url',
+        'payment_slip_url',
     ];
 
     protected $casts = [
@@ -48,6 +51,7 @@ class Order extends Model
         'delivered_date' => 'datetime',
         'cancelled_date' => 'datetime',
         'delivery_status' => 'integer',
+        'payment_slip_status' => 'integer',
     ];
     
     public function machinery()
@@ -81,16 +85,33 @@ class Order extends Model
         $contract = $this->contract;
         return $contract ? asset($contract->image_path) : null;
     }
+
+    public function getPaymentSlipUrlAttribute()
+    {
+        return $this->payment_slip_path ? asset($this->payment_slip_path) : null;
+    }
     
+    public function getPaymentSlipStatusTextAttribute()
+    {
+        $statusMap = [
+            0 => 'Pending',
+            1 => 'Approve',
+            2 => 'Decline',
+        ];
+        
+        return $statusMap[$this->payment_slip_status] ?? 'Unknown';
+    }
+
     public function getDeliveryStatusTextAttribute()
     {
         $statusMap = [
             0 => 'Pending',
-            1 => 'Process',
-            2 => 'Shipped',
-            3 => 'In Transit',
-            4 => 'Delivered',
-            5 => 'Cancelled',
+            1 => 'Confirmed',
+            2 => 'Process',
+            3 => 'Shipped',
+            4 => 'In Transit',
+            5 => 'Delivered',
+            6 => 'Cancelled',
         ];
         
         return $statusMap[$this->delivery_status] ?? 'Unknown';
