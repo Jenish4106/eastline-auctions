@@ -103,7 +103,6 @@ Route::middleware(['auth.user'])->group(function () {
     Route::post('/user/checkout', [CheckoutController::class, 'checkout']);
     Route::post('/user/get-contract', [CheckoutController::class, 'getContract']);
     Route::post('/user/orders', [BiddingController::class, 'getUserOrders']);
-    Route::post('/user/order-details', [BiddingController::class, 'getOrderDetails']);
 
     Route::get('/user/dashboard', [UserDashboardController::class, 'index']);
 

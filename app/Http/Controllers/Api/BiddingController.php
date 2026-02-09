@@ -851,6 +851,100 @@ class BiddingController extends Controller
     {
         try {
             $user = auth('api')->user();
+            $settings = Settings::first();
+            $deliveryContact = $settings ? $settings->phone_no : null;
+
+            $transformOrder = function ($order) use ($deliveryContact) {
+                if (!$order->machinery) {
+                    return null;
+                }
+
+                $firstImage = $order->machinery->images->firstWhere('type', 'image');
+
+                $deliveryStatusMap = [
+                    0 => 'Pending',
+                    1 => 'Process',
+                    2 => 'Shipped',
+                    3 => 'In Transit',
+                    4 => 'Delivered',
+                    5 => 'Cancelled',
+                ];
+
+                $deliveryTimeline = [];
+                if ($order->purchase_date) {
+                    $deliveryTimeline[] = ['status' => 'Pending', 'date' => $order->purchase_date, 'status_code' => 0];
+                }
+                if ($order->process_date) {
+                    $deliveryTimeline[] = ['status' => 'Process', 'date' => $order->process_date, 'status_code' => 1];
+                }
+                if ($order->shipped_date) {
+                    $deliveryTimeline[] = ['status' => 'Shipped', 'date' => $order->shipped_date, 'status_code' => 2];
+                }
+                if ($order->in_transit_date) {
+                    $deliveryTimeline[] = ['status' => 'In Transit', 'date' => $order->in_transit_date, 'status_code' => 3];
+                }
+                if ($order->delivered_date) {
+                    $deliveryTimeline[] = ['status' => 'Delivered', 'date' => $order->delivered_date, 'status_code' => 4];
+                }
+                if ($order->cancelled_date) {
+                    $deliveryTimeline[] = ['status' => 'Cancelled', 'date' => $order->cancelled_date, 'status_code' => 5];
+                }
+
+                return [
+                    'id' => $order->id,
+                    'order_id' => $order->order_id,
+                    'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
+                    'name' => $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model,
+                    'auction_id' => $order->machinery->auction_id,
+                    'price' => $order->price,
+                    'purchase_date' => $order->purchase_date,
+                    'delivery_status' => $order->delivery_status,
+                    'delivery_status_text' => isset($deliveryStatusMap[$order->delivery_status]) ? $deliveryStatusMap[$order->delivery_status] : 'Unknown',
+                    'current_status' => isset($deliveryStatusMap[$order->delivery_status]) ? $deliveryStatusMap[$order->delivery_status] : 'Unknown',
+                    'invoice_url' => $order->invoice_url,
+                    'contract_url' => $order->contract_url,
+                    'working_hours' => $order->machinery->working_hours,
+                    'weight' => $order->machinery->weight,
+                    'year' => $order->machinery->year,
+                    'serial_no' => $order->machinery->serial_number,
+                    'delivery_contact' => $deliveryContact,
+                    'delivery_timeline' => $deliveryTimeline,
+                ];
+            };
+
+            $query = Order::where('user_id', $user->id)
+                ->with(['machinery' => function($query) {
+                    $query->select('id', 'make', 'model', 'year', 'working_hours', 'weight', 'serial_number', 'description', 'auction_id');
+                }, 'machinery.images']);
+
+            if ($request->has('order_id')) {
+                $validator = Validator::make($request->all(), [
+                    'order_id' => 'required|string|exists:orders,id',
+                ]);
+
+                if ($validator->fails()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $validator->errors(),
+                    ], 400);
+                }
+
+                $order = $query->where('id', $request->order_id)->first();
+
+                if (!$order) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Order not found',
+                    ], 404);
+                }
+
+                $orderDetails = $transformOrder($order);
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $orderDetails,
+                ], 200);
+            }
 
             $search = $request->input('search', '');
             $perPage = $request->input('per_page', 10);
@@ -869,11 +963,6 @@ class BiddingController extends Controller
                 $sortOrder = 'desc';
             }
 
-            $query = Order::where('user_id', $user->id)
-                ->with(['machinery' => function($query) {
-                    $query->select('id', 'make', 'model', 'year', 'description');
-                }, 'machinery.images']);
-
             if (!empty($search)) {
                 $query->where(function($q) use ($search) {
                     $q->where('order_id', 'LIKE', "%{$search}%")
@@ -889,34 +978,7 @@ class BiddingController extends Controller
 
             $orders = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
 
-            $ordersWithFormattedData = $orders->getCollection()->map(function ($order) {
-                if ($order->machinery) {
-                    $firstImage = $order->machinery->images->firstWhere('type', 'image');
-
-                    $deliveryStatusMap = [
-                        0 => 'Pending',
-                        1 => 'Process',
-                        2 => 'Shipped',
-                        3 => 'In Transit',
-                        4 => 'Delivered',
-                        5 => 'Cancelled',
-                    ];
-
-                    return [
-                        'id' => $order->id,
-                        'order_id' => $order->order_id,
-                        'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
-                        'name' => $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model,
-                        'auction_id' => $order->machinery->auction_id,
-                        'price' => $order->price,
-                        'purchase_date' => $order->purchase_date,
-                        'delivery_status' => $order->delivery_status,
-                        'delivery_status_text' => isset($deliveryStatusMap[$order->delivery_status]) ? $deliveryStatusMap[$order->delivery_status] : 'Unknown',
-                        'invoice_url' => $order->invoice_url,
-                        'contract_url' => $order->contract_url,
-                    ];
-                }
-            })->filter();
+            $ordersWithFormattedData = $orders->getCollection()->map($transformOrder)->filter();
 
             if ($ordersWithFormattedData->isEmpty()) {
                 return response()->json([
@@ -927,7 +989,7 @@ class BiddingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $ordersWithFormattedData,
+                'data' => $ordersWithFormattedData->values(),
                 'pagination' => [
                     'current_page' => $orders->currentPage(),
                     'last_page'    => $orders->lastPage(),
@@ -936,129 +998,6 @@ class BiddingController extends Controller
                     'from'         => $orders->firstItem(),
                     'to'           => $orders->lastItem(),
                 ],
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong, please try again.',
-            ], 500);
-        }
-    }
-
-    public function getOrderDetails(Request $request)
-    {
-        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-            'order_id' => 'required|string|exists:orders,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => $validator->errors(),
-            ], 400);
-        }
-
-        try {
-            $user = auth('api')->user();
-
-            $order = Order::where('id', $request->order_id)
-                ->where('user_id', $user->id)
-                ->with(['machinery' => function($query) {
-                    $query->select('id', 'make', 'model', 'year', 'working_hours', 'weight', 'serial_number');
-                }, 'machinery.images'])
-                ->first();
-
-            if (!$order) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Order not found',
-                ], 404);
-            }
-
-            $firstImage = $order->machinery->images->firstWhere('type', 'image');
-
-            $settings = Settings::first();
-            $deliveryContact = $settings ? $settings->phone_no : null;
-
-            $deliveryStatusMap = [
-                0 => 'Pending',
-                1 => 'Process',
-                2 => 'Shipped',
-                3 => 'In Transit',
-                4 => 'Delivered',
-                5 => 'Cancelled',
-            ];
-
-            $deliveryTimeline = [];
-
-            if ($order->purchase_date) {
-                $deliveryTimeline[] = [
-                    'status' => 'Pending',
-                    'date' => $order->purchase_date,
-                    'status_code' => 0
-                ];
-            }
-
-            if ($order->process_date) {
-                $deliveryTimeline[] = [
-                    'status' => 'Process',
-                    'date' => $order->process_date,
-                    'status_code' => 1
-                ];
-            }
-
-            if ($order->shipped_date) {
-                $deliveryTimeline[] = [
-                    'status' => 'Shipped',
-                    'date' => $order->shipped_date,
-                    'status_code' => 2
-                ];
-            }
-
-            if ($order->in_transit_date) {
-                $deliveryTimeline[] = [
-                    'status' => 'In Transit',
-                    'date' => $order->in_transit_date,
-                    'status_code' => 3
-                ];
-            }
-
-            if ($order->delivered_date) {
-                $deliveryTimeline[] = [
-                    'status' => 'Delivered',
-                    'date' => $order->delivered_date,
-                    'status_code' => 4
-                ];
-            }
-
-            if ($order->cancelled_date) {
-                $deliveryTimeline[] = [
-                    'status' => 'Cancelled',
-                    'date' => $order->cancelled_date,
-                    'status_code' => 5
-                ];
-            }
-
-            $orderDetails = [
-                'first_image' => $firstImage ? asset('uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
-                'name' => $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model,
-                'auction_id' => $order->machinery->auction_id,
-                'working_hours' => $order->machinery->working_hours,
-                'weight' => $order->machinery->weight,
-                'year' => $order->machinery->year,
-                'price' => $order->price,
-                'serial_no' => $order->machinery->serial_number,
-                'order_id' => $order->order_id,
-                'delivery_contact' => $deliveryContact,
-                'current_status' => isset($deliveryStatusMap[$order->delivery_status]) ? $deliveryStatusMap[$order->delivery_status] : 'Unknown',
-                'delivery_timeline' => $deliveryTimeline,
-                'invoice_url' => $order->invoice_url,
-                'contract_url' => $order->contract_url,
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $orderDetails,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
