@@ -393,7 +393,8 @@ class CheckoutController extends Controller
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => $companyLogo,
+                    'logo' => null,
+                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];

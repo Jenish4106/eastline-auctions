@@ -126,14 +126,15 @@
         <table class="header-table">
             <tr>
                 <td style="width: 50%;">
-                    @if(isset($companyInfo['logoUrl']) && !empty($companyInfo['logoUrl']))
-                         <img src="{{ $companyInfo['logoUrl'] }}" class="logo">
-                    @elseif(isset($companyInfo['logo']) && !empty($companyInfo['logo']))
+                    @if(isset($companyInfo['logo']) && !empty($companyInfo['logo']))
                          <img src="{{ $companyInfo['logo'] }}" class="logo">
+                    @elseif(isset($companyInfo['logoUrl']) && !empty($companyInfo['logoUrl']))
+                         <img src="{{ $companyInfo['logoUrl'] }}" class="logo">
                     @else
                          <h2 style="margin:0; color:#2c3e50;">{{ $companyInfo['name'] }}</h2>
                     @endif
                 </td>
+
                 <td style="width: 50%; text-align: right;">
                     <div class="invoice-title">INVOICE</div>
                     <div style="color: #7f8c8d;">#{{ $order->order_id }}</div>
@@ -197,10 +198,10 @@
             <tbody>
                 <tr>
                     <td>
-                        @if(isset($machineryImageUrl) && $machineryImageUrl)
-                            <img src="{{ $machineryImageUrl }}" class="machinery-image">
-                        @elseif(isset($machineryImage) && $machineryImage)
+                        @if(isset($machineryImage) && $machineryImage)
                             <img src="{{ $machineryImage }}" class="machinery-image">
+                        @elseif(isset($machineryImageUrl) && $machineryImageUrl)
+                            <img src="{{ $machineryImageUrl }}" class="machinery-image">
                         @else
                             <div style="width:80px; height:60px; background:#eee; display:flex; align-items:center; justify-content:center; color:#999; font-size:10px;">No Image</div>
                         @endif
