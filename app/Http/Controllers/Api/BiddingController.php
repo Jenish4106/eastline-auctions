@@ -492,18 +492,6 @@ class BiddingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'machineryId' => 'required|exists:machinery,id',
-            'billing_details.legal_company_name' => 'nullable|string|max:255',
-            'billing_details.street_and_number' => 'required|string|max:255',
-            'billing_details.city' => 'required|string|max:255',
-            'billing_details.state_province' => 'nullable|string|max:255',
-            'billing_details.zip_postal_code' => 'required|string|max:20',
-            'billing_details.country' => 'required|string|max:255',
-            'shipping_details.is_different' => 'required|boolean',
-            'shipping_details.shipping_street' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
-            'shipping_details.shipping_city' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
-            'shipping_details.shipping_state' => 'nullable|string|max:255',
-            'shipping_details.shipping_zip' => 'required_if:shipping_details.is_different,true|nullable|string|max:20',
-            'shipping_details.shipping_country' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -543,60 +531,6 @@ class BiddingController extends Controller
                 4 => 'Rejected',
             ];
 
-            $winningUser = User::find($machinery->won_user);
-
-            $highestBidModel = $machinery->bids->where('auction_id', $machinery->auction_id)->sortByDesc('amount')->first();
-
-            $order = Order::where('machinery_id', $machinery->id)
-                ->where('user_id', $user->id)
-                ->first();
-
-            $companyAddress = Settings::get('address') ?? '';
-            $sellerAddress = $companyAddress;
-
-            $billing = $request->input('billing_details');
-            $shipping = $request->input('shipping_details');
-            $isShippingDifferent = filter_var($shipping['is_different'] ?? false, FILTER_VALIDATE_BOOLEAN);
-
-            $buyerAddress = trim(($billing['street_and_number'] ?? '') . ', ' .
-                            ($billing['city'] ?? '') . ', ' .
-                            ($billing['state_province'] ?? '') . ' ' .
-                            ($billing['zip_postal_code'] ?? '') . ', ' .
-                            ($billing['country'] ?? ''));
-            $buyerAddress = trim(str_replace(',  ', ', ', $buyerAddress), ', ');
-
-            $shippingAddress = $buyerAddress;
-            if ($isShippingDifferent) {
-                $shippingAddress = trim(($shipping['shipping_street'] ?? '') . ', ' .
-                                       ($shipping['shipping_city'] ?? '') . ', ' .
-                                       ($shipping['shipping_state'] ?? '') . ' ' .
-                                       ($shipping['shipping_zip'] ?? '') . ', ' .
-                                       ($shipping['shipping_country'] ?? ''));
-                $shippingAddress = trim(str_replace(',  ', ', ', $shippingAddress), ', ');
-            }
-
-            $contractDataView = [
-                'machinery' => $machinery,
-                'highestBid' => $highestBidModel,
-                'user' => $winningUser,
-                'order' => $order,
-                'sellerAddress' => $sellerAddress,
-                'buyerAddress' => $buyerAddress,
-                'shippingAddress' => $shippingAddress,
-                'signaturePath' => null,
-                'absoluteSignaturePath' => null,
-                'companyInfo' => [
-                    'name' => Settings::get('company_name', 'Stiopa Equipment'),
-                    'address' => $companyAddress,
-                    'phone' => Settings::get('phone_no'),
-                    'email' => Settings::get('email'),
-                    'logo' => Settings::get('dark_logo'),
-                ],
-                'contractDate' => now()->format('Y-m-d'),
-            ];
-
-            $contractHtml = View::make('pdf.contract', $contractDataView)->render();
-
             $contractData = [
                 'id' => $machinery->id,
                 'auction_id' => $machinery->auction_id,
@@ -605,7 +539,6 @@ class BiddingController extends Controller
                 'start_bid_price' => $machinery->bid_start_price,
                 'won_bid_amount' => $highestBid,
                 'status' => isset($contractStatusMap[$machinery->contract_status]) ? $contractStatusMap[$machinery->contract_status] : 'Unknown',
-                'contract_html' => $contractHtml,
             ];
 
             return response()->json([
@@ -673,7 +606,6 @@ class BiddingController extends Controller
             $shipping = $request->input('shipping_details');
             $isShippingDifferent = filter_var($shipping['is_different'], FILTER_VALIDATE_BOOLEAN);
 
-            // Calculate Shipping Cost
             $shippingCost = 0;
             try {
                 $shippingZip = $isShippingDifferent ? $shipping['shipping_zip'] : $billing['zip_postal_code'];
