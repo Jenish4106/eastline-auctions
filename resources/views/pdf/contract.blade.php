@@ -220,11 +220,11 @@
             </tr>
             <tr>
                 <td>Delivery Cost:</td>
-                <td style="font-weight: bold;">${{ number_format(isset($order) && $order->shipping_cost ? $order->shipping_cost : 0, 2) }}</td>
+                <td style="font-weight: bold;">${{ number_format(isset($order) && $order->shipping_cost ? $order->shipping_cost : ($shipping_cost ?? 0), 2) }}</td>
             </tr>
             <tr style="border-top: 1px solid #000; font-weight: bold;">
                 <td>Total Amount:</td>
-                <td style="font-weight: bold;">${{ number_format((isset($order) && $order->shipping_cost ? $order->shipping_cost : 0) + ($highestBid->amount ?? 0), 2) }}</td>
+                <td style="font-weight: bold;">${{ number_format((isset($order) && $order->shipping_cost ? $order->shipping_cost : ($shipping_cost ?? 0)) + ($highestBid->amount ?? 0), 2) }}</td>
             </tr>
         </table>
     </div>

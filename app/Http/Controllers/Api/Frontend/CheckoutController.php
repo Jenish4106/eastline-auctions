@@ -380,11 +380,37 @@ class CheckoutController extends Controller
                 $shippingAddress = trim(str_replace(',  ', ', ', $shippingAddress), ', ');
             }
 
+            $shippingCost = 0;
+            try {
+                $shippingZip = $isShippingDifferent ? ($shipping['shipping_zip'] ?? null) : ($billing['zip_postal_code'] ?? null);
+                $shippingCountry = $isShippingDifferent ? ($shipping['shipping_country'] ?? null) : ($billing['country'] ?? null);
+
+                $companyAddress = $this->googleMapsService->getCompanyAddress();
+                if ($companyAddress && $shippingZip && $shippingCountry) {
+                    $companyLocation = $this->googleMapsService->geocodeAddress($companyAddress);
+                    $customerLocation = $this->googleMapsService->getCoordinatesFromZipAndCountry($shippingZip, $shippingCountry);
+
+                    if ($companyLocation && $customerLocation) {
+                        $distanceResult = $this->googleMapsService->calculateDistance($companyLocation, $customerLocation);
+                        if ($distanceResult) {
+                            $perMileDeliveryCost = Settings::get('per_mile_delivery_cost', 0);
+                            $shippingCost = $distanceResult['distance_miles'] * $perMileDeliveryCost;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Something went wrong, please try again.'
+                ], 500);
+            }
+
             $contractDataView = [
                 'machinery' => $machinery,
                 'highestBid' => $highestBidModel,
                 'user' => $user,
                 'order' => $order,
+                'shipping_cost' => $shippingCost,
                 'sellerAddress' => $sellerAddress,
                 'buyerAddress' => $buyerAddress,
                 'shippingAddress' => $shippingAddress,
