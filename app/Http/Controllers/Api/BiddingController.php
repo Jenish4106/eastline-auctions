@@ -492,6 +492,18 @@ class BiddingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'machineryId' => 'required|exists:machinery,id',
+            'billing_details.legal_company_name' => 'nullable|string|max:255',
+            'billing_details.street_and_number' => 'required|string|max:255',
+            'billing_details.city' => 'required|string|max:255',
+            'billing_details.state_province' => 'nullable|string|max:255',
+            'billing_details.zip_postal_code' => 'required|string|max:20',
+            'billing_details.country' => 'required|string|max:255',
+            'shipping_details.is_different' => 'required|boolean',
+            'shipping_details.shipping_street' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
+            'shipping_details.shipping_city' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
+            'shipping_details.shipping_state' => 'nullable|string|max:255',
+            'shipping_details.shipping_zip' => 'required_if:shipping_details.is_different,true|nullable|string|max:20',
+            'shipping_details.shipping_country' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -535,15 +547,50 @@ class BiddingController extends Controller
 
             $highestBidModel = $machinery->bids->where('auction_id', $machinery->auction_id)->sortByDesc('amount')->first();
 
+            $order = Order::where('machinery_id', $machinery->id)
+                ->where('user_id', $user->id)
+                ->first();
+
+            $companyAddress = Settings::get('address') ?? '';
+            $sellerAddress = $companyAddress;
+
+            $billing = $request->input('billing_details');
+            $shipping = $request->input('shipping_details');
+            $isShippingDifferent = filter_var($shipping['is_different'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+            $buyerAddress = trim(($billing['street_and_number'] ?? '') . ', ' .
+                            ($billing['city'] ?? '') . ', ' .
+                            ($billing['state_province'] ?? '') . ' ' .
+                            ($billing['zip_postal_code'] ?? '') . ', ' .
+                            ($billing['country'] ?? ''));
+            $buyerAddress = trim(str_replace(',  ', ', ', $buyerAddress), ', ');
+
+            $shippingAddress = $buyerAddress;
+            if ($isShippingDifferent) {
+                $shippingAddress = trim(($shipping['shipping_street'] ?? '') . ', ' .
+                                       ($shipping['shipping_city'] ?? '') . ', ' .
+                                       ($shipping['shipping_state'] ?? '') . ' ' .
+                                       ($shipping['shipping_zip'] ?? '') . ', ' .
+                                       ($shipping['shipping_country'] ?? ''));
+                $shippingAddress = trim(str_replace(',  ', ', ', $shippingAddress), ', ');
+            }
+
             $contractDataView = [
                 'machinery' => $machinery,
                 'highestBid' => $highestBidModel,
                 'user' => $winningUser,
+                'order' => $order,
+                'sellerAddress' => $sellerAddress,
+                'buyerAddress' => $buyerAddress,
+                'shippingAddress' => $shippingAddress,
+                'signaturePath' => null,
+                'absoluteSignaturePath' => null,
                 'companyInfo' => [
-                    'name' => Settings::get('company_name',),
-                    'address' => Settings::get('address'),
+                    'name' => Settings::get('company_name', 'Stiopa Equipment'),
+                    'address' => $companyAddress,
                     'phone' => Settings::get('phone_no'),
                     'email' => Settings::get('email'),
+                    'logo' => Settings::get('dark_logo'),
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];
@@ -734,20 +781,20 @@ class BiddingController extends Controller
 
             $sellerAddress = $companyAddress;
 
-            $buyerAddress = trim(($order->billing_street ?? '') . ', ' .
-                            ($order->billing_city ?? '') . ', ' .
-                            ($order->billing_state ?? '') . ' ' .
-                            ($order->billing_zip ?? '') . ', ' .
-                            ($order->billing_country ?? ''));
+            $buyerAddress = trim(($billing['street_and_number'] ?? '') . ', ' .
+                            ($billing['city'] ?? '') . ', ' .
+                            ($billing['state_province'] ?? '') . ' ' .
+                            ($billing['zip_postal_code'] ?? '') . ', ' .
+                            ($billing['country'] ?? ''));
             $buyerAddress = trim(str_replace(',  ', ', ', $buyerAddress), ', ');
 
             $shippingAddress = $buyerAddress;
-            if (!$order->shipping_same_as_billing) {
-                $shippingAddress = trim(($order->shipping_street ?? '') . ', ' .
-                                       ($order->shipping_city ?? '') . ', ' .
-                                       ($order->shipping_state ?? '') . ' ' .
-                                       ($order->shipping_zip ?? '') . ', ' .
-                                       ($order->shipping_country ?? ''));
+            if ($isShippingDifferent) {
+                $shippingAddress = trim(($shipping['shipping_street'] ?? '') . ', ' .
+                                       ($shipping['shipping_city'] ?? '') . ', ' .
+                                       ($shipping['shipping_state'] ?? '') . ' ' .
+                                       ($shipping['shipping_zip'] ?? '') . ', ' .
+                                       ($shipping['shipping_country'] ?? ''));
                 $shippingAddress = trim(str_replace(',  ', ', ', $shippingAddress), ', ');
             }
 
