@@ -745,7 +745,9 @@ class BiddingController extends Controller
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => Settings::get('dark_logo') ?? '',
+                    'logo' => $companyLogo ? public_path($companyLogo) : null, // For PDF
+                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,   // For Frontend
+                    'signature_path' => public_path('uploads/signatures/seller_signature.png'), // For PDF
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];
@@ -780,22 +782,27 @@ class BiddingController extends Controller
             $machinery->load('images');
             $firstImage = $machinery->images->firstWhere('type', 'image');
             $machineryImage = null;
+            $machineryImageUrl = null;
+            
             if ($firstImage) {
-                 $imagePath = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
-                 if (File::exists(public_path($imagePath))) {
-                     $machineryImage = asset($imagePath);
+                 $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
+                 if (File::exists(public_path($imagePathRel))) {
+                     $machineryImage = public_path($imagePathRel); // For PDF generation
+                     $machineryImageUrl = asset($imagePathRel);   // For Frontend display
                  }
             }
 
             $invoiceData = [
                 'order' => $order,
                 'machineryImage' => $machineryImage,
+                'machineryImageUrl' => $machineryImageUrl,
                 'companyInfo' => [
                     'name' => $companyName,
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => $companyLogoPath,
+                    'logo' => $companyLogo ? public_path($companyLogo) : null, // For PDF
+                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,   // For Frontend
                 ]
             ];
 

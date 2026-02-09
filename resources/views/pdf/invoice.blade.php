@@ -126,8 +126,10 @@
         <table class="header-table">
             <tr>
                 <td style="width: 50%;">
-                    @if(isset($companyInfo['logo']) && !empty($companyInfo['logo']))
-                        <img src="{{ asset($companyInfo['logo']) }}" class="logo">
+                    @if(isset($companyInfo['logoUrl']) && !empty($companyInfo['logoUrl']))
+                         <img src="{{ $companyInfo['logoUrl'] }}" class="logo">
+                    @elseif(isset($companyInfo['logo']) && !empty($companyInfo['logo']))
+                         <img src="{{ $companyInfo['logo'] }}" class="logo">
                     @else
                          <h2 style="margin:0; color:#2c3e50;">{{ $companyInfo['name'] }}</h2>
                     @endif
@@ -195,7 +197,9 @@
             <tbody>
                 <tr>
                     <td>
-                        @if(isset($machineryImage) && $machineryImage)
+                        @if(isset($machineryImageUrl) && $machineryImageUrl)
+                            <img src="{{ $machineryImageUrl }}" class="machinery-image">
+                        @elseif(isset($machineryImage) && $machineryImage)
                             <img src="{{ $machineryImage }}" class="machinery-image">
                         @else
                             <div style="width:80px; height:60px; background:#eee; display:flex; align-items:center; justify-content:center; color:#999; font-size:10px;">No Image</div>

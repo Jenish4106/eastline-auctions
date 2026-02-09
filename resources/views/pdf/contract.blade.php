@@ -149,7 +149,9 @@
     <!-- Page 1 -->
         <div class="header">
         @if(isset($companyInfo['logo']) && !empty($companyInfo['logo']))
-            <img src="{{ asset($companyInfo['logo']) }}" class="logo" alt="Company Logo">
+            <img src="{{ $companyInfo['logo'] }}" class="logo" alt="Company Logo">
+        @elseif(isset($companyInfo['logoUrl']) && !empty($companyInfo['logoUrl']))
+            <img src="{{ $companyInfo['logoUrl'] }}" class="logo" alt="Company Logo">
         @endif
         <div class="header-title">{{ $companyInfo['name'] }}</div>
         <div class="company-info">
@@ -337,12 +339,10 @@
         <div class="signature-row" style="margin-top: 15px;">
             <span class="bold">Buyer's Signature:</span>
             <div class="signature-line">
-                @if(isset($signaturePath) && !empty($signaturePath))
-                     <!-- If relative path provided, use asset -->
-                    <img src="{{ asset($signaturePath) }}" class="signature-img">
-                @elseif(isset($absoluteSignaturePath) && file_exists($absoluteSignaturePath))
-                    <!-- WARNING: This will expose local path, user likely wants asset($signaturePath) here too but kept existing logic for fallback if variable exists -->
-                     <img src="{{ asset(str_replace(public_path(), '', $absoluteSignaturePath)) }}" class="signature-img">
+                @if(isset($absoluteSignaturePath) && file_exists($absoluteSignaturePath))
+                    <img src="{{ $absoluteSignaturePath }}" class="signature-img">
+                @elseif(isset($signaturePath) && !empty($signaturePath))
+                    <img src="{{ Str::startsWith($signaturePath, 'http') ? $signaturePath : asset($signaturePath) }}" class="signature-img">
                 @else
                     <span class="signature-name">{{ $user->first_name }} {{ $user->last_name }}</span>
                 @endif
@@ -352,7 +352,11 @@
         <div class="signature-row" style="margin-top: 15px;">
             <span class="bold">Seller's Signature:</span> <span style="margin-left: 5px;">{{ $companyInfo['name'] }}</span>
             <div class="signature-line">
-                <img src="{{ asset('uploads/signatures/seller_signature.png') }}" class="signature-img">
+                @if(isset($companyInfo['signature_path']) && !empty($companyInfo['signature_path']) && file_exists($companyInfo['signature_path']))
+                    <img src="{{ $companyInfo['signature_path'] }}" class="signature-img">
+                @else
+                    <img src="{{ asset('uploads/signatures/seller_signature.png') }}" class="signature-img">
+                @endif
             </div>
         </div>
     </div>
