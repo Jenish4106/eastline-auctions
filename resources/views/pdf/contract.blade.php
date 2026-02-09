@@ -5,99 +5,99 @@
     <title>Sales Agreement</title>
     <style>
         @page {
-            margin: 1.2cm 1.5cm;
+            margin: 0.8cm 1.2cm;
         }
         body {
             font-family: 'Helvetica', 'Arial', sans-serif;
-            font-size: 11pt;
-            line-height: 1.35;
+            font-size: 10pt;
+            line-height: 1.3;
             color: #000;
             margin: 0;
             padding: 0;
         }
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             border-bottom: 2px solid #333;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
         }
         .logo {
-            max-height: 60px;
-            margin-bottom: 10px;
+            max-height: 50px;
+            margin-bottom: 5px;
         }
         .company-info {
-            font-size: 10pt;
+            font-size: 9pt;
             color: #333;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
         .header-title {
-            font-size: 22pt;
+            font-size: 18pt;
             font-weight: bold;
             color: #000;
-            margin: 10px 0 5px 0;
+            margin: 5px 0 2px 0;
         }
         .header-subtitle {
-            font-size: 10pt;
+            font-size: 9pt;
             color: #666;
             margin: 0;
         }
         .section-title {
-            font-size: 12.5pt;
+            font-size: 11pt;
             font-weight: bold;
-            margin-top: 18px;
-            margin-bottom: 8px;
+            margin-top: 12px;
+            margin-bottom: 5px;
             color: #000;
         }
         .content {
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             text-align: left;
         }
         .parties-section {
-            margin: 20px 0 25px 0;
+            margin: 15px 0 20px 0;
         }
         .party-block {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             display: inline-block;
             width: 48%;
             vertical-align: top;
         }
         .party-label {
             font-weight: bold;
-            font-size: 10pt;
+            font-size: 9pt;
             color: #333;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         .party-info {
-            font-size: 10pt;
-            line-height: 1.5;
+            font-size: 9pt;
+            line-height: 1.4;
         }
         .center-text {
             text-align: center;
             font-weight: bold;
-            margin: 8px 0;
-            font-size: 11pt;
+            margin: 5px 0;
+            font-size: 10pt;
         }
         .bold {
             font-weight: bold;
         }
         ul {
-            margin: 8px 0 12px 25px;
+            margin: 5px 0 8px 20px;
             padding: 0;
             list-style-type: disc;
         }
         li {
-            margin-bottom: 3px;
+            margin-bottom: 2px;
         }
         .footer {
-            margin-top: 40px;
+            margin-top: 20px;
         }
         .signature-row {
-            margin-top: 30px;
+            margin-top: 20px;
         }
         .signature-line {
             display: inline-block;
             border-bottom: 1px solid #000;
-            width: 350px;
+            width: 300px;
             margin-left: 10px;
             height: 25px;
             vertical-align: bottom;
@@ -106,14 +106,14 @@
         .signature-name {
             font-family: 'DejaVu Sans', sans-serif;
             font-style: italic;
-            font-size: 13pt;
+            font-size: 12pt;
             color: #000;
             position: absolute;
             bottom: 2px;
             left: 5px;
         }
         .signature-img {
-            max-height: 45px;
+            max-height: 40px;
             position: absolute;
             bottom: -5px;
             left: 5px;
@@ -124,16 +124,16 @@
         .agreement-intro {
             text-align: center;
             font-weight: bold;
-            margin: 15px 0 15px 0;
-            font-size: 11pt;
+            margin: 10px 0 10px 0;
+            font-size: 10pt;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 10px 0;
+            margin: 5px 0;
         }
         td {
-            padding: 8px;
+            padding: 5px;
             vertical-align: top;
         }
         .address-label {
@@ -141,7 +141,7 @@
             width: 30%;
         }
         .address-content {
-            font-size: 10pt;
+            font-size: 9pt;
         }
     </style>
 </head>
@@ -149,7 +149,7 @@
     <!-- Page 1 -->
     <div class="header">
         @if(isset($companyInfo['logo']) && !empty($companyInfo['logo']))
-            <img src="{{ asset($companyInfo['logo']) }}" class="logo" alt="Company Logo">
+            <img src="{{ public_path($companyInfo['logo']) }}" class="logo" alt="Company Logo">
         @endif
         <div class="header-title">{{ $companyInfo['name'] }}</div>
         <div class="company-info">
@@ -158,14 +158,14 @@
         </div>
     </div>
 
-    <div class="header-title" style="text-align: center; font-size: 18pt; margin-bottom: 15px;">SALES AGREEMENT</div>
+    <div class="header-title" style="text-align: center; font-size: 16pt; margin-bottom: 10px;">SALES AGREEMENT</div>
 
     <div class="agreement-intro">
         THIS SALES AGREEMENT (the "Agreement") is dated this {{ \Carbon\Carbon::parse($contractDate)->format('jS \o\f F, Y') }}
     </div>
 
     <div class="parties-section">
-        <div class="center-text" style="margin-bottom: 15px;">BETWEEN:</div>
+        <div class="center-text" style="margin-bottom: 10px;">BETWEEN:</div>
 
         <table>
             <tr>
@@ -179,7 +179,7 @@
             </tr>
         </table>
 
-        <div class="center-text" style="margin: 12px 0;">AND</div>
+        <div class="center-text" style="margin: 8px 0;">AND</div>
 
         <table>
             <tr>
@@ -194,7 +194,7 @@
         </table>
     </div>
 
-    <div class="content" style="margin-top: 20px; text-align: center; font-weight: bold;">
+    <div class="content" style="margin-top: 15px; text-align: center; font-weight: bold;">
         IN CONSIDERATION of the covenants and agreements contained in this Agreement, the parties agree as follows:
     </div>
 
@@ -331,13 +331,16 @@
     </div>
 
     <div class="footer">
-        <div class="bold" style="font-size: 13pt; margin-bottom: 10px;">IN WITNESS WHEREOF</div>
-        <div class="content">The parties have executed this Sales Agreement` as follows:</div>
+        <div class="bold" style="font-size: 11pt; margin-bottom: 8px;">IN WITNESS WHEREOF</div>
+        <div class="content">The parties have executed this Sales Agreement as follows:</div>
 
-        <div class="signature-row" style="margin-top: 30px;">
+        <div class="signature-row" style="margin-top: 15px;">
             <span class="bold">Buyer's Signature:</span>
             <div class="signature-line">
-                @if(isset($absoluteSignaturePath) && file_exists($absoluteSignaturePath))
+                @if(isset($signaturePath) && !empty($signaturePath))
+                     <!-- If relative path provided, use public_path -->
+                    <img src="{{ public_path($signaturePath) }}" class="signature-img">
+                @elseif(isset($absoluteSignaturePath) && file_exists($absoluteSignaturePath))
                     <img src="{{ $absoluteSignaturePath }}" class="signature-img">
                 @else
                     <span class="signature-name">{{ $user->first_name }} {{ $user->last_name }}</span>
@@ -348,7 +351,7 @@
         <div class="signature-row" style="margin-top: 15px;">
             <span class="bold">Seller's Signature:</span> <span style="margin-left: 5px;">{{ $companyInfo['name'] }}</span>
             <div class="signature-line">
-                <img src="{{ asset('uploads/signatures/seller_signature.png') }}" class="signature-img">
+                <img src="{{ public_path('uploads/signatures/seller_signature.png') }}" class="signature-img">
             </div>
         </div>
     </div>

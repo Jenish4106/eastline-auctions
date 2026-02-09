@@ -135,10 +135,6 @@ class CheckoutController extends Controller
             $companyEmail = Settings::get('email') ?? '';
 
             $companyLogo = Settings::get('dark_logo');
-            $companyLogoPath = null;
-            if ($companyLogo && File::exists(public_path($companyLogo))) {
-                $companyLogoPath = public_path($companyLogo);
-            }
 
             $machinery->load('images');
             $firstImage = $machinery->images->firstWhere('type', 'image');
@@ -158,7 +154,7 @@ class CheckoutController extends Controller
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => $companyLogoPath,
+                    'logo' => $companyLogo,
                 ]
             ];
 
