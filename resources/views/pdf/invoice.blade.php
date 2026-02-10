@@ -140,10 +140,6 @@
                     <div style="color: #7f8c8d;">#{{ $order->order_id }}</div>
                     <div class="invoice-meta">
                         <strong>Date:</strong> {{ $order->purchase_date->format('F d, Y') }}<br>
-                        <strong>Status:</strong>
-                        <span style="color: {{ $order->delivery_status == 4 ? '#e74c3c' : '#27ae60' }}; font-weight:bold;">
-                            {{ $order->delivery_status == 0 ? 'Processing' : 'Paid' }}
-                        </span>
                     </div>
                 </td>
             </tr>
