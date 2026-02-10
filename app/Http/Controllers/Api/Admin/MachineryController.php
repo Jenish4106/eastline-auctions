@@ -633,6 +633,18 @@ class MachineryController extends Controller
             } while (Machinery::where('auction_id', $auctionId)->exists());
 
             $machinery->auction_id = $auctionId;
+
+            if ($machinery->status == 2) {
+                $machinery->status          = 1;
+                $machinery->won_user        = null;
+                $machinery->bid_won_date    = null;
+                $machinery->is_purchase     = 0;
+                $machinery->contract_status = 0;
+                $machinery->bid_status      = '0';
+                $machinery->bid_start_time  = Carbon::now();
+                $machinery->bid_end_time    = Carbon::now()->addDays($machinery->bid_end_days);
+            }
+
             $machinery->save();
 
             return response()->json([
