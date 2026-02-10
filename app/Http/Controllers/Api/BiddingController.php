@@ -1120,7 +1120,7 @@ class BiddingController extends Controller
 
         try {
             $user = auth('api')->user();
-            $order = Order::where('order_id', $request->id)->where('user_id', $user->id)->first();
+            $order = Order::where('id', $request->order_id)->where('user_id', $user->id)->first();
 
             if (!$order) {
                 return response()->json([
