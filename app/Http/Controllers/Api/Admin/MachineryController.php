@@ -83,6 +83,31 @@ class MachineryController extends Controller
             $machinery = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
 
             $machineryWithUrls = $machinery->getCollection()->map(function ($item) {
+                $isSign = null;
+
+                if ($item->bid_won_date) {
+                    $bidWonDate = $item->bid_won_date instanceof \Carbon\Carbon ? $item->bid_won_date : \Carbon\Carbon::parse($item->bid_won_date);
+                    $limitDate  = $bidWonDate->copy()->addDays(7);
+
+                    $contract = $item->images->first(function ($file) {
+                        return $file->type === 'contract_pdf';
+                    });
+
+                    if ($contract) {
+                        $signedDate = $contract->created_at instanceof \Carbon\Carbon ? $contract->created_at : \Carbon\Carbon::parse($contract->created_at);
+                        if ($signedDate->lte($limitDate)) {
+                            $isSign = true;
+                        } else {
+                            $isSign = false;
+                        }
+                    } else {
+                        if (\Carbon\Carbon::now()->gt($limitDate)) {
+                            $isSign = false;
+                        }
+                    }
+                }
+                $item->is_sign = $isSign;
+
                 $images = $item->images->filter(function ($file) {
                     return $file->type === 'image';
                 });
@@ -634,17 +659,14 @@ class MachineryController extends Controller
             } while (Machinery::where('auction_id', $auctionId)->exists());
 
             $machinery->auction_id = $auctionId;
-
-            if ($machinery->status == 2) {
-                $machinery->status          = 1;
-                $machinery->won_user        = null;
-                $machinery->bid_won_date    = null;
-                $machinery->is_purchase     = 0;
-                $machinery->contract_status = 0;
-                $machinery->bid_status      = '0';
-                $machinery->bid_start_time  = Carbon::now();
-                $machinery->bid_end_time    = Carbon::now()->addDays($machinery->bid_end_days);
-            }
+            $machinery->status          = 1;
+            $machinery->won_user        = null;
+            $machinery->bid_won_date    = null;
+            $machinery->is_purchase     = 0;
+            $machinery->contract_status = 0;
+            $machinery->bid_status      = '0';
+            $machinery->bid_start_time  = Carbon::now();
+            $machinery->bid_end_time    = Carbon::now()->addDays($machinery->bid_end_days);
 
             $machinery->save();
 
