@@ -92,6 +92,7 @@ Route::middleware(['auth.user'])->group(function () {
     Route::post('/user/upload-license', [UsersController::class, 'uploadLicense']);
 
     Route::post('/user/settings', [UserSettingsController::class, 'settings']);
+    Route::post('/user/update-license-status', [UsersController::class, 'updateLicenseStatus']);
 
     Route::post('/place-bid', [BiddingController::class, 'placeBid']);
     Route::post('/user/my-bids', [BiddingController::class, 'getMachineryWithBids']);

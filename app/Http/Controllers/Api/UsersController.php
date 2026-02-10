@@ -213,4 +213,53 @@ class UsersController extends Controller
             ], 500);
         }
     }
+    public function updateLicenseStatus(Request $request)
+    {
+        try {
+            $user = auth('api')->user();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized access',
+                ], 401);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'status' => 'required|integer',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation error',
+                    'errors' => $validator->errors()->first(),
+                ], 422);
+            }
+
+            $latestLicense = License::where('user_id', $user->id)->latest()->first();
+
+            $status = $request->status;
+
+            if ($latestLicense) {
+                $latestLicense->update(['status' => $status]);
+            }
+            
+            $user->update(['is_license' => $status]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'License status updated successfully',
+                'data' => [
+                    'user_id' => $user->id,
+                    'license_status' => $status,
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong, please try again.',
+            ], 500);
+        }
+    }
 }
