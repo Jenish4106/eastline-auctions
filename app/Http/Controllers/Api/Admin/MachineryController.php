@@ -54,6 +54,7 @@ class MachineryController extends Controller
                 'buy_now_price',
                 'bid_start_price',
                 'bid_end_time',
+                'bid_won_date',
                 'description',
                 'offer',
                 'status',
