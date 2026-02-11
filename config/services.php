@@ -33,11 +33,5 @@ return [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
-    ],
-
-    'smtp2go' => [
-        'api_key' => env('SMTP2GO_API_KEY'),
-        'api_url' => env('SMTP2GO_API_URL', 'https://api.smtp2go.com/v3/email/send'),
-    ],
-
+    ]
 ];

@@ -3,6 +3,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\Settings;
 
 class SMTP2GOService
 {
@@ -13,10 +14,10 @@ class SMTP2GOService
 
     public function __construct()
     {
-        $this->apiKey      = env('SMTP2GO_API_KEY', 'api-FB7FBB0BD14A413DA64AFC6D86660F46');
-        $this->apiUrl      = env('SMTP2GO_API_URL', 'https://api.smtp2go.com/v3/email/send');
-        $this->senderEmail = env('MAIL_FROM_ADDRESS', 'info@stiopa-equipment.com');
-        $this->senderName  = env('MAIL_FROM_NAME', 'Stiopa Equipment');
+        $this->apiKey      = Settings::get('smtp2go_api_key');
+        $this->apiUrl      = Settings::get('smtp2go_api_url');
+        $this->senderEmail = Settings::get('mail_from_address');
+        $this->senderName  = Settings::get('mail_from_name');
     }
 
     /**
