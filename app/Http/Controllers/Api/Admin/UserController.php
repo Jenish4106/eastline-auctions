@@ -161,8 +161,11 @@ class UserController extends Controller
             ];
             
             if ($latestLicense) {
-                if ($latestLicense->file) {
-                    $latestLicense->file_url = url($latestLicense->file);
+                if ($latestLicense->front_side) {
+                    $latestLicense->front_side_url = url($latestLicense->front_side);
+                }
+                if ($latestLicense->back_side) {
+                    $latestLicense->back_side_url = url($latestLicense->back_side);
                 }
                 
                 $user->license_status_text = isset($licenseStatusMap[$latestLicense->status]) ? $licenseStatusMap[$latestLicense->status] : 'Unknown';
@@ -297,8 +300,14 @@ class UserController extends Controller
             }
 
             if ($user->license) {
-                if ($user->license->file) {
-                    $licenseFilePath = public_path($user->license->file);
+                if ($user->license->front_side) {
+                    $licenseFilePath = public_path($user->license->front_side);
+                    if (file_exists($licenseFilePath)) {
+                        unlink($licenseFilePath);
+                    }
+                }
+                if ($user->license->back_side) {
+                    $licenseFilePath = public_path($user->license->back_side);
                     if (file_exists($licenseFilePath)) {
                         unlink($licenseFilePath);
                     }

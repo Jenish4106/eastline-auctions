@@ -11,18 +11,21 @@ class License extends Model
 
     protected $fillable = [
         'user_id',
-        'file',
+        'front_side',
+        'back_side',
         'status',
     ];
 
-    protected $appends = ['file_url'];
+    protected $appends = ['front_side_url', 'back_side_url'];
 
     protected $visible = [
         'id',
         'user_id',
-        'file',
+        'front_side',
+        'back_side',
         'status',
-        'file_url'
+        'front_side_url',
+        'back_side_url'
     ];
 
     protected function casts(): array
@@ -38,8 +41,13 @@ class License extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function getFileUrlAttribute()
+    public function getFrontSideUrlAttribute()
     {
-        return $this->file ? url($this->file) : null;
+        return $this->front_side ? url($this->front_side) : null;
+    }
+
+    public function getBackSideUrlAttribute()
+    {
+        return $this->back_side ? url($this->back_side) : null;
     }
 }
