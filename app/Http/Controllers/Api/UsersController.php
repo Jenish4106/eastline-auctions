@@ -15,10 +15,9 @@ class UsersController extends Controller
     public function uploadLicense(Request $request)
     {
         try {
-            // Validate the request
             $validator = Validator::make($request->all(), [
-                'front_side' => 'required|file|mimes:jpeg,png,jpg,pdf|max:20480', // Max 20MB
-                'back_side'  => 'required|file|mimes:jpeg,png,jpg,pdf|max:20480', // Max 20MB
+                'front_side' => 'required|file|mimes:jpeg,png,jpg,pdf|max:20480',
+                'back_side'  => 'required|file|mimes:jpeg,png,jpg,pdf|max:20480',
             ]);
 
             if ($validator->fails()) {
@@ -48,7 +47,6 @@ class UsersController extends Controller
                 mkdir($destinationPath, 0755, true);
             }
 
-            // Handle Front Side
             if ($request->hasFile('front_side')) {
                 $file     = $request->file('front_side');
                 $fileName = time() . '_' . $user->id . '_front.' . $file->getClientOriginalExtension();
@@ -64,7 +62,6 @@ class UsersController extends Controller
                 $frontSidePath = 'licenses/' . $fileName;
             }
 
-            // Handle Back Side
             if ($request->hasFile('back_side')) {
                 $file     = $request->file('back_side');
                 $fileName = time() . '_' . $user->id . '_back.' . $file->getClientOriginalExtension();
