@@ -68,15 +68,25 @@ class MachineryController extends Controller
                         ->orWhere('make', 'LIKE', "%{$search}%")
                         ->orWhere('model', 'LIKE', "%{$search}%")
                         ->orWhere('year', 'LIKE', "%{$search}%")
+                        ->orWhereRaw("CONCAT_WS(' ', year, make, model) LIKE ?", ["%{$search}%"])
                         ->orWhere('weight', 'LIKE', "%{$search}%")
                         ->orWhere('working_hours', 'LIKE', "%{$search}%")
                         ->orWhere('condition', 'LIKE', "%{$search}%")
                         ->orWhere('fuel', 'LIKE', "%{$search}%")
                         ->orWhere('serial_number', 'LIKE', "%{$search}%")
+                        ->orWhere('buy_now_price', 'LIKE', "%{$search}%")
+                        ->orWhere('bid_start_price', 'LIKE', "%{$search}%")
                         ->orWhere('description', 'LIKE', "%{$search}%")
                         ->orWhereHas('category', function ($query) use ($search) {
                             $query->where('category_name', 'LIKE', "%{$search}%");
                         });
+                        
+                    $statusMap = ['active' => 1, 'sold' => 2, 'closed' => 3];
+                    foreach ($statusMap as $label => $value) {
+                        if (stripos($label, $search) !== false) {
+                            $q->orWhere('status', $value);
+                        }
+                    }
                 });
             }
 

@@ -91,14 +91,25 @@ class InventoryController extends Controller
                 $query->where('make', 'LIKE', "%{$search}%")
                       ->orWhere('model', 'LIKE', "%{$search}%")
                       ->orWhere('year', 'LIKE', "%{$search}%")
+                      ->orWhereRaw("CONCAT_WS(' ', year, make, model) LIKE ?", ["%{$search}%"])
                       ->orWhere('working_hours', 'LIKE', "%{$search}%")
                       ->orWhere('condition', 'LIKE', "%{$search}%")
                       ->orWhere('fuel', 'LIKE', "%{$search}%")
                       ->orWhere('serial_number', 'LIKE', "%{$search}%")
                       ->orWhere('description', 'LIKE', "%{$search}%")
+                      ->orWhereRaw("buy_now_price LIKE ?", ["%{$search}%"])
+                      ->orWhereRaw("bid_start_price LIKE ?", ["%{$search}%"])
                       ->orWhereHas('category', function($q) use ($search) {
                           $q->where('category_name', 'LIKE', "%{$search}%");
                       });
+                
+                // Status search
+                $statusMap = ['pending' => '0', 'active' => '1', 'sold' => '2'];
+                foreach ($statusMap as $label => $value) {
+                    if (stripos($label, $search) !== false) {
+                        $query->orWhere('bid_status', $value);
+                    }
+                }
             });
         }
 

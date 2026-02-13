@@ -48,14 +48,56 @@ class OrderController extends Controller
             if (! empty($search)) {
                 $query->where(function ($q) use ($search) {
                     $q->where('order_id', 'LIKE', "%{$search}%")
+                        ->orWhere('price', 'LIKE', "%{$search}%")
+                        ->orWhere('billing_city', 'LIKE', "%{$search}%")
+                        ->orWhere('billing_country', 'LIKE', "%{$search}%")
+                        ->orWhere('billing_zip', 'LIKE', "%{$search}%")
+                        ->orWhere('shipping_city', 'LIKE', "%{$search}%")
+                        ->orWhere('shipping_country', 'LIKE', "%{$search}%")
+                        ->orWhere('shipping_zip', 'LIKE', "%{$search}%")
                         ->orWhereHas('user', function ($q) use ($search) {
                             $q->where('first_name', 'LIKE', "%{$search}%")
                                 ->orWhere('last_name', 'LIKE', "%{$search}%")
-                                ->orWhere('phone_no', 'LIKE', "%{$search}%");
+                                ->orWhereRaw("CONCAT_WS(' ', first_name, last_name) LIKE ?", ["%{$search}%"])
+                                ->orWhere('phone_no', 'LIKE', "%{$search}%")
+                                ->orWhere('email', 'LIKE', "%{$search}%");
                         })
                         ->orWhereHas('machinery', function ($q) use ($search) {
-                            $q->where('id', 'LIKE', "%{$search}%");
+                            $q->where('id', 'LIKE', "%{$search}%")
+                                ->orWhere('auction_id', 'LIKE', "%{$search}%")
+                                ->orWhere('make', 'LIKE', "%{$search}%")
+                                ->orWhere('model', 'LIKE', "%{$search}%")
+                                ->orWhere('year', 'LIKE', "%{$search}%")
+                                ->orWhereRaw("CONCAT_WS(' ', year, make, model) LIKE ?", ["%{$search}%"]);
                         });
+
+                    // Delivery Status search
+                    $deliveryStatusMap = [
+                        'pending'    => 0,
+                        'confirmed'  => 1,
+                        'process'    => 2,
+                        'shipped'    => 3,
+                        'in transit' => 4,
+                        'delivered'  => 5,
+                        'cancelled'  => 6,
+                    ];
+                    foreach ($deliveryStatusMap as $label => $value) {
+                        if (stripos($label, $search) !== false) {
+                            $q->orWhere('delivery_status', $value);
+                        }
+                    }
+
+                    // Payment Slip Status search
+                    $paymentStatusMap = [
+                        'pending' => 0,
+                        'approve' => 1,
+                        'decline' => 2,
+                    ];
+                    foreach ($paymentStatusMap as $label => $value) {
+                        if (stripos($label, $search) !== false) {
+                            $q->orWhere('payment_slip_status', $value);
+                        }
+                    }
                 });
             }
 

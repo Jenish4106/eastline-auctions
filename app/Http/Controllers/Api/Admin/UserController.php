@@ -61,9 +61,30 @@ class UserController extends Controller
                 $query->where(function($q) use ($search) {
                     $q->where('first_name', 'LIKE', "%{$search}%")
                       ->orWhere('last_name', 'LIKE', "%{$search}%")
+                      ->orWhereRaw("CONCAT_WS(' ', first_name, last_name) LIKE ?", ["%{$search}%"])
                       ->orWhere('email', 'LIKE', "%{$search}%")
                       ->orWhere('phone_no', 'LIKE', "%{$search}%")
-                      ->orWhere('company_name', 'LIKE', "%{$search}%");
+                      ->orWhere('company_name', 'LIKE', "%{$search}%")
+                      ->orWhere('address', 'LIKE', "%{$search}%")
+                      ->orWhere('city', 'LIKE', "%{$search}%")
+                      ->orWhere('state', 'LIKE', "%{$search}%")
+                      ->orWhere('zip_code', 'LIKE', "%{$search}%");
+
+                    // Status search
+                    $statusMap = ['inactive' => 0, 'active' => 1, 'blocked' => 2];
+                    foreach ($statusMap as $label => $value) {
+                        if (stripos($label, $search) !== false) {
+                            $q->orWhere('status', $value);
+                        }
+                    }
+
+                    // License Status search
+                    $licenseStatusMap = ['pending' => 0, 'approved' => 1, 'rejected' => 2];
+                    foreach ($licenseStatusMap as $label => $value) {
+                        if (stripos($label, $search) !== false) {
+                            $q->orWhere('is_license', $value);
+                        }
+                    }
                 });
             }
 

@@ -44,9 +44,19 @@ class BiddingController extends Controller
 
             if (!empty($search)) {
                 $query->where(function($q) use ($search) {
-                    $q->where('year', 'LIKE', "%{$search}%")
-                      ->orWhere('make', 'LIKE', "%{$search}%")
-                      ->orWhere('model', 'LIKE', "%{$search}%");
+                    $q->where('machinery.auction_id', 'LIKE', "%{$search}%")
+                      ->orWhere('machinery.year', 'LIKE', "%{$search}%")
+                      ->orWhere('machinery.make', 'LIKE', "%{$search}%")
+                      ->orWhere('machinery.model', 'LIKE', "%{$search}%")
+                      ->orWhereRaw("CONCAT_WS(' ', machinery.year, machinery.make, machinery.model) LIKE ?", ["%{$search}%"]);
+
+                    // Status search
+                    $statusMap = ['pending' => '0', 'active' => '1', 'sold' => '2'];
+                    foreach ($statusMap as $label => $value) {
+                        if (stripos($label, $search) !== false) {
+                            $q->orWhere('machinery.bid_status', $value);
+                        }
+                    }
                 });
             }
 
@@ -276,13 +286,24 @@ class BiddingController extends Controller
 
             if (!empty($search)) {
                 $query->where(function($q) use ($search) {
-                    $q->where('machinery.year', 'LIKE', "%{$search}%")
+                    $q->where('machinery.auction_id', 'LIKE', "%{$search}%")
+                      ->orWhere('machinery.year', 'LIKE', "%{$search}%")
                       ->orWhere('machinery.make', 'LIKE', "%{$search}%")
                       ->orWhere('machinery.model', 'LIKE', "%{$search}%")
+                      ->orWhereRaw("CONCAT_WS(' ', machinery.year, machinery.make, machinery.model) LIKE ?", ["%{$search}%"])
                       ->orWhere('users.first_name', 'LIKE', "%{$search}%")
                       ->orWhere('users.last_name', 'LIKE', "%{$search}%")
+                      ->orWhereRaw("CONCAT_WS(' ', users.first_name, users.last_name) LIKE ?", ["%{$search}%"])
                       ->orWhere('users.phone_no', 'LIKE', "%{$search}%")
                       ->orWhere('categories.category_name', 'LIKE', "%{$search}%");
+
+                    // Contract Status search
+                    $contractStatusMap = ['pending' => 0, 'approved' => 1, 'signed' => 3, 'rejected' => 4];
+                    foreach ($contractStatusMap as $label => $value) {
+                        if (stripos($label, $search) !== false) {
+                            $q->orWhere('machinery.contract_status', $value);
+                        }
+                    }
                 });
             }
 

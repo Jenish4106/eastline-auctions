@@ -197,11 +197,18 @@ class BiddingController extends Controller
 
             if (!empty($search)) {
                 $query->where(function($q) use ($search) {
-                    $q->where('year', 'LIKE', "%{$search}%")
+                    $q->where('auction_id', 'LIKE', "%{$search}%")
+                      ->orWhere('year', 'LIKE', "%{$search}%")
                       ->orWhere('make', 'LIKE', "%{$search}%")
                       ->orWhere('model', 'LIKE', "%{$search}%")
+                      ->orWhereRaw("CONCAT_WS(' ', year, make, model) LIKE ?", ["%{$search}%"])
                       ->orWhere('bid_start_price', 'LIKE', "%{$search}%")
                       ->orWhere('bid_end_time', 'LIKE', "%{$search}%");
+
+                    // Basic status search
+                    if (stripos('sold', $search) !== false) {
+                        $q->orWhere('bid_status', 'sold')->orWhereNotNull('won_user');
+                    }
                 });
             }
 
@@ -423,13 +430,23 @@ class BiddingController extends Controller
 
             if (!empty($search)) {
                 $query->where(function($q) use ($search) {
-                    $q->where('year', 'LIKE', "%{$search}%")
+                    $q->where('auction_id', 'LIKE', "%{$search}%")
+                      ->orWhere('year', 'LIKE', "%{$search}%")
                       ->orWhere('make', 'LIKE', "%{$search}%")
                       ->orWhere('model', 'LIKE', "%{$search}%")
+                      ->orWhereRaw("CONCAT_WS(' ', year, make, model) LIKE ?", ["%{$search}%"])
                       ->orWhere('bid_won_date', 'LIKE', "%{$search}%")
                       ->orWhereHas('category', function($q2) use ($search) {
                           $q2->where('category_name', 'LIKE', "%{$search}%");
                       });
+
+                    // Contract Status search
+                    $contractStatusMap = ['pending' => 0, 'approved' => 1, 'signed' => 3, 'rejected' => 4];
+                    foreach ($contractStatusMap as $label => $value) {
+                        if (stripos($label, $search) !== false) {
+                            $q->orWhere('contract_status', $value);
+                        }
+                    }
                 });
             }
 
@@ -1195,7 +1212,7 @@ class BiddingController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong: ' . $e->getMessage(),
+                'message' => 'Something went wrong, please try again.'
             ], 500);
         }
     }

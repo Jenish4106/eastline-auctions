@@ -44,7 +44,8 @@ class CategoryController extends Controller
 
             if (!empty($search)) {
                 $query->where(function($q) use ($search) {
-                    $q->where('category_name', 'LIKE', "%{$search}%")
+                    $q->where('id', 'LIKE', "%{$search}%")
+                      ->orWhere('category_name', 'LIKE', "%{$search}%")
                       ->orWhere('total_machinery', 'LIKE', "%{$search}%");
                 });
             }
