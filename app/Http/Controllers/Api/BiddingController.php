@@ -51,12 +51,12 @@ class BiddingController extends Controller
         try {
             $user = auth('api')->user();
 
-            if ($user->is_license == 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Your license is not verified.',
-                ], 403);
-            }
+            // if ($user->is_license == 0) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'Your license is not verified.',
+            //     ], 403);
+            // }
 
             $machinery = Machinery::find($request->machinery_id);
 

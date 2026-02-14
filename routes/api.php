@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\UsersController;
 use App\Http\Controllers\Api\UserDashboardController;
 use App\Http\Controllers\Api\DistanceController;
 use App\Http\Controllers\Api\Frontend\CheckoutController;
+use App\Http\Controllers\Api\SumsubController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [RegisterController::class, 'register']);
@@ -112,7 +113,12 @@ Route::middleware(['auth.user'])->group(function () {
     Route::post('/user/profile-update', [UsersController::class, 'updateProfile']);
     Route::get('/user/get-profile', [UsersController::class, 'getProfile']);
     Route::post('/user/get-details', [UsersController::class, 'getUserDetails']);
+
+    // Sumsub KYC Routes
+    Route::post('/license/upload', [SumsubController::class, 'uploadLicense']);
+    Route::get('/license/status/{applicantId}', [SumsubController::class, 'status']);
 });
+
 
 Route::get('/get-categories', [UsersController::class, 'getCategories']);
 

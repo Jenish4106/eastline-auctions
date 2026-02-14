@@ -28,6 +28,14 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'sumsub' => [
+        'active' => env('SUMSUB_ACTIVE', true),
+        'base_url' => env('SUMSUB_BASE_URL', 'https://api.sumsub.com'),
+        'app_token' => env('SUMSUB_APP_TOKEN'),
+        'secret_key' => env('SUMSUB_SECRET_KEY'),
+        'level' => env('SUMSUB_LEVEL', 'id-only'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
