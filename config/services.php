@@ -31,8 +31,8 @@ return [
     'sumsub' => [
         'active' => env('SUMSUB_ACTIVE', true),
         'base_url' => env('SUMSUB_BASE_URL', 'https://api.sumsub.com'),
-        'app_token' => env('SUMSUB_APP_TOKEN'),
-        'secret_key' => env('SUMSUB_SECRET_KEY'),
+        'app_token' => env('SUMSUB_TOKEN'),
+        'secret_key' => env('SUMSUB_SECRET'),
         'level' => env('SUMSUB_LEVEL', 'id-only'),
     ],
 

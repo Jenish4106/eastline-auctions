@@ -90,7 +90,7 @@ Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
 
 Route::middleware(['auth.user'])->group(function () {
     Route::post('/user/logout', [LoginController::class, 'logout']);
-    Route::post('/user/upload-license', [UsersController::class, 'uploadLicense']);
+
 
     Route::post('/user/settings', [UserSettingsController::class, 'settings']);
     Route::post('/user/update-license-status', [UsersController::class, 'updateLicenseStatus']);
@@ -114,9 +114,7 @@ Route::middleware(['auth.user'])->group(function () {
     Route::get('/user/get-profile', [UsersController::class, 'getProfile']);
     Route::post('/user/get-details', [UsersController::class, 'getUserDetails']);
 
-    // Sumsub KYC Routes
     Route::post('/license/upload', [SumsubController::class, 'uploadLicense']);
-    Route::get('/license/status/{applicantId}', [SumsubController::class, 'status']);
 });
 
 

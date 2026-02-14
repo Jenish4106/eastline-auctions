@@ -11,6 +11,7 @@ class License extends Model
 
     protected $fillable = [
         'user_id',
+        'applicant_id',
         'front_side',
         'back_side',
         'status',
@@ -21,6 +22,7 @@ class License extends Model
     protected $visible = [
         'id',
         'user_id',
+        'applicant_id',
         'front_side',
         'back_side',
         'status',
