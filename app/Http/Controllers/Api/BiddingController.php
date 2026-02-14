@@ -756,15 +756,15 @@ class BiddingController extends Controller
                 'buyerAddress' => $buyerAddress,
                 'shippingAddress' => $shippingAddress,
                 'signaturePath' => $signaturePath,
-                'absoluteSignaturePath' => public_path($signaturePath),
+                'absoluteSignaturePath' => File::exists(public_path($signaturePath)) ? $this->imageToBase64(public_path($signaturePath)) : null,
                 'companyInfo' => [
                     'name' => $companyName,
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => $companyLogo ? public_path($companyLogo) : null, // For PDF
-                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,   // For Frontend
-                    'signature_path' => public_path('uploads/signatures/seller_signature.png'), // For PDF
+                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,
+                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,
+                    'signature_path' => File::exists(public_path('uploads/signatures/seller_signature.png')) ? $this->imageToBase64(public_path('uploads/signatures/seller_signature.png')) : null, // For PDF
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];
@@ -804,7 +804,7 @@ class BiddingController extends Controller
             if ($firstImage) {
                  $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
                  if (File::exists(public_path($imagePathRel))) {
-                     $machineryImage = public_path($imagePathRel); // For PDF generation
+                     $machineryImage = $this->imageToBase64(public_path($imagePathRel)); // For PDF generation
                      $machineryImageUrl = asset($imagePathRel);   // For Frontend display
                  }
             }
@@ -818,7 +818,7 @@ class BiddingController extends Controller
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => $companyLogo ? public_path($companyLogo) : null, // For PDF
+                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null, // For PDF
                     'logoUrl' => $companyLogo ? asset($companyLogo) : null,   // For Frontend
                 ]
             ];
@@ -1215,5 +1215,15 @@ class BiddingController extends Controller
                 'message' => 'Something went wrong, please try again.'
             ], 500);
         }
+    }
+
+    private function imageToBase64($path)
+    {
+        if (File::exists($path)) {
+            $type = pathinfo($path, PATHINFO_EXTENSION);
+            $data = file_get_contents($path);
+            return 'data:image/' . $type . ';base64,' . base64_encode($data);
+        }
+        return null;
     }
 }

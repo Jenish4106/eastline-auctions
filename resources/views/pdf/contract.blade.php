@@ -339,7 +339,7 @@
         <div class="signature-row" style="margin-top: 15px;">
             <span class="bold">Buyer's Signature:</span>
             <div class="signature-line">
-                @if(isset($absoluteSignaturePath) && file_exists($absoluteSignaturePath))
+                @if(isset($absoluteSignaturePath) && !empty($absoluteSignaturePath))
                     <img src="{{ $absoluteSignaturePath }}" class="signature-img">
                 @elseif(isset($signaturePath) && !empty($signaturePath))
                     <img src="{{ Str::startsWith($signaturePath, 'http') ? $signaturePath : asset($signaturePath) }}" class="signature-img">
@@ -352,7 +352,7 @@
         <div class="signature-row" style="margin-top: 15px;">
             <span class="bold">Seller's Signature:</span> <span style="margin-left: 5px;">{{ $companyInfo['name'] }}</span>
             <div class="signature-line">
-                @if(isset($companyInfo['signature_path']) && !empty($companyInfo['signature_path']) && file_exists($companyInfo['signature_path']))
+                @if(isset($companyInfo['signature_path']) && !empty($companyInfo['signature_path']))
                     <img src="{{ $companyInfo['signature_path'] }}" class="signature-img">
                 @else
                     <img src="{{ asset('uploads/signatures/seller_signature.png') }}" class="signature-img">
