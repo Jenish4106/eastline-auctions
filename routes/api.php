@@ -114,7 +114,7 @@ Route::middleware(['auth.user'])->group(function () {
     Route::get('/user/get-profile', [UsersController::class, 'getProfile']);
     Route::post('/user/get-details', [UsersController::class, 'getUserDetails']);
 
-    Route::post('/license/upload', [SumsubController::class, 'uploadLicense']);
+    Route::post('/user/license-upload', [SumsubController::class, 'uploadLicense']);
 });
 
 
