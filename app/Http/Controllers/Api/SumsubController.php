@@ -273,7 +273,7 @@ class SumsubController extends Controller
 
     private function syncStatus($applicantId)
     {
-        $url = "/resources/applicants/" . $applicantId . "/status";
+        $url = "/resources/applicants/" . $applicantId . "/one";
         $ts = time();
         $sig = $this->sign($ts, 'GET', $url);
 
