@@ -155,7 +155,6 @@ class SumsubController extends Controller
     {
         try{
             $validator = Validator::make($request->all(), [
-                'externalUserId'=>'required',
                 'docType'=>'required',
                 'country'=>'required',
                 'front'=>'required|file',
@@ -178,7 +177,7 @@ class SumsubController extends Controller
                 ], 401);
             }
 
-            $externalUserId = $request->externalUserId;
+            $externalUserId = 'USER_' . $user->id . '_' . time();
             $docType = $request->docType;
             $country = $request->country;
 
