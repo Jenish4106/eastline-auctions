@@ -33,7 +33,7 @@ class OrderController extends Controller
                 $sortOrder = 'desc';
             }
 
-            $query = Order::with(['user:id,first_name,last_name,phone_no', 'machinery:id'])->select([
+            $query = Order::with(['user:id,first_name,last_name,phone_no', 'machinery:id,make,model,year'])->select([
                 'id',
                 'order_id',
                 'machinery_id',
@@ -106,6 +106,7 @@ class OrderController extends Controller
             $ordersWithFormattedData = $orders->getCollection()->map(function ($order) {
                 $order->user_full_name = $order->user ? $order->user->first_name . ' ' . $order->user->last_name : 'N/A';
                 $order->phone_no       = $order->user ? $order->user->phone_no : 'N/A';
+                $order->machinery_name = $order->machinery ? $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model : 'N/A';
                 $order->order_date     = $order->purchase_date->format('M d, Y h:i A');
                 $order->order_amount   = $order->price;
                 $order->status         = $order->delivery_status_text;
@@ -117,6 +118,7 @@ class OrderController extends Controller
                 $order->payment_slip_status_text = $order->payment_slip_status_text;
 
                 unset($order->user);
+                unset($order->machinery);
 
                 return $order;
             });
