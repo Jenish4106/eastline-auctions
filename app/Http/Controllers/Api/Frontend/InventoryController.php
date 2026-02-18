@@ -189,9 +189,9 @@ class InventoryController extends Controller
             $machinery->category = $machinery->category ? $machinery->category->category_name : null;
 
             if ($machinery->bid_end_time) {
-                $bidEndTime = new \DateTime($machinery->bid_end_time);
-                $currentTime = new \DateTime();
-                $machinery->is_view = $bidEndTime < $currentTime ? 1 : 0;
+                $bidEndTime = new \DateTime($machinery->bid_end_time, new \DateTimeZone('UTC'));
+                $currentTime = new \DateTime('now', new \DateTimeZone('UTC'));
+                $machinery->is_view = ($bidEndTime < $currentTime) ? 1 : 0;
             } else {
                 $machinery->is_view = 0;
             }
