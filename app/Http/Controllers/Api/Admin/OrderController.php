@@ -22,7 +22,7 @@ class OrderController extends Controller
             $sortBy    = $request->input('sort_by', 'created_at');
             $sortOrder = $request->input('sort_order', 'desc');
 
-            $allowedSortFields = ['id', 'order_id', 'machinery_id', 'user_id', 'price', 'delivery_status', 'created_at'];
+            $allowedSortFields = ['id', 'order_id', 'machinery_id', 'user_id', 'type', 'price', 'delivery_status', 'created_at'];
             $allowedSortOrders = ['asc', 'desc'];
 
             if (! in_array($sortBy, $allowedSortFields)) {
@@ -38,6 +38,7 @@ class OrderController extends Controller
                 'order_id',
                 'machinery_id',
                 'user_id',
+                'type',
                 'price',
                 'delivery_status',
                 'purchase_date',
@@ -112,6 +113,8 @@ class OrderController extends Controller
                 $order->machinery_name = $order->machinery ? $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model : 'N/A';
                 $order->order_date     = $order->purchase_date->format('M d, Y h:i A');
                 $order->order_amount   = $order->price;
+                $order->type = $order->type;
+                $order->type_text = $order->type == 1 ? 'Checkout' : 'Bidding';
                 $order->status         = $order->delivery_status_text;
                 $order->status_code    = $order->delivery_status;
                 $order->invoice_url    = $order->invoice_url;

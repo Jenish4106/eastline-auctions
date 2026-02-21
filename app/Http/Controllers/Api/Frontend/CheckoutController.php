@@ -100,6 +100,7 @@ class CheckoutController extends Controller
                 'order_id' => 'ORD-' . strtoupper(Str::random(10)),
                 'machinery_id' => $machinery->id,
                 'user_id' => $user->id,
+                'type' => 1,
                 'price' => $machinery->buy_now_price > 0 ? $machinery->buy_now_price : ($machinery->bid_start_price ?? 0),
                 'shipping_cost' => $shippingCost,
                 'purchase_date' => now(),

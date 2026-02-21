@@ -473,6 +473,7 @@ class BiddingController extends Controller
                             'order_id' => 'ORD-' . strtoupper(Str::random(10)),
                             'machinery_id' => $machinery->id,
                             'user_id' => $machinery->won_user,
+                            'type' => 2,
                             'price' => $bidModel->amount,
                             'purchase_date' => now(),
                             'delivery_status' => 2,

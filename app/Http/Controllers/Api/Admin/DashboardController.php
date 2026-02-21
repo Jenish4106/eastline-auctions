@@ -107,6 +107,8 @@ class DashboardController extends Controller
                     'user_name' => ($order->user->first_name ?? '') . ' ' . ($order->user->last_name ?? ''),
                     'phone_no' => $order->user->phone_no ?? 'N/A',
                     'order_date' => $order->purchase_date->format('Y-m-d H:i:s') ?? null,
+                    'type' => $order->type,
+                    'type_text' => $order->type == 1 ? 'Checkout' : 'Bidding',
                     'amount' => $order->price,
                     'status' => $order->delivery_status_text,
                     'invoice_url' => $order->invoice_url,
