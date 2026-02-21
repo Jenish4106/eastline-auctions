@@ -728,6 +728,7 @@ class BiddingController extends Controller
             $companyAddress = Settings::get('address') ?? '';
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';
+            $companyLogo = Settings::get('dark_logo');
 
             $sellerAddress = $companyAddress;
 
