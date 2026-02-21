@@ -73,13 +73,16 @@ class OrderController extends Controller
 
                     // Delivery Status search
                     $deliveryStatusMap = [
-                        'pending'    => 0,
-                        'confirmed'  => 1,
-                        'process'    => 2,
-                        'shipped'    => 3,
-                        'in transit' => 4,
-                        'delivered'  => 5,
-                        'cancelled'  => 6,
+                        'order submitted'  => 0,
+                        'sales agreement'  => 1,
+                        'awaiting invoice' => 2,
+                        'settle payment'   => 3,
+                        'confirmation'     => 4,
+                        'processing'       => 5,
+                        'shipping'         => 6,
+                        'in transit'       => 7,
+                        'delivered'        => 8,
+                        'cancelled'        => 9,
                     ];
                     foreach ($deliveryStatusMap as $label => $value) {
                         if (stripos($label, $search) !== false) {
@@ -161,7 +164,7 @@ class OrderController extends Controller
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'order_id' => 'required|exists:orders,id',
-            'status'   => 'required|integer|between:0,6',
+            'status'   => 'required|integer|between:0,9',
         ]);
 
         if ($validator->fails()) {
@@ -184,17 +187,23 @@ class OrderController extends Controller
             $order->delivery_status = $request->status;
 
             switch ($request->status) {
-                case 1:$order->confirmed_date = now();
+                case 1:$order->sales_agreement_date = now();
                     break;
-                case 2:$order->process_date = now();
+                case 2:$order->awaiting_invoice_date = now();
                     break;
-                case 3:$order->shipped_date = now();
+                case 3:$order->settle_payment_date = now();
                     break;
-                case 4:$order->in_transit_date = now();
+                case 4:$order->confirmation_date = now();
                     break;
-                case 5:$order->delivered_date = now();
+                case 5:$order->process_date = now();
                     break;
-                case 6:$order->cancelled_date = now();
+                case 6:$order->shipped_date = now();
+                    break;
+                case 7:$order->in_transit_date = now();
+                    break;
+                case 8:$order->delivered_date = now();
+                    break;
+                case 9:$order->cancelled_date = now();
                     break;
             }
 
@@ -254,13 +263,16 @@ class OrderController extends Controller
             }
 
             $statusMessages = [
-                0 => 'Order status updated to Pending.',
-                1 => 'Order confirmed and invoice sent.',
-                2 => 'Order moved to processing.',
-                3 => 'Order shipped successfully.',
-                4 => 'Order is in transit.',
-                5 => 'Order delivered successfully.',
-                6 => 'Order cancelled successfully.',
+                0 => 'Order status updated to Order Submitted.',
+                1 => 'Order moved to Sales Agreement.',
+                2 => 'Order moved to Awaiting Invoice.',
+                3 => 'Order moved to Settle Payment.',
+                4 => 'Order moved to Confirmation.',
+                5 => 'Order moved to Processing.',
+                6 => 'Order status updated to Shipping.',
+                7 => 'Order is in transit.',
+                8 => 'Order delivered successfully.',
+                9 => 'Order cancelled successfully.',
             ];
 
             return response()->json([
@@ -304,8 +316,8 @@ class OrderController extends Controller
             $message = 'Payment slip status updated.';
 
             if ($request->status == 1) {
-                $order->delivery_status = 1;
-                $order->confirmed_date = now();
+                $order->delivery_status = 4;
+                $order->confirmation_date = now();
                 $order->save();
                 
                 if ($order->machinery) {
@@ -318,7 +330,7 @@ class OrderController extends Controller
                             $order->user,
                             $order,
                             $order->machinery,
-                            1
+                            4
                         );
 
                         $smtp2goService = new SMTP2GOService();

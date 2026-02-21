@@ -475,13 +475,30 @@ class BiddingController extends Controller
                             'user_id' => $machinery->won_user,
                             'price' => $bidModel->amount,
                             'purchase_date' => now(),
-                            'delivery_status' => 0,
-                            'process_date' => now(),
+                            'delivery_status' => 2,
+                            'awaiting_invoice_date' => now(),
+                        ]);
+                    } else {
+                        $existingOrder->update([
+                            'delivery_status' => 2,
+                            'awaiting_invoice_date' => now()
                         ]);
                     }
                 }
             } elseif ($action === 'reject') {
                 $machinery->contract_status = 4;
+                
+                if ($machinery->won_user) {
+                    $existingOrder = Order::where('machinery_id', $machinery->id)
+                                         ->where('user_id', $machinery->won_user)
+                                         ->first();
+                    if ($existingOrder) {
+                        $existingOrder->update([
+                            'delivery_status' => 9,
+                            'cancelled_date' => now()
+                        ]);
+                    }
+                }
             }
 
             $machinery->save();

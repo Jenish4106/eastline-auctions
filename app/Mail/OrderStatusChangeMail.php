@@ -58,12 +58,16 @@ class OrderStatusChangeMail extends Mailable
     private function getStatusText($status)
     {
         $statusMap = [
-            0 => 'Pending',
-            1 => 'Process',
-            2 => 'Shipped',
-            3 => 'In Transit',
-            4 => 'Delivered',
-            5 => 'Cancelled',
+            0 => 'Order Submitted',
+            1 => 'Sales Agreement',
+            2 => 'Awaiting Invoice',
+            3 => 'Settle Payment',
+            4 => 'Confirmation',
+            5 => 'Processing',
+            6 => 'Shipping',
+            7 => 'In Transit',
+            8 => 'Delivered',
+            9 => 'Cancelled',
         ];
         return $statusMap[$status] ?? 'Unknown';
     }

@@ -845,6 +845,13 @@ class BiddingController extends Controller
                 'contract_status' => 3,
             ]);
 
+            if ($order) {
+                $order->update([
+                    'delivery_status' => 1,
+                    'sales_agreement_date' => now(),
+                ]); // Sales Agreement
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Contract signed, PDF and Invoice generated successfully',
@@ -879,36 +886,48 @@ class BiddingController extends Controller
                 $firstImage = $order->machinery->images->firstWhere('type', 'image');
 
                 $deliveryStatusMap = [
-                    0 => 'Pending',
-                    1 => 'Confirmed',
-                    2 => 'Process',
-                    3 => 'Shipped',
-                    4 => 'In Transit',
-                    5 => 'Delivered',
-                    6 => 'Cancelled',
+                    0 => 'Order Submitted',
+                    1 => 'Sales Agreement',
+                    2 => 'Awaiting Invoice',
+                    3 => 'Settle Payment',
+                    4 => 'Confirmation',
+                    5 => 'Processing',
+                    6 => 'Shipping',
+                    7 => 'In Transit',
+                    8 => 'Delivered',
+                    9 => 'Cancelled',
                 ];
 
                 $deliveryTimeline = [];
                 if ($order->purchase_date) {
-                    $deliveryTimeline[] = ['status' => 'Pending', 'date' => $order->purchase_date, 'status_code' => 0];
+                    $deliveryTimeline[] = ['status' => 'Order Submitted', 'date' => $order->purchase_date, 'status_code' => 0];
                 }
-                if ($order->confirmed_date) {
-                    $deliveryTimeline[] = ['status' => 'Confirmed', 'date' => $order->confirmed_date, 'status_code' => 1];
+                if ($order->sales_agreement_date) {
+                    $deliveryTimeline[] = ['status' => 'Sales Agreement', 'date' => $order->sales_agreement_date, 'status_code' => 1];
+                }
+                if ($order->awaiting_invoice_date) {
+                    $deliveryTimeline[] = ['status' => 'Awaiting Invoice', 'date' => $order->awaiting_invoice_date, 'status_code' => 2];
+                }
+                if ($order->settle_payment_date) {
+                    $deliveryTimeline[] = ['status' => 'Settle Payment', 'date' => $order->settle_payment_date, 'status_code' => 3];
+                }
+                if ($order->confirmation_date) {
+                    $deliveryTimeline[] = ['status' => 'Confirmation', 'date' => $order->confirmation_date, 'status_code' => 4];
                 }
                 if ($order->process_date) {
-                    $deliveryTimeline[] = ['status' => 'Process', 'date' => $order->process_date, 'status_code' => 2];
+                    $deliveryTimeline[] = ['status' => 'Processing', 'date' => $order->process_date, 'status_code' => 5];
                 }
                 if ($order->shipped_date) {
-                    $deliveryTimeline[] = ['status' => 'Shipped', 'date' => $order->shipped_date, 'status_code' => 3];
+                    $deliveryTimeline[] = ['status' => 'Shipping', 'date' => $order->shipped_date, 'status_code' => 6];
                 }
                 if ($order->in_transit_date) {
-                    $deliveryTimeline[] = ['status' => 'In Transit', 'date' => $order->in_transit_date, 'status_code' => 4];
+                    $deliveryTimeline[] = ['status' => 'In Transit', 'date' => $order->in_transit_date, 'status_code' => 7];
                 }
                 if ($order->delivered_date) {
-                    $deliveryTimeline[] = ['status' => 'Delivered', 'date' => $order->delivered_date, 'status_code' => 5];
+                    $deliveryTimeline[] = ['status' => 'Delivered', 'date' => $order->delivered_date, 'status_code' => 8];
                 }
                 if ($order->cancelled_date) {
-                    $deliveryTimeline[] = ['status' => 'Cancelled', 'date' => $order->cancelled_date, 'status_code' => 6];
+                    $deliveryTimeline[] = ['status' => 'Cancelled', 'date' => $order->cancelled_date, 'status_code' => 9];
                 }
 
                 return [
@@ -1197,6 +1216,8 @@ class BiddingController extends Controller
 
             $order->payment_slip_path = $directoryPath . '/' . $fileName;
             $order->payment_slip_status = 0;
+            $order->delivery_status = 3;
+            $order->settle_payment_date = now();
             $order->save();
 
             return response()->json([

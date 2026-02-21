@@ -15,6 +15,10 @@ class Order extends Model
         'price',
         'shipping_cost',
         'purchase_date',
+        'sales_agreement_date',
+        'awaiting_invoice_date',
+        'settle_payment_date',
+        'confirmation_date',
         'delivery_status',
         'process_date',
         'shipped_date',
@@ -45,6 +49,10 @@ class Order extends Model
 
     protected $casts = [
         'purchase_date' => 'date',
+        'sales_agreement_date' => 'datetime',
+        'awaiting_invoice_date' => 'datetime',
+        'settle_payment_date' => 'datetime',
+        'confirmation_date' => 'datetime',
         'process_date' => 'datetime',
         'shipped_date' => 'datetime',
         'in_transit_date' => 'datetime',
@@ -105,13 +113,16 @@ class Order extends Model
     public function getDeliveryStatusTextAttribute()
     {
         $statusMap = [
-            0 => 'Pending',
-            1 => 'Confirmed',
-            2 => 'Process',
-            3 => 'Shipped',
-            4 => 'In Transit',
-            5 => 'Delivered',
-            6 => 'Cancelled',
+            0 => 'Order Submitted',
+            1 => 'Sales Agreement',
+            2 => 'Awaiting Invoice',
+            3 => 'Settle Payment',
+            4 => 'Confirmation',
+            5 => 'Processing',
+            6 => 'Shipping',
+            7 => 'In Transit',
+            8 => 'Delivered',
+            9 => 'Cancelled',
         ];
         
         return $statusMap[$this->delivery_status] ?? 'Unknown';

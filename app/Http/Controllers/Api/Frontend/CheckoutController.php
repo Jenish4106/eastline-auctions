@@ -249,7 +249,7 @@ class CheckoutController extends Controller
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
                     'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null, // For PDF
-                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,   // For Frontend
+                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,
                     'signature_path' => File::exists(public_path('uploads/signatures/seller_signature.png')) ? $this->imageToBase64(public_path('uploads/signatures/seller_signature.png')) : null, // For PDF
                 ],
                 'contractDate' => now()->format('Y-m-d'),
