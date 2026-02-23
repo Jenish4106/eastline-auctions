@@ -104,7 +104,7 @@ class CheckoutController extends Controller
                 'price' => $machinery->buy_now_price > 0 ? $machinery->buy_now_price : ($machinery->bid_start_price ?? 0),
                 'shipping_cost' => $shippingCost,
                 'purchase_date' => now(),
-                'delivery_status' => 0,
+                'delivery_status' => 1,
 
                 'billing_company' => $billing['legal_company_name'] ?? null,
                 'billing_street' => $billing['street_and_number'],
