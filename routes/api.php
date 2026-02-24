@@ -12,15 +12,15 @@ use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\RegisterController;
-use App\Http\Controllers\Api\BiddingController;
+use App\Http\Controllers\Api\Frontend\CheckoutController;
 use App\Http\Controllers\Api\Frontend\InventoryController;
 use App\Http\Controllers\Api\Frontend\SettingsController as FrontendSettingsController;
-use App\Http\Controllers\Api\SettingsController as UserSettingsController;
-use App\Http\Controllers\Api\UsersController;
-use App\Http\Controllers\Api\UserDashboardController;
+use App\Http\Controllers\Api\BiddingController;
 use App\Http\Controllers\Api\DistanceController;
-use App\Http\Controllers\Api\Frontend\CheckoutController;
+use App\Http\Controllers\Api\SettingsController as UserSettingsController;
 use App\Http\Controllers\Api\SumsubController;
+use App\Http\Controllers\Api\UserDashboardController;
+use App\Http\Controllers\Api\UsersController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [RegisterController::class, 'register']);
@@ -91,7 +91,6 @@ Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
 Route::middleware(['auth.user'])->group(function () {
     Route::post('/user/logout', [LoginController::class, 'logout']);
 
-
     Route::post('/user/settings', [UserSettingsController::class, 'settings']);
     Route::post('/user/update-license-status', [UsersController::class, 'updateLicenseStatus']);
 
@@ -115,8 +114,8 @@ Route::middleware(['auth.user'])->group(function () {
     Route::post('/user/get-details', [UsersController::class, 'getUserDetails']);
 
     Route::post('/user/license/upload', [SumsubController::class, 'uploadLicense']);
+    Route::post('/user/license/status', [SumsubController::class, 'checkStatus']);
 });
-
 
 Route::get('/get-categories', [UsersController::class, 'getCategories']);
 
