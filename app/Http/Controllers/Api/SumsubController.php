@@ -333,8 +333,9 @@ class SumsubController extends Controller
             throw new \Exception($msg);
         }
 
-        if (isset($data['reviewResult']['reviewAnswer'])) {
-            $answer = $data['reviewResult']['reviewAnswer'];
+        if (isset($data['review']['reviewResult']['reviewAnswer'])) {
+
+            $answer = $data['review']['reviewResult']['reviewAnswer'];
             $license = License::where('applicant_id', $applicantId)->first();
 
             if ($license) {
