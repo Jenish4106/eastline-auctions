@@ -301,7 +301,7 @@ class BiddingController extends Controller
                         ->orWhere('categories.category_name', 'LIKE', "%{$search}%");
 
                     // Contract Status search
-                    $contractStatusMap = ['pending' => 0, 'approved' => 1, 'awaiting invoice' => 3, 'rejected' => 4];
+                    $contractStatusMap = ['pending' => 0, 'approved' => 1, 'signed' => 3, 'rejected' => 4];
                     foreach ($contractStatusMap as $label => $value) {
                         if (stripos($label, $search) !== false) {
                             $q->orWhere('machinery.contract_status', $value);
@@ -324,7 +324,7 @@ class BiddingController extends Controller
                 $contractStatusMap = [
                     0 => 'Pending',
                     1 => 'Approved',
-                    3 => 'Awaiting invoice',
+                    3 => 'Signed',
                     4 => 'Rejected',
                 ];
 
@@ -405,7 +405,7 @@ class BiddingController extends Controller
             $contractStatusMap = [
                 0 => 'Pending',
                 1 => 'Approved',
-                3 => 'Awaiting invoice',
+                3 => 'Signed',
                 4 => 'Rejected',
             ];
 

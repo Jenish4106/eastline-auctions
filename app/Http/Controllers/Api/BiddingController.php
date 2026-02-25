@@ -2,27 +2,27 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\BiddingMail;
+use App\Mail\BuyNowOrderMail;
+use App\Mail\OutbidMail;
+use App\Mail\SendContractMail;
 use App\Models\Bid;
 use App\Models\Machinery;
 use App\Models\MachineryFileManager;
 use App\Models\Order;
-use App\Mail\BiddingMail;
-use App\Mail\OutbidMail;
-use App\Mail\BuyNowOrderMail;
-use App\Services\SMTP2GOService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use App\Models\User;
 use App\Models\Settings;
-use Illuminate\Support\Facades\View;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\File;
-use Yajra\DataTables\DataTables;
-use Illuminate\Support\Str;
+use App\Models\User;
 use App\Services\GoogleMapsService;
-use App\Mail\SendContractMail;
+use App\Services\SMTP2GOService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
+use Yajra\DataTables\DataTables;
 
 class BiddingController extends Controller
 {
@@ -75,9 +75,9 @@ class BiddingController extends Controller
             }
 
             $previousHighestBid = Bid::where('machinery_id', $request->machinery_id)
-                            ->where('auction_id', $request->auction_id)
-                            ->orderBy('amount', 'desc')
-                            ->first();
+                ->where('auction_id', $request->auction_id)
+                ->orderBy('amount', 'desc')
+                ->first();
 
             $highestBidAmount = $previousHighestBid ? $previousHighestBid->amount : $machinery->bid_start_price;
             $minAmount = $highestBidAmount;
@@ -105,9 +105,9 @@ class BiddingController extends Controller
 
             if ($isWon) {
                 $machinery->update([
-                    'bid_status'      => '2',
-                    'won_user'        => $user->id,
-                    'bid_won_date'    => Carbon::now(),
+                    'bid_status' => '2',
+                    'won_user' => $user->id,
+                    'bid_won_date' => Carbon::now(),
                     'contract_status' => '0',
                 ]);
 
@@ -189,21 +189,23 @@ class BiddingController extends Controller
                 $sortOrder = 'desc';
             }
 
-            $query = Machinery::whereHas('bids', function($q) use ($user) {
-                    $q->where('user_id', $user->id)
-                      ->whereColumn('bids.auction_id', 'machinery.auction_id');
-                })
+            $query = Machinery::whereHas('bids', function ($q) use ($user) {
+                $q
+                    ->where('user_id', $user->id)
+                    ->whereColumn('bids.auction_id', 'machinery.auction_id');
+            })
                 ->with(['images', 'bids.user']);
 
             if (!empty($search)) {
-                $query->where(function($q) use ($search) {
-                    $q->where('auction_id', 'LIKE', "%{$search}%")
-                      ->orWhere('year', 'LIKE', "%{$search}%")
-                      ->orWhere('make', 'LIKE', "%{$search}%")
-                      ->orWhere('model', 'LIKE', "%{$search}%")
-                      ->orWhereRaw("CONCAT_WS(' ', year, make, model) LIKE ?", ["%{$search}%"])
-                      ->orWhere('bid_start_price', 'LIKE', "%{$search}%")
-                      ->orWhere('bid_end_time', 'LIKE', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q
+                        ->where('auction_id', 'LIKE', "%{$search}%")
+                        ->orWhere('year', 'LIKE', "%{$search}%")
+                        ->orWhere('make', 'LIKE', "%{$search}%")
+                        ->orWhere('model', 'LIKE', "%{$search}%")
+                        ->orWhereRaw("CONCAT_WS(' ', year, make, model) LIKE ?", ["%{$search}%"])
+                        ->orWhere('bid_start_price', 'LIKE', "%{$search}%")
+                        ->orWhere('bid_end_time', 'LIKE', "%{$search}%");
 
                     // Basic status search
                     if (stripos('sold', $search) !== false) {
@@ -268,11 +270,11 @@ class BiddingController extends Controller
                 'data' => $machineriesWithFormattedData,
                 'pagination' => [
                     'current_page' => $machineries->currentPage(),
-                    'last_page'    => $machineries->lastPage(),
-                    'per_page'     => $machineries->perPage(),
-                    'total'        => $machineries->total(),
-                    'from'         => $machineries->firstItem(),
-                    'to'           => $machineries->lastItem(),
+                    'last_page' => $machineries->lastPage(),
+                    'per_page' => $machineries->perPage(),
+                    'total' => $machineries->total(),
+                    'from' => $machineries->firstItem(),
+                    'to' => $machineries->lastItem(),
                 ],
             ], 200);
         } catch (\Exception $e) {
@@ -423,25 +425,27 @@ class BiddingController extends Controller
 
             $query = Machinery::where('won_user', $user->id)
                 ->whereHas('bids', function ($q) use ($user) {
-                    $q->where('user_id', $user->id)
-                      ->whereColumn('bids.auction_id', 'machinery.auction_id');
+                    $q
+                        ->where('user_id', $user->id)
+                        ->whereColumn('bids.auction_id', 'machinery.auction_id');
                 })
                 ->with(['images', 'category', 'bids']);
 
             if (!empty($search)) {
-                $query->where(function($q) use ($search) {
-                    $q->where('auction_id', 'LIKE', "%{$search}%")
-                      ->orWhere('year', 'LIKE', "%{$search}%")
-                      ->orWhere('make', 'LIKE', "%{$search}%")
-                      ->orWhere('model', 'LIKE', "%{$search}%")
-                      ->orWhereRaw("CONCAT_WS(' ', year, make, model) LIKE ?", ["%{$search}%"])
-                      ->orWhere('bid_won_date', 'LIKE', "%{$search}%")
-                      ->orWhereHas('category', function($q2) use ($search) {
-                          $q2->where('category_name', 'LIKE', "%{$search}%");
-                      });
+                $query->where(function ($q) use ($search) {
+                    $q
+                        ->where('auction_id', 'LIKE', "%{$search}%")
+                        ->orWhere('year', 'LIKE', "%{$search}%")
+                        ->orWhere('make', 'LIKE', "%{$search}%")
+                        ->orWhere('model', 'LIKE', "%{$search}%")
+                        ->orWhereRaw("CONCAT_WS(' ', year, make, model) LIKE ?", ["%{$search}%"])
+                        ->orWhere('bid_won_date', 'LIKE', "%{$search}%")
+                        ->orWhereHas('category', function ($q2) use ($search) {
+                            $q2->where('category_name', 'LIKE', "%{$search}%");
+                        });
 
                     // Contract Status search
-                    $contractStatusMap = ['pending' => 0, 'approved' => 1, 'awaiting invoice' => 3, 'rejected' => 4];
+                    $contractStatusMap = ['pending' => 0, 'approved' => 1, 'signed' => 3, 'rejected' => 4];
                     foreach ($contractStatusMap as $label => $value) {
                         if (stripos($label, $search) !== false) {
                             $q->orWhere('contract_status', $value);
@@ -453,16 +457,18 @@ class BiddingController extends Controller
             $wonMachinery = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
 
             $wonMachineryWithFormattedData = $wonMachinery->getCollection()->map(function ($machinery) {
-                $userWonBid = $machinery->bids->where('user_id', auth('api')->id())
-                                              ->where('auction_id', $machinery->auction_id)
-                                              ->max('amount');
+                $userWonBid = $machinery
+                    ->bids
+                    ->where('user_id', auth('api')->id())
+                    ->where('auction_id', $machinery->auction_id)
+                    ->max('amount');
 
                 $firstImage = $machinery->images->firstWhere('type', 'image');
 
                 $contractStatusMap = [
                     0 => 'Pending',
                     1 => 'Approved',
-                    3 => 'Awaiting invoice',
+                    3 => 'Signed',
                     4 => 'Rejected',
                 ];
 
@@ -490,11 +496,11 @@ class BiddingController extends Controller
                 'data' => $wonMachineryWithFormattedData,
                 'pagination' => [
                     'current_page' => $wonMachinery->currentPage(),
-                    'last_page'    => $wonMachinery->lastPage(),
-                    'per_page'     => $wonMachinery->perPage(),
-                    'total'        => $wonMachinery->total(),
-                    'from'         => $wonMachinery->firstItem(),
-                    'to'           => $wonMachinery->lastItem(),
+                    'last_page' => $wonMachinery->lastPage(),
+                    'per_page' => $wonMachinery->perPage(),
+                    'total' => $wonMachinery->total(),
+                    'from' => $wonMachinery->firstItem(),
+                    'to' => $wonMachinery->lastItem(),
                 ],
             ], 200);
         } catch (\Exception $e) {
@@ -544,7 +550,7 @@ class BiddingController extends Controller
             $contractStatusMap = [
                 0 => 'Pending',
                 1 => 'Approved',
-                3 => 'Awaiting invoice',
+                3 => 'Signed',
                 4 => 'Rejected',
             ];
 
@@ -575,14 +581,12 @@ class BiddingController extends Controller
         $validator = Validator::make($request->all(), [
             'machinery_id' => 'required|exists:machinery,id',
             'sign_photo' => 'required|string',
-
             'billing_details.legal_company_name' => 'nullable|string|max:255',
             'billing_details.street_and_number' => 'required|string|max:255',
             'billing_details.city' => 'required|string|max:255',
             'billing_details.state_province' => 'nullable|string|max:255',
             'billing_details.zip_postal_code' => 'required|string|max:20',
             'billing_details.country' => 'required|string|max:255',
-
             'shipping_details.is_different' => 'required|boolean',
             'shipping_details.shipping_street' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
             'shipping_details.shipping_city' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
@@ -687,7 +691,6 @@ class BiddingController extends Controller
                     'billing_state' => $billing['state_province'] ?? null,
                     'billing_zip' => $billing['zip_postal_code'],
                     'billing_country' => $billing['country'],
-
                     'shipping_same_as_billing' => !$isShippingDifferent,
                     'shipping_street' => $isShippingDifferent ? ($shipping['shipping_street'] ?? null) : null,
                     'shipping_city' => $isShippingDifferent ? ($shipping['shipping_city'] ?? null) : null,
@@ -704,15 +707,14 @@ class BiddingController extends Controller
                     'price' => $highestBid,
                     'shipping_cost' => $shippingCost,
                     'purchase_date' => now(),
-                    'delivery_status' => 0,
-
+                    'awaiting_invoice_date' => now(),
+                    'delivery_status' => 2,
                     'billing_company' => $billing['legal_company_name'] ?? null,
                     'billing_street' => $billing['street_and_number'],
                     'billing_city' => $billing['city'],
                     'billing_state' => $billing['state_province'] ?? null,
                     'billing_zip' => $billing['zip_postal_code'],
                     'billing_country' => $billing['country'],
-
                     'shipping_same_as_billing' => !$isShippingDifferent,
                     'shipping_street' => $isShippingDifferent ? ($shipping['shipping_street'] ?? null) : null,
                     'shipping_city' => $isShippingDifferent ? ($shipping['shipping_city'] ?? null) : null,
@@ -732,20 +734,20 @@ class BiddingController extends Controller
 
             $sellerAddress = $companyAddress;
 
-            $buyerAddress = trim(($billing['street_and_number'] ?? '') . ', ' .
-                            ($billing['city'] ?? '') . ', ' .
-                            ($billing['state_province'] ?? '') . ' ' .
-                            ($billing['zip_postal_code'] ?? '') . ', ' .
-                            ($billing['country'] ?? ''));
+            $buyerAddress = trim(($billing['street_and_number'] ?? '') . ', '
+                . ($billing['city'] ?? '') . ', '
+                . ($billing['state_province'] ?? '') . ' '
+                . ($billing['zip_postal_code'] ?? '') . ', '
+                . ($billing['country'] ?? ''));
             $buyerAddress = trim(str_replace(',  ', ', ', $buyerAddress), ', ');
 
             $shippingAddress = $buyerAddress;
             if ($isShippingDifferent) {
-                $shippingAddress = trim(($shipping['shipping_street'] ?? '') . ', ' .
-                                       ($shipping['shipping_city'] ?? '') . ', ' .
-                                       ($shipping['shipping_state'] ?? '') . ' ' .
-                                       ($shipping['shipping_zip'] ?? '') . ', ' .
-                                       ($shipping['shipping_country'] ?? ''));
+                $shippingAddress = trim(($shipping['shipping_street'] ?? '') . ', '
+                    . ($shipping['shipping_city'] ?? '') . ', '
+                    . ($shipping['shipping_state'] ?? '') . ' '
+                    . ($shipping['shipping_zip'] ?? '') . ', '
+                    . ($shipping['shipping_country'] ?? ''));
                 $shippingAddress = trim(str_replace(',  ', ', ', $shippingAddress), ', ');
             }
 
@@ -766,7 +768,7 @@ class BiddingController extends Controller
                     'email' => $companyEmail,
                     'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,
                     'logoUrl' => $companyLogo ? asset($companyLogo) : null,
-                    'signature_path' => File::exists(public_path('uploads/signatures/seller_signature.png')) ? $this->imageToBase64(public_path('uploads/signatures/seller_signature.png')) : null, // For PDF
+                    'signature_path' => File::exists(public_path('uploads/signatures/seller_signature.png')) ? $this->imageToBase64(public_path('uploads/signatures/seller_signature.png')) : null,  // For PDF
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];
@@ -802,13 +804,13 @@ class BiddingController extends Controller
             $firstImage = $machinery->images->firstWhere('type', 'image');
             $machineryImage = null;
             $machineryImageUrl = null;
-            
+
             if ($firstImage) {
-                 $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
-                 if (File::exists(public_path($imagePathRel))) {
-                     $machineryImage = $this->imageToBase64(public_path($imagePathRel)); // For PDF generation
-                     $machineryImageUrl = asset($imagePathRel);   // For Frontend display
-                 }
+                $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
+                if (File::exists(public_path($imagePathRel))) {
+                    $machineryImage = $this->imageToBase64(public_path($imagePathRel));  // For PDF generation
+                    $machineryImageUrl = asset($imagePathRel);  // For Frontend display
+                }
             }
 
             $invoiceData = [
@@ -820,8 +822,8 @@ class BiddingController extends Controller
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null, // For PDF
-                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,   // For Frontend
+                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,  // For PDF
+                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,  // For Frontend
                 ]
             ];
 
@@ -849,10 +851,9 @@ class BiddingController extends Controller
 
             if ($order) {
                 $order->update([
-                    'delivery_status' => 2, // Awaiting Invoice
-                    'awaiting_invoice_date' => now(),
-                    'sales_agreement_date' => $order->sales_agreement_date ?? now(),
-                ]);
+                    'delivery_status' => 1,
+                    'sales_agreement_date' => now(),
+                ]);  // Sales Agreement
             }
 
             return response()->json([
@@ -961,7 +962,7 @@ class BiddingController extends Controller
             };
 
             $query = Order::where('user_id', $user->id)
-                ->with(['machinery' => function($query) {
+                ->with(['machinery' => function ($query) {
                     $query->select('id', 'make', 'model', 'year', 'working_hours', 'weight', 'serial_number', 'description', 'auction_id');
                 }, 'machinery.images']);
 
@@ -1012,15 +1013,17 @@ class BiddingController extends Controller
             }
 
             if (!empty($search)) {
-                $query->where(function($q) use ($search) {
-                    $q->where('order_id', 'LIKE', "%{$search}%")
-                      ->orWhere('price', 'LIKE', "%{$search}%")
-                      ->orWhere('delivery_status', 'LIKE', "%{$search}%")
-                      ->orWhereHas('machinery', function($q2) use ($search) {
-                          $q2->where('make', 'LIKE', "%{$search}%")
-                             ->orWhere('model', 'LIKE', "%{$search}%")
-                             ->orWhere('year', 'LIKE', "%{$search}%");
-                      });
+                $query->where(function ($q) use ($search) {
+                    $q
+                        ->where('order_id', 'LIKE', "%{$search}%")
+                        ->orWhere('price', 'LIKE', "%{$search}%")
+                        ->orWhere('delivery_status', 'LIKE', "%{$search}%")
+                        ->orWhereHas('machinery', function ($q2) use ($search) {
+                            $q2
+                                ->where('make', 'LIKE', "%{$search}%")
+                                ->orWhere('model', 'LIKE', "%{$search}%")
+                                ->orWhere('year', 'LIKE', "%{$search}%");
+                        });
                 });
             }
 
@@ -1040,11 +1043,11 @@ class BiddingController extends Controller
                 'data' => $ordersWithFormattedData->values(),
                 'pagination' => [
                     'current_page' => $orders->currentPage(),
-                    'last_page'    => $orders->lastPage(),
-                    'per_page'     => $orders->perPage(),
-                    'total'        => $orders->total(),
-                    'from'         => $orders->firstItem(),
-                    'to'           => $orders->lastItem(),
+                    'last_page' => $orders->lastPage(),
+                    'per_page' => $orders->perPage(),
+                    'total' => $orders->total(),
+                    'from' => $orders->firstItem(),
+                    'to' => $orders->lastItem(),
                 ],
             ], 200);
         } catch (\Exception $e) {
@@ -1140,7 +1143,6 @@ class BiddingController extends Controller
                     'price' => $machinery->buy_now_price,
                 ],
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -1176,7 +1178,7 @@ class BiddingController extends Controller
 
             $paymentSlipData = $request->input('payment_slip');
             $extension = 'jpg';
-            
+
             if (preg_match('/^data:image\/(\w+);base64,/', $paymentSlipData, $type)) {
                 $paymentSlipData = substr($paymentSlipData, strpos($paymentSlipData, ',') + 1);
                 $type = strtolower($type[1]);
@@ -1191,20 +1193,20 @@ class BiddingController extends Controller
                 $paymentSlipData = substr($paymentSlipData, strpos($paymentSlipData, ',') + 1);
                 $extension = 'pdf';
             } else {
-                 return response()->json([
+                return response()->json([
                     'success' => false,
                     'message' => 'Invalid payment slip format.',
                 ], 400);
             }
-            
-            if(strpos($paymentSlipData, 'data:image') === 0 || strpos($paymentSlipData, 'data:application') === 0) {
-                 $paymentSlipData = explode(',', $paymentSlipData)[1];
+
+            if (strpos($paymentSlipData, 'data:image') === 0 || strpos($paymentSlipData, 'data:application') === 0) {
+                $paymentSlipData = explode(',', $paymentSlipData)[1];
             }
 
             $decodedData = base64_decode($paymentSlipData);
 
             if ($decodedData === false) {
-                 return response()->json([
+                return response()->json([
                     'success' => false,
                     'message' => 'Base64 decode failed.',
                 ], 400);
@@ -1235,7 +1237,6 @@ class BiddingController extends Controller
                     'status_code' => 0
                 ]
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
