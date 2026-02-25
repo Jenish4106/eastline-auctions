@@ -3,18 +3,20 @@
 namespace App\Http\Controllers\Api\Frontend;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
+use App\Mail\BuyNowOrderMail;
 use App\Models\Machinery;
-use App\Models\Settings;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\File;
-use App\Services\GoogleMapsService;
 use App\Models\MachineryFileManager;
+use App\Models\Order;
+use App\Models\Settings;
 use App\Models\User;
+use App\Services\GoogleMapsService;
+use App\Services\SMTP2GOService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
@@ -30,14 +32,12 @@ class CheckoutController extends Controller
         $validator = Validator::make($request->all(), [
             'machinery_id' => 'required|exists:machinery,id',
             'sign_photo' => 'required|string',
-
             'billing_details.legal_company_name' => 'nullable|string|max:255',
             'billing_details.street_and_number' => 'required|string|max:255',
             'billing_details.city' => 'required|string|max:255',
             'billing_details.state_province' => 'nullable|string|max:255',
             'billing_details.zip_postal_code' => 'required|string|max:20',
             'billing_details.country' => 'required|string|max:255',
-
             'shipping_details.is_different' => 'required|boolean',
             'shipping_details.shipping_street' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
             'shipping_details.shipping_city' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
@@ -65,10 +65,10 @@ class CheckoutController extends Controller
             }
 
             if ($machinery->is_purchase || $machinery->bid_status == '2' || $machinery->bid_status === 'sold') {
-                 return response()->json([
-                     'success' => false,
-                     'message' => 'This machinery has already been purchased.'
-                 ], 400);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This machinery has already been purchased.'
+                ], 400);
             }
 
             $billing = $request->input('billing_details');
@@ -105,15 +105,14 @@ class CheckoutController extends Controller
                 'shipping_cost' => $shippingCost,
                 'purchase_date' => now(),
                 'sales_agreement_date' => now(),
-                'delivery_status' => 1,
-
+                'awaiting_invoice_date' => now(),
+                'delivery_status' => 2,
                 'billing_company' => $billing['legal_company_name'] ?? null,
                 'billing_street' => $billing['street_and_number'],
                 'billing_city' => $billing['city'],
                 'billing_state' => $billing['state_province'] ?? null,
                 'billing_zip' => $billing['zip_postal_code'],
                 'billing_country' => $billing['country'],
-
                 'shipping_same_as_billing' => !$isShippingDifferent,
                 'shipping_street' => $isShippingDifferent ? ($shipping['shipping_street'] ?? null) : null,
                 'shipping_city' => $isShippingDifferent ? ($shipping['shipping_city'] ?? null) : null,
@@ -143,14 +142,14 @@ class CheckoutController extends Controller
             $machineryImage = null;
             $machineryImageUrl = null;
             if ($firstImage) {
-                 $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
-                 if (File::exists(public_path($imagePathRel))) {
-                     $machineryImage = $this->imageToBase64(public_path($imagePathRel)); // For PDF generation
-                     $machineryImageUrl = asset($imagePathRel);   // For Frontend display
-                 }
+                $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
+                if (File::exists(public_path($imagePathRel))) {
+                    $machineryImage = $this->imageToBase64(public_path($imagePathRel));  // For PDF generation
+                    $machineryImageUrl = asset($imagePathRel);  // For Frontend display
+                }
             }
 
-             $data = [
+            $data = [
                 'order' => $order,
                 'machineryImage' => $machineryImage,
                 'machineryImageUrl' => $machineryImageUrl ?? null,
@@ -159,8 +158,8 @@ class CheckoutController extends Controller
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null, // For PDF
-                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,   // For Frontend
+                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,  // For PDF
+                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,  // For Frontend
                 ]
             ];
 
@@ -214,24 +213,24 @@ class CheckoutController extends Controller
 
             $winningUser = $user;
 
-            $pseudoBid = (object)['amount' => $order->price];
+            $pseudoBid = (object) ['amount' => $order->price];
 
             $sellerAddress = $companyAddress;
 
-            $buyerAddress = trim(($order->billing_street ?? '') . ', ' .
-                            ($order->billing_city ?? '') . ', ' .
-                            ($order->billing_state ?? '') . ' ' .
-                            ($order->billing_zip ?? '') . ', ' .
-                            ($order->billing_country ?? ''));
+            $buyerAddress = trim(($order->billing_street ?? '') . ', '
+                . ($order->billing_city ?? '') . ', '
+                . ($order->billing_state ?? '') . ' '
+                . ($order->billing_zip ?? '') . ', '
+                . ($order->billing_country ?? ''));
             $buyerAddress = trim(str_replace(',  ', ', ', $buyerAddress), ', ');
 
             $shippingAddress = $buyerAddress;
             if (!$order->shipping_same_as_billing) {
-                $shippingAddress = trim(($order->shipping_street ?? '') . ', ' .
-                                       ($order->shipping_city ?? '') . ', ' .
-                                       ($order->shipping_state ?? '') . ' ' .
-                                       ($order->shipping_zip ?? '') . ', ' .
-                                       ($order->shipping_country ?? ''));
+                $shippingAddress = trim(($order->shipping_street ?? '') . ', '
+                    . ($order->shipping_city ?? '') . ', '
+                    . ($order->shipping_state ?? '') . ' '
+                    . ($order->shipping_zip ?? '') . ', '
+                    . ($order->shipping_country ?? ''));
                 $shippingAddress = trim(str_replace(',  ', ', ', $shippingAddress), ', ');
             }
 
@@ -250,9 +249,9 @@ class CheckoutController extends Controller
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null, // For PDF
+                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,  // For PDF
                     'logoUrl' => $companyLogo ? asset($companyLogo) : null,
-                    'signature_path' => File::exists(public_path('uploads/signatures/seller_signature.png')) ? $this->imageToBase64(public_path('uploads/signatures/seller_signature.png')) : null, // For PDF
+                    'signature_path' => File::exists(public_path('uploads/signatures/seller_signature.png')) ? $this->imageToBase64(public_path('uploads/signatures/seller_signature.png')) : null,  // For PDF
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];
@@ -281,6 +280,18 @@ class CheckoutController extends Controller
                 'contract_status' => 3,
             ]);
 
+            try {
+                $mail = new BuyNowOrderMail($winningUser, $order, $machinery);
+                $smtp2goService = new SMTP2GOService();
+                $htmlContent = $mail->renderHtmlContent();
+                $smtp2goService->sendEmail($winningUser->email, $mail->getSubject(), $htmlContent);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to send email',
+                ], 500);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Checkout successful',
@@ -298,7 +309,6 @@ class CheckoutController extends Controller
                     ]
                 ]
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -357,7 +367,7 @@ class CheckoutController extends Controller
             if ($highestBidModel) {
                 $price = $highestBidModel->amount;
             } else {
-                $highestBidModel = (object)['amount' => $price];
+                $highestBidModel = (object) ['amount' => $price];
             }
 
             $sellerAddress = $companyAddress;
@@ -366,20 +376,20 @@ class CheckoutController extends Controller
             $shipping = $request->input('shipping_details');
             $isShippingDifferent = filter_var($shipping['is_different'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
-            $buyerAddress = trim(($billing['street_and_number'] ?? '') . ', ' .
-                            ($billing['city'] ?? '') . ', ' .
-                            ($billing['state_province'] ?? '') . ' ' .
-                            ($billing['zip_postal_code'] ?? '') . ', ' .
-                            ($billing['country'] ?? ''));
+            $buyerAddress = trim(($billing['street_and_number'] ?? '') . ', '
+                . ($billing['city'] ?? '') . ', '
+                . ($billing['state_province'] ?? '') . ' '
+                . ($billing['zip_postal_code'] ?? '') . ', '
+                . ($billing['country'] ?? ''));
             $buyerAddress = trim(str_replace(',  ', ', ', $buyerAddress), ', ');
 
             $shippingAddress = $buyerAddress;
             if ($isShippingDifferent) {
-                $shippingAddress = trim(($shipping['shipping_street'] ?? '') . ', ' .
-                                       ($shipping['shipping_city'] ?? '') . ', ' .
-                                       ($shipping['shipping_state'] ?? '') . ' ' .
-                                       ($shipping['shipping_zip'] ?? '') . ', ' .
-                                       ($shipping['shipping_country'] ?? ''));
+                $shippingAddress = trim(($shipping['shipping_street'] ?? '') . ', '
+                    . ($shipping['shipping_city'] ?? '') . ', '
+                    . ($shipping['shipping_state'] ?? '') . ' '
+                    . ($shipping['shipping_zip'] ?? '') . ', '
+                    . ($shipping['shipping_country'] ?? ''));
                 $shippingAddress = trim(str_replace(',  ', ', ', $shippingAddress), ', ');
             }
 
