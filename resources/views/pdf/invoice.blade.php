@@ -17,7 +17,7 @@
         }
         .header-table {
             width: 100%;
-            margin-bottom: 40px;
+            margin-bottom: 25px;
             border-bottom: 2px solid #eee;
             padding-bottom: 20px;
         }
@@ -33,11 +33,11 @@
             font-size: 13px;
         }
         .invoice-title {
-            font-size: 28px;
-            font-weight: bold;
+            font-size: 26px;
+            font-weight: 700;
             color: #2c3e50;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
             margin-bottom: 5px;
         }
         .invoice-meta {
@@ -46,7 +46,7 @@
         }
         .info-table {
             width: 100%;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         .info-table td {
             width: 50%;
@@ -85,6 +85,10 @@
             border-bottom: 1px solid #eee;
             vertical-align: middle;
         }
+        table.items td:last-child {
+            font-weight: 600;
+            color: #2c3e50;
+        }
         .machinery-image {
             width: 80px;
             height: 60px;
@@ -106,18 +110,30 @@
             border-bottom: 1px solid #eee;
         }
         .total-row {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
             color: #2c3e50;
             border-top: 2px solid #2c3e50;
         }
+        .bank-box {
+            background: #f9fafb;
+            border: 1px solid #ddd;
+            padding: 12px;
+            font-size: 12px;
+            line-height: 1.6;
+            width: 55%;
+            float: left;
+            text-align: left;
+            box-sizing: border-box;
+        }
         .footer {
-            margin-top: 50px;
+            margin-top: 20px;
             text-align: center;
             font-size: 12px;
             color: #999;
             border-top: 1px solid #eee;
             padding-top: 20px;
+            clear: both;
         }
     </style>
 </head>
@@ -213,6 +229,13 @@
         </table>
 
         <div class="total-section">
+            @if(isset($companyInfo['bankDetails']) && !empty($companyInfo['bankDetails']))
+            <div class="bank-box">
+                <strong>Bank Details:</strong><br>
+                {!! $companyInfo['bankDetails'] !!}
+            </div>
+            @endif
+
             <table class="total-table">
                 <tr>
                     <td>Subtotal:</td>
@@ -237,13 +260,6 @@
         <div class="footer">
             <p>Thank you for your business!</p>
             <p>{{ $companyInfo['name'] }} | {{ $companyInfo['email'] }}</p>
-            
-            @if(isset($companyInfo['bankDetails']) && !empty($companyInfo['bankDetails']))
-            <div style="margin-top: 15px; font-size: 13px; text-align: left; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
-                <strong>Bank Details:</strong><br>
-                {!! $companyInfo['bankDetails'] !!}
-            </div>
-            @endif
         </div>
     </div>
 </body>
