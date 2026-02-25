@@ -441,7 +441,7 @@ class BiddingController extends Controller
                       });
 
                     // Contract Status search
-                    $contractStatusMap = ['pending' => 0, 'approved' => 1, 'signed' => 3, 'rejected' => 4];
+                    $contractStatusMap = ['pending' => 0, 'approved' => 1, 'awaiting invoice' => 3, 'rejected' => 4];
                     foreach ($contractStatusMap as $label => $value) {
                         if (stripos($label, $search) !== false) {
                             $q->orWhere('contract_status', $value);
@@ -462,7 +462,7 @@ class BiddingController extends Controller
                 $contractStatusMap = [
                     0 => 'Pending',
                     1 => 'Approved',
-                    3 => 'Signed',
+                    3 => 'Awaiting invoice',
                     4 => 'Rejected',
                 ];
 
@@ -544,7 +544,7 @@ class BiddingController extends Controller
             $contractStatusMap = [
                 0 => 'Pending',
                 1 => 'Approved',
-                3 => 'Signed',
+                3 => 'Awaiting invoice',
                 4 => 'Rejected',
             ];
 
@@ -849,9 +849,10 @@ class BiddingController extends Controller
 
             if ($order) {
                 $order->update([
-                    'delivery_status' => 1,
-                    'sales_agreement_date' => now(),
-                ]); // Sales Agreement
+                    'delivery_status' => 2, // Awaiting Invoice
+                    'awaiting_invoice_date' => now(),
+                    'sales_agreement_date' => $order->sales_agreement_date ?? now(),
+                ]);
             }
 
             return response()->json([

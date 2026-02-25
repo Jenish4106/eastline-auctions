@@ -43,12 +43,13 @@ class BiddingController extends Controller
             ]);
 
             if (!empty($search)) {
-                $query->where(function($q) use ($search) {
-                    $q->where('machinery.auction_id', 'LIKE', "%{$search}%")
-                      ->orWhere('machinery.year', 'LIKE', "%{$search}%")
-                      ->orWhere('machinery.make', 'LIKE', "%{$search}%")
-                      ->orWhere('machinery.model', 'LIKE', "%{$search}%")
-                      ->orWhereRaw("CONCAT_WS(' ', machinery.year, machinery.make, machinery.model) LIKE ?", ["%{$search}%"]);
+                $query->where(function ($q) use ($search) {
+                    $q
+                        ->where('machinery.auction_id', 'LIKE', "%{$search}%")
+                        ->orWhere('machinery.year', 'LIKE', "%{$search}%")
+                        ->orWhere('machinery.make', 'LIKE', "%{$search}%")
+                        ->orWhere('machinery.model', 'LIKE', "%{$search}%")
+                        ->orWhereRaw("CONCAT_WS(' ', machinery.year, machinery.make, machinery.model) LIKE ?", ["%{$search}%"]);
 
                     // Status search
                     $statusMap = ['pending' => '0', 'active' => '1', 'sold' => '2'];
@@ -60,16 +61,18 @@ class BiddingController extends Controller
                 });
             }
 
-            $machineries = $query->withCount(['bids' => function ($q) {
-                        $q->whereColumn('bids.auction_id', 'machinery.auction_id');
-                    }])
-                    ->leftJoin(\Illuminate\Support\Facades\DB::raw('(SELECT machinery_id, auction_id, MAX(amount) as highest_bid FROM bids GROUP BY machinery_id, auction_id) as bid_max'), function ($join) {
-                        $join->on('machinery.id', '=', 'bid_max.machinery_id')
-                             ->on('machinery.auction_id', '=', 'bid_max.auction_id');
-                    })
-                    ->selectRaw('machinery.*, bid_max.highest_bid')
-                    ->orderBy($sortBy === 'bids_count' ? 'bids_count' : $sortBy, $sortOrder)
-                    ->paginate($perPage, ['*'], 'page', $page);
+            $machineries = $query
+                ->withCount(['bids' => function ($q) {
+                    $q->whereColumn('bids.auction_id', 'machinery.auction_id');
+                }])
+                ->leftJoin(\Illuminate\Support\Facades\DB::raw('(SELECT machinery_id, auction_id, MAX(amount) as highest_bid FROM bids GROUP BY machinery_id, auction_id) as bid_max'), function ($join) {
+                    $join
+                        ->on('machinery.id', '=', 'bid_max.machinery_id')
+                        ->on('machinery.auction_id', '=', 'bid_max.auction_id');
+                })
+                ->selectRaw('machinery.*, bid_max.highest_bid')
+                ->orderBy($sortBy === 'bids_count' ? 'bids_count' : $sortBy, $sortOrder)
+                ->paginate($perPage, ['*'], 'page', $page);
 
             $result = $machineries->getCollection()->map(function ($machinery) {
                 $name = trim($machinery->year . ' ' . $machinery->make . ' ' . $machinery->model);
@@ -112,11 +115,11 @@ class BiddingController extends Controller
                 'data' => $result,
                 'pagination' => [
                     'current_page' => $machineries->currentPage(),
-                    'last_page'    => $machineries->lastPage(),
-                    'per_page'     => $machineries->perPage(),
-                    'total'        => $machineries->total(),
-                    'from'         => $machineries->firstItem(),
-                    'to'           => $machineries->lastItem(),
+                    'last_page' => $machineries->lastPage(),
+                    'per_page' => $machineries->perPage(),
+                    'total' => $machineries->total(),
+                    'from' => $machineries->firstItem(),
+                    'to' => $machineries->lastItem(),
                 ],
             ], 200);
         } catch (\Exception $e) {
@@ -184,7 +187,7 @@ class BiddingController extends Controller
                 'bid_status' => $bidStatusText,
             ];
 
-            $biddingDetails = $machinery->bids->filter(function($bid) use ($machinery) {
+            $biddingDetails = $machinery->bids->filter(function ($bid) use ($machinery) {
                 return $bid->auction_id === $machinery->auction_id;
             })->map(function ($bid) use ($highestBid, $machinery) {
                 $bidData = [
@@ -276,29 +279,29 @@ class BiddingController extends Controller
                 'users.last_name',
                 'users.phone_no',
                 'categories.category_name',
-
             ])
-            ->leftJoin('users', 'machinery.won_user', '=', 'users.id')
-            ->leftJoin('categories', 'machinery.category_id', '=', 'categories.id')
-            ->whereHas('bids')
-            ->whereNotNull('machinery.won_user')
-            ->where('machinery.won_user', '!=', 0);
+                ->leftJoin('users', 'machinery.won_user', '=', 'users.id')
+                ->leftJoin('categories', 'machinery.category_id', '=', 'categories.id')
+                ->whereHas('bids')
+                ->whereNotNull('machinery.won_user')
+                ->where('machinery.won_user', '!=', 0);
 
             if (!empty($search)) {
-                $query->where(function($q) use ($search) {
-                    $q->where('machinery.auction_id', 'LIKE', "%{$search}%")
-                      ->orWhere('machinery.year', 'LIKE', "%{$search}%")
-                      ->orWhere('machinery.make', 'LIKE', "%{$search}%")
-                      ->orWhere('machinery.model', 'LIKE', "%{$search}%")
-                      ->orWhereRaw("CONCAT_WS(' ', machinery.year, machinery.make, machinery.model) LIKE ?", ["%{$search}%"])
-                      ->orWhere('users.first_name', 'LIKE', "%{$search}%")
-                      ->orWhere('users.last_name', 'LIKE', "%{$search}%")
-                      ->orWhereRaw("CONCAT_WS(' ', users.first_name, users.last_name) LIKE ?", ["%{$search}%"])
-                      ->orWhere('users.phone_no', 'LIKE', "%{$search}%")
-                      ->orWhere('categories.category_name', 'LIKE', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q
+                        ->where('machinery.auction_id', 'LIKE', "%{$search}%")
+                        ->orWhere('machinery.year', 'LIKE', "%{$search}%")
+                        ->orWhere('machinery.make', 'LIKE', "%{$search}%")
+                        ->orWhere('machinery.model', 'LIKE', "%{$search}%")
+                        ->orWhereRaw("CONCAT_WS(' ', machinery.year, machinery.make, machinery.model) LIKE ?", ["%{$search}%"])
+                        ->orWhere('users.first_name', 'LIKE', "%{$search}%")
+                        ->orWhere('users.last_name', 'LIKE', "%{$search}%")
+                        ->orWhereRaw("CONCAT_WS(' ', users.first_name, users.last_name) LIKE ?", ["%{$search}%"])
+                        ->orWhere('users.phone_no', 'LIKE', "%{$search}%")
+                        ->orWhere('categories.category_name', 'LIKE', "%{$search}%");
 
                     // Contract Status search
-                    $contractStatusMap = ['pending' => 0, 'approved' => 1, 'signed' => 3, 'rejected' => 4];
+                    $contractStatusMap = ['pending' => 0, 'approved' => 1, 'awaiting invoice' => 3, 'rejected' => 4];
                     foreach ($contractStatusMap as $label => $value) {
                         if (stripos($label, $search) !== false) {
                             $q->orWhere('machinery.contract_status', $value);
@@ -321,7 +324,7 @@ class BiddingController extends Controller
                 $contractStatusMap = [
                     0 => 'Pending',
                     1 => 'Approved',
-                    3 => 'Signed',
+                    3 => 'Awaiting invoice',
                     4 => 'Rejected',
                 ];
 
@@ -350,11 +353,11 @@ class BiddingController extends Controller
                 'data' => $result,
                 'pagination' => [
                     'current_page' => $wonMachineries->currentPage(),
-                    'last_page'    => $wonMachineries->lastPage(),
-                    'per_page'     => $wonMachineries->perPage(),
-                    'total'        => $wonMachineries->total(),
-                    'from'         => $wonMachineries->firstItem(),
-                    'to'           => $wonMachineries->lastItem(),
+                    'last_page' => $wonMachineries->lastPage(),
+                    'per_page' => $wonMachineries->perPage(),
+                    'total' => $wonMachineries->total(),
+                    'from' => $wonMachineries->firstItem(),
+                    'to' => $wonMachineries->lastItem(),
                 ],
             ], 200);
         } catch (\Exception $e) {
@@ -382,7 +385,7 @@ class BiddingController extends Controller
             $machineryId = $request->machinery_id;
 
             $machinery = Machinery::with(['wonUser:id,first_name,last_name,phone_no', 'category:id,category_name', 'bids'])
-                ->whereHas('bids', function($q) {
+                ->whereHas('bids', function ($q) {
                     $q->whereColumn('bids.auction_id', 'machinery.auction_id');
                 })
                 ->where('id', $machineryId)
@@ -402,7 +405,7 @@ class BiddingController extends Controller
             $contractStatusMap = [
                 0 => 'Pending',
                 1 => 'Approved',
-                3 => 'Signed',
+                3 => 'Awaiting invoice',
                 4 => 'Rejected',
             ];
 
@@ -465,8 +468,8 @@ class BiddingController extends Controller
 
                 if ($bidModel && $machinery->won_user) {
                     $existingOrder = Order::where('machinery_id', $machinery->id)
-                                         ->where('user_id', $machinery->won_user)
-                                         ->first();
+                        ->where('user_id', $machinery->won_user)
+                        ->first();
 
                     if (!$existingOrder) {
                         Order::create([
@@ -488,11 +491,11 @@ class BiddingController extends Controller
                 }
             } elseif ($action === 'reject') {
                 $machinery->contract_status = 4;
-                
+
                 if ($machinery->won_user) {
                     $existingOrder = Order::where('machinery_id', $machinery->id)
-                                         ->where('user_id', $machinery->won_user)
-                                         ->first();
+                        ->where('user_id', $machinery->won_user)
+                        ->first();
                     if ($existingOrder) {
                         $existingOrder->update([
                             'delivery_status' => 9,
