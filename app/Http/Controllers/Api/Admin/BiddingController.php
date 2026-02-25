@@ -440,9 +440,14 @@ class BiddingController extends Controller
     public function updateContractStatus(Request $request)
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-            'machinery_id' => 'required|exists:machinery,id',
-            'action' => 'required|in:approve,reject',
-            'bank_details' => 'nullable|string',
+            'machinery_id'   => 'required|exists:machinery,id',
+            'action'         => 'required|in:approve,reject',
+            'bank_name'              => 'nullable|string|max:255',
+            'beneficiary_name'       => 'nullable|string|max:255',
+            'beneficiary_address'    => 'nullable|string',
+            'account_number'         => 'nullable|string|max:50',
+            'routing_number'         => 'nullable|string|max:50',
+            'branch_address'         => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -525,7 +530,12 @@ class BiddingController extends Controller
                             'email' => $companyEmail,
                             'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,
                             'logoUrl' => $companyLogo ? asset($companyLogo) : null,
-                            'bankDetails' => $request->input('bank_details', null),
+                            'bank_name' => $request->input('bank_name', null),
+                            'beneficiary_name' => $request->input('beneficiary_name', null),
+                            'beneficiary_address' => $request->input('beneficiary_address', null),
+                            'account_number' => $request->input('account_number', null),
+                            'routing_number' => $request->input('routing_number', null),
+                            'branch_address' => $request->input('branch_address', null),
                         ]
                     ];
 

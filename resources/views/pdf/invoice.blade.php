@@ -16,9 +16,10 @@
         .container {
             width: 100%;
             padding: 15px;
+            min-height: 100vh;
+            position: relative;
         }
 
-        /* HEADER */
         .header-table {
             width: 100%;
             border-bottom: 2px solid #ddd;
@@ -47,7 +48,6 @@
             margin-top: 5px;
         }
 
-        /* BILL & SHIP */
         .info-table {
             width: 100%;
             margin-top: 10px;
@@ -66,7 +66,6 @@
             line-height: 1.5;
         }
 
-        /* ITEMS */
         table.items {
             width: 100%;
             border-collapse: collapse;
@@ -91,16 +90,15 @@
             height: 50px;
         }
 
-        /* SUMMARY SECTION */
         .summary-table {
             width: 100%;
-            margin-top: 20px;
+            margin-top: 25px;
         }
 
         .bank-box {
-            width: 60%;
+            width: 50%;
             border: 1px solid #ccc;
-            padding: 10px;
+            padding: 14px;
             font-size: 12px;
             vertical-align: top;
         }
@@ -123,11 +121,14 @@
         }
 
         .footer {
-            margin-top: 25px;
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
             font-size: 11px;
             text-align: center;
             border-top: 1px solid #eee;
-            padding-top: 10px;
+            padding-top: 8px;
         }
     </style>
 </head>
@@ -135,7 +136,6 @@
 
 <div class="container">
 
-    <!-- HEADER -->
     <table class="header-table">
         <tr>
             <td width="50%" valign="top">
@@ -146,7 +146,6 @@
                     <img src="{{ $companyInfo['logoUrl'] }}" class="logo"><br>
                 @endif
 
-                <!-- COMPANY INFO (FROM) -->
                 <div class="company-info">
                     <strong>{{ $companyInfo['name'] }}</strong><br>
                     {{ $companyInfo['address'] }}<br>
@@ -165,7 +164,6 @@
         </tr>
     </table>
 
-    <!-- BILL & SHIP -->
     <table class="info-table">
         <tr>
             <td width="50%" valign="top">
@@ -198,7 +196,6 @@
         </tr>
     </table>
 
-    <!-- ITEMS TABLE -->
     <table class="items">
         <thead>
         <tr>
@@ -232,17 +229,42 @@
         </tbody>
     </table>
 
-    <!-- BANK + TOTAL -->
     <table class="summary-table">
         <tr>
-            <td class="bank-box" width="60%">
-                @if(isset($companyInfo['bankDetails']) && $companyInfo['bankDetails'])
+            <td width="10%"></td>
+
+            <td class="bank-box" width="45%">
+                @if(
+                    (!empty($companyInfo['bank_name'])) ||
+                    (!empty($companyInfo['beneficiary_name'])) ||
+                    (!empty($companyInfo['beneficiary_address'])) ||
+                    (!empty($companyInfo['account_number'])) ||
+                    (!empty($companyInfo['routing_number'])) ||
+                    (!empty($companyInfo['branch_address']))
+                )
                     <strong>Bank Details:</strong><br>
-                    {!! $companyInfo['bankDetails'] !!}
+                    @if(!empty($companyInfo['bank_name']))
+                        Bank: {{ $companyInfo['bank_name'] }}<br>
+                    @endif
+                    @if(!empty($companyInfo['beneficiary_name']))
+                        Beneficiary: {{ $companyInfo['beneficiary_name'] }}<br>
+                    @endif
+                    @if(!empty($companyInfo['beneficiary_address']))
+                        Address: {!! nl2br(e($companyInfo['beneficiary_address'])) !!}<br>
+                    @endif
+                    @if(!empty($companyInfo['account_number']))
+                        Account #: {{ $companyInfo['account_number'] }}<br>
+                    @endif
+                    @if(!empty($companyInfo['routing_number']))
+                        Routing #: {{ $companyInfo['routing_number'] }}<br>
+                    @endif
+                    @if(!empty($companyInfo['branch_address']))
+                        Branch Address: {!! nl2br(e($companyInfo['branch_address'])) !!}<br>
+                    @endif
                 @endif
             </td>
 
-            <td width="40%" valign="top">
+            <td width="45%" valign="top">
                 <table class="total-table">
                     <tr>
                         <td>Subtotal:</td>
@@ -267,9 +289,8 @@
         </tr>
     </table>
 
-    <!-- FOOTER -->
     <div class="footer">
-        Thank you for your business! <br>
+        Thank you for your business!<br>
         {{ $companyInfo['name'] }} | {{ $companyInfo['email'] }}
     </div>
 

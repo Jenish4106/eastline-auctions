@@ -134,7 +134,12 @@ class CheckoutController extends Controller
             $companyAddress = Settings::get('address') ?? '';
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';
-            $bankDetails = Settings::get('bank_details');
+            $companyBankName = Settings::get('bank_name');
+            $companyBeneficiaryName = Settings::get('beneficiary_name');
+            $companyBeneficiaryAddress = Settings::get('beneficiary_address');
+            $companyAccountNumber = Settings::get('account_number');
+            $companyRoutingNumber = Settings::get('routing_number');
+            $companyBranchAddress = Settings::get('branch_address');
 
             $companyLogo = Settings::get('dark_logo');
 
@@ -159,7 +164,12 @@ class CheckoutController extends Controller
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'bankDetails' => $bankDetails,
+                    'bank_name' => $companyBankName,
+                    'beneficiary_name' => $companyBeneficiaryName,
+                    'beneficiary_address' => $companyBeneficiaryAddress,
+                    'account_number' => $companyAccountNumber,
+                    'routing_number' => $companyRoutingNumber,
+                    'branch_address' => $companyBranchAddress,
                     'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,  // For PDF
                     'logoUrl' => $companyLogo ? asset($companyLogo) : null,  // For Frontend
                 ]

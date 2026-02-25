@@ -68,7 +68,12 @@ class SettingsController extends Controller
                 'twitter'                => 'nullable|string|max:255',
                 'instagram'              => 'nullable|string|max:255',
                 'linkedin'               => 'nullable|string|max:255',
-                'bank_details'           => 'nullable|string',
+                'bank_name'              => 'nullable|string|max:255',
+                'beneficiary_name'       => 'nullable|string|max:255',
+                'beneficiary_address'    => 'nullable|string',
+                'account_number'         => 'nullable|string|max:50',
+                'routing_number'         => 'nullable|string|max:50',
+                'branch_address'         => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
@@ -131,7 +136,12 @@ class SettingsController extends Controller
                 'twitter'                => $request->input('twitter'),
                 'instagram'              => $request->input('instagram'),
                 'linkedin'               => $request->input('linkedin'),
-                'bank_details'           => $request->input('bank_details'),
+                'bank_name'              => $request->input('bank_name'),
+                'beneficiary_name'       => $request->input('beneficiary_name'),
+                'beneficiary_address'    => $request->input('beneficiary_address'),
+                'account_number'         => $request->input('account_number'),
+                'routing_number'         => $request->input('routing_number'),
+                'branch_address'         => $request->input('branch_address'),
             ];
 
             if ($whiteLogoPath) {
@@ -159,7 +169,12 @@ class SettingsController extends Controller
                     'twitter'                => $request->input('twitter', ''),
                     'instagram'              => $request->input('instagram', ''),
                     'linkedin'               => $request->input('linkedin', ''),
-                    'bank_details'           => $request->input('bank_details', ''),
+                    'bank_name'              => $request->input('bank_name', ''),
+                'beneficiary_name'       => $request->input('beneficiary_name', ''),
+                'beneficiary_address'    => $request->input('beneficiary_address', ''),
+                'account_number'         => $request->input('account_number', ''),
+                'routing_number'         => $request->input('routing_number', ''),
+                'branch_address'         => $request->input('branch_address', ''),
                 ];
                 
                 foreach ($defaultSettings as $key => $value) {
