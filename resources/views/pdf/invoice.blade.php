@@ -17,32 +17,38 @@
         }
         .header-table {
             width: 100%;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             border-bottom: 2px solid #eee;
-            padding-bottom: 20px;
+            padding-bottom: 10px;
         }
         .header-table td {
             vertical-align: top;
         }
         .logo {
-            max-width: 180px;
-            max-height: 80px;
+            max-width: 135px;
+            max-height: 55px;
         }
         .company-info {
             text-align: right;
             font-size: 13px;
         }
         .invoice-title {
-            font-size: 26px;
+            font-size: 20px;
             font-weight: 700;
             color: #2c3e50;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
+        }
+        .invoice-number {
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-bottom: 4px;
         }
         .invoice-meta {
             text-align: right;
-            margin-top: 10px;
+            margin-top: 0;
+            font-size: 12px;
         }
         .info-table {
             width: 100%;
@@ -153,7 +159,7 @@
 
                 <td style="width: 50%; text-align: right;">
                     <div class="invoice-title">INVOICE</div>
-                    <div style="color: #7f8c8d;">#{{ $order->order_id }}</div>
+                    <div class="invoice-number">#{{ $order->order_id }}</div>
                     <div class="invoice-meta">
                         <strong>Date:</strong> {{ $order->purchase_date->format('F d, Y') }}<br>
                     </div>
@@ -161,9 +167,9 @@
             </tr>
         </table>
         
-        <div style="margin-bottom: 40px; text-align:right;">
-             <div style="margin-bottom: 10px;">
-                    <strong style="font-size: 13px; color: #2c3e50;">FROM:</strong><br>
+        <div class="bank-box">
+            <div style="margin-bottom: 5px;">
+                <strong style="font-size: 13px; color: #2c3e50;">FROM:</strong><br>
                 <strong>{{ $companyInfo['name'] }}</strong><br>
                 {{ $companyInfo['address'] }}
             </div>
