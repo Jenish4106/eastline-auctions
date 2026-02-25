@@ -5,8 +5,12 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Bid;
 use App\Models\Machinery;
+use App\Models\MachineryFileManager;
 use App\Models\Order;
+use App\Models\Settings;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class BiddingController extends Controller
@@ -438,6 +442,7 @@ class BiddingController extends Controller
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'machinery_id' => 'required|exists:machinery,id',
             'action' => 'required|in:approve,reject',
+            'bank_details' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -472,7 +477,7 @@ class BiddingController extends Controller
                         ->first();
 
                     if (!$existingOrder) {
-                        Order::create([
+                        $existingOrder = Order::create([
                             'order_id' => 'ORD-' . strtoupper(Str::random(10)),
                             'machinery_id' => $machinery->id,
                             'user_id' => $machinery->won_user,
@@ -488,6 +493,59 @@ class BiddingController extends Controller
                             'awaiting_invoice_date' => now()
                         ]);
                     }
+
+                    // Generate Invoice
+                    $companyName = Settings::get('company_name', 'Stiopa Equipment');
+                    $companyAddress = Settings::get('address') ?? '';
+                    $companyPhone = Settings::get('phone_no') ?? '';
+                    $companyEmail = Settings::get('email') ?? '';
+                    $companyLogo = Settings::get('dark_logo');
+
+                    $machinery->load('images');
+                    $firstImage = $machinery->images->firstWhere('type', 'image');
+                    $machineryImage = null;
+                    $machineryImageUrl = null;
+
+                    if ($firstImage) {
+                        $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
+                        if (File::exists(public_path($imagePathRel))) {
+                            $machineryImage = $this->imageToBase64(public_path($imagePathRel));  // For PDF generation
+                            $machineryImageUrl = asset($imagePathRel);  // For Frontend display
+                        }
+                    }
+
+                    $invoiceData = [
+                        'order' => $existingOrder,
+                        'machineryImage' => $machineryImage,
+                        'machineryImageUrl' => $machineryImageUrl,
+                        'companyInfo' => [
+                            'name' => $companyName,
+                            'address' => $companyAddress,
+                            'phone' => $companyPhone,
+                            'email' => $companyEmail,
+                            'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,
+                            'logoUrl' => $companyLogo ? asset($companyLogo) : null,
+                            'bankDetails' => $request->input('bank_details', null),
+                        ]
+                    ];
+
+                    $invoicePdf = Pdf::loadView('pdf.invoice', $invoiceData);
+                    $invoiceFileName = 'invoice_' . $existingOrder->order_id . '.pdf';
+                    $invoicePath = 'uploads/invoices/' . $invoiceFileName;
+
+                    $invoicePublicDir = public_path('uploads/invoices');
+                    if (!File::exists($invoicePublicDir)) {
+                        File::makeDirectory($invoicePublicDir, 0755, true);
+                    }
+
+                    $invoicePdf->save(public_path($invoicePath));
+
+                    MachineryFileManager::create([
+                        'machinery_id' => $machinery->id,
+                        'order_id' => $existingOrder->id,
+                        'image_path' => $invoicePath,
+                        'type' => 'invoice',
+                    ]);
                 }
             } elseif ($action === 'reject') {
                 $machinery->contract_status = 4;
@@ -523,5 +581,15 @@ class BiddingController extends Controller
                 'message' => 'Something went wrong, please try again.',
             ], 500);
         }
+    }
+
+    private function imageToBase64($path)
+    {
+        if (File::exists($path)) {
+            $type = pathinfo($path, PATHINFO_EXTENSION);
+            $data = file_get_contents($path);
+            return 'data:image/' . $type . ';base64,' . base64_encode($data);
+        }
+        return null;
     }
 }

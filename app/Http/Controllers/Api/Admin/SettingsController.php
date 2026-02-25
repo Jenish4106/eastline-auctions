@@ -68,6 +68,7 @@ class SettingsController extends Controller
                 'twitter'                => 'nullable|string|max:255',
                 'instagram'              => 'nullable|string|max:255',
                 'linkedin'               => 'nullable|string|max:255',
+                'bank_details'           => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
@@ -130,6 +131,7 @@ class SettingsController extends Controller
                 'twitter'                => $request->input('twitter'),
                 'instagram'              => $request->input('instagram'),
                 'linkedin'               => $request->input('linkedin'),
+                'bank_details'           => $request->input('bank_details'),
             ];
 
             if ($whiteLogoPath) {
@@ -157,6 +159,7 @@ class SettingsController extends Controller
                     'twitter'                => $request->input('twitter', ''),
                     'instagram'              => $request->input('instagram', ''),
                     'linkedin'               => $request->input('linkedin', ''),
+                    'bank_details'           => $request->input('bank_details', ''),
                 ];
                 
                 foreach ($defaultSettings as $key => $value) {

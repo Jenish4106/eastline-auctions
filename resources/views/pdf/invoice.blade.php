@@ -237,6 +237,13 @@
         <div class="footer">
             <p>Thank you for your business!</p>
             <p>{{ $companyInfo['name'] }} | {{ $companyInfo['email'] }}</p>
+            
+            @if(isset($companyInfo['bankDetails']) && !empty($companyInfo['bankDetails']))
+            <div style="margin-top: 15px; font-size: 13px; text-align: left; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+                <strong>Bank Details:</strong><br>
+                {!! $companyInfo['bankDetails'] !!}
+            </div>
+            @endif
         </div>
     </div>
 </body>

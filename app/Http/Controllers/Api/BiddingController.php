@@ -808,42 +808,10 @@ class BiddingController extends Controller
             if ($firstImage) {
                 $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
                 if (File::exists(public_path($imagePathRel))) {
-                    $machineryImage = $this->imageToBase64(public_path($imagePathRel));  // For PDF generation
-                    $machineryImageUrl = asset($imagePathRel);  // For Frontend display
+                    $machineryImage = $this->imageToBase64(public_path($imagePathRel));
+                    $machineryImageUrl = asset($imagePathRel);
                 }
             }
-
-            $invoiceData = [
-                'order' => $order,
-                'machineryImage' => $machineryImage,
-                'machineryImageUrl' => $machineryImageUrl,
-                'companyInfo' => [
-                    'name' => $companyName,
-                    'address' => $companyAddress,
-                    'phone' => $companyPhone,
-                    'email' => $companyEmail,
-                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,  // For PDF
-                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,  // For Frontend
-                ]
-            ];
-
-            $invoicePdf = Pdf::loadView('pdf.invoice', $invoiceData);
-            $invoiceFileName = 'invoice_' . $order->order_id . '.pdf';
-            $invoicePath = 'uploads/invoices/' . $invoiceFileName;
-
-            $invoicePublicDir = public_path('uploads/invoices');
-            if (!File::exists($invoicePublicDir)) {
-                File::makeDirectory($invoicePublicDir, 0755, true);
-            }
-
-            $invoicePdf->save(public_path($invoicePath));
-
-            MachineryFileManager::create([
-                'machinery_id' => $machinery->id,
-                'order_id' => $order->id,
-                'image_path' => $invoicePath,
-                'type' => 'invoice',
-            ]);
 
             $machinery->update([
                 'contract_status' => 3,
@@ -853,16 +821,15 @@ class BiddingController extends Controller
                 $order->update([
                     'delivery_status' => 1,
                     'sales_agreement_date' => now(),
-                ]);  // Sales Agreement
+                ]);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Contract signed, PDF and Invoice generated successfully',
+                'message' => 'Contract signed and PDF generated successfully',
                 'data' => [
                     'contract_file_id' => $fileManager->id,
                     'contract_file_path' => asset($pdfPath),
-                    'invoice_url' => asset($invoicePath),
                     'signature_path' => asset($signaturePath),
                     'machinery_id' => $machineryId,
                 ]

@@ -134,6 +134,7 @@ class CheckoutController extends Controller
             $companyAddress = Settings::get('address') ?? '';
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';
+            $bankDetails = Settings::get('bank_details');
 
             $companyLogo = Settings::get('dark_logo');
 
@@ -144,8 +145,8 @@ class CheckoutController extends Controller
             if ($firstImage) {
                 $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
                 if (File::exists(public_path($imagePathRel))) {
-                    $machineryImage = $this->imageToBase64(public_path($imagePathRel));  // For PDF generation
-                    $machineryImageUrl = asset($imagePathRel);  // For Frontend display
+                    $machineryImage = $this->imageToBase64(public_path($imagePathRel));
+                    $machineryImageUrl = asset($imagePathRel);
                 }
             }
 
@@ -158,6 +159,7 @@ class CheckoutController extends Controller
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
+                    'bankDetails' => $bankDetails,
                     'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,  // For PDF
                     'logoUrl' => $companyLogo ? asset($companyLogo) : null,  // For Frontend
                 ]
