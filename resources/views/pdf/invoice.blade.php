@@ -26,18 +26,25 @@
         }
 
         .logo {
-            max-width: 130px;
-            max-height: 55px;
+            max-width: 120px;
+            max-height: 50px;
+        }
+
+        .company-info {
+            font-size: 12px;
+            line-height: 1.4;
+            margin-top: 5px;
         }
 
         .invoice-title {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: bold;
             text-transform: uppercase;
         }
 
         .invoice-meta {
             font-size: 12px;
+            margin-top: 5px;
         }
 
         /* BILL & SHIP */
@@ -122,7 +129,6 @@
             border-top: 1px solid #eee;
             padding-top: 10px;
         }
-
     </style>
 </head>
 <body>
@@ -132,17 +138,24 @@
     <!-- HEADER -->
     <table class="header-table">
         <tr>
-            <td width="50%">
+            <td width="50%" valign="top">
+                
                 @if(isset($companyInfo['logo']) && $companyInfo['logo'])
-                    <img src="{{ $companyInfo['logo'] }}" class="logo">
+                    <img src="{{ $companyInfo['logo'] }}" class="logo"><br>
                 @elseif(isset($companyInfo['logoUrl']) && $companyInfo['logoUrl'])
-                    <img src="{{ $companyInfo['logoUrl'] }}" class="logo">
-                @else
-                    <h3 style="margin:0;">{{ $companyInfo['name'] }}</h3>
+                    <img src="{{ $companyInfo['logoUrl'] }}" class="logo"><br>
                 @endif
+
+                <!-- COMPANY INFO (FROM) -->
+                <div class="company-info">
+                    <strong>{{ $companyInfo['name'] }}</strong><br>
+                    {{ $companyInfo['address'] }}<br>
+                    {{ $companyInfo['email'] ?? '' }}
+                </div>
+
             </td>
 
-            <td width="50%" align="right">
+            <td width="50%" align="right" valign="top">
                 <div class="invoice-title">INVOICE</div>
                 <div class="invoice-meta">
                     <strong>#{{ $order->order_id }}</strong><br>
@@ -151,7 +164,6 @@
             </td>
         </tr>
     </table>
-
 
     <!-- BILL & SHIP -->
     <table class="info-table">
@@ -185,7 +197,6 @@
             </td>
         </tr>
     </table>
-
 
     <!-- ITEMS TABLE -->
     <table class="items">
@@ -221,15 +232,10 @@
         </tbody>
     </table>
 
-
     <!-- BANK + TOTAL -->
     <table class="summary-table">
         <tr>
             <td class="bank-box" width="60%">
-                <strong>FROM:</strong><br>
-                <strong>{{ $companyInfo['name'] }}</strong><br>
-                {{ $companyInfo['address'] }}<br><br>
-
                 @if(isset($companyInfo['bankDetails']) && $companyInfo['bankDetails'])
                     <strong>Bank Details:</strong><br>
                     {!! $companyInfo['bankDetails'] !!}
@@ -260,7 +266,6 @@
             </td>
         </tr>
     </table>
-
 
     <!-- FOOTER -->
     <div class="footer">
