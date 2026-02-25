@@ -162,10 +162,15 @@
         </table>
         
         <div style="margin-bottom: 40px; text-align:right;">
-             <strong>{{ $companyInfo['name'] }}</strong><br>
-             {{ $companyInfo['address'] }}<br>
-             {{ $companyInfo['phone'] }}<br>
-             {{ $companyInfo['email'] }}
+             <div style="margin-bottom: 10px;">
+                    <strong style="font-size: 13px; color: #2c3e50;">FROM:</strong><br>
+                <strong>{{ $companyInfo['name'] }}</strong><br>
+                {{ $companyInfo['address'] }}
+            </div>
+            @if(isset($companyInfo['bankDetails']) && !empty($companyInfo['bankDetails']))
+            <strong style="font-size: 13px; color: #2c3e50;">Bank Details:</strong><br>
+            {!! $companyInfo['bankDetails'] !!}
+            @endif
         </div>
 
         <table class="info-table">
@@ -229,13 +234,6 @@
         </table>
 
         <div class="total-section">
-            @if(isset($companyInfo['bankDetails']) && !empty($companyInfo['bankDetails']))
-            <div class="bank-box">
-                <strong>Bank Details:</strong><br>
-                {!! $companyInfo['bankDetails'] !!}
-            </div>
-            @endif
-
             <table class="total-table">
                 <tr>
                     <td>Subtotal:</td>
