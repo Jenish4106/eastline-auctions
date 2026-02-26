@@ -208,20 +208,33 @@ class SumsubController extends Controller
             $backFile->move($destinationPath, $backName);
             $backPath = 'licenses/' . $backName;
 
-            $applicantId = $this->getApplicant($externalUserId);
+            $applicantId = null;
+            $frontRes = null;
+            $backRes = null;
+            $verify = null;
+            $sumsub_error = null;
 
-            $frontRes = $this->uploadSide($applicantId, new \Illuminate\Http\File($destinationPath . '/' . $frontName), 'front', $docType, $country);
-            $backRes = $this->uploadSide($applicantId, new \Illuminate\Http\File($destinationPath . '/' . $backName), 'back', $docType, $country);
+            try {
+                $applicantId = $this->getApplicant($externalUserId);
 
-            $verify = $this->startVerify($applicantId);
+                $frontRes = $this->uploadSide($applicantId, new \Illuminate\Http\File($destinationPath . '/' . $frontName), 'front', $docType, $country);
+                $backRes = $this->uploadSide($applicantId, new \Illuminate\Http\File($destinationPath . '/' . $backName), 'back', $docType, $country);
+
+                $verify = $this->startVerify($applicantId);
+            } catch (\Exception $e) {
+                $sumsub_error = $e->getMessage();
+            }
 
             $licenseData = [
                 'user_id' => $user->id,
-                'applicant_id' => $applicantId,
                 'front_side' => $frontPath,
                 'back_side' => $backPath,
                 'status' => 0,
             ];
+
+            if ($applicantId) {
+                $licenseData['applicant_id'] = $applicantId;
+            }
 
             if ($existingLicense) {
                 $existingLicense->update($licenseData);
@@ -232,19 +245,30 @@ class SumsubController extends Controller
 
             $user->update(['is_license' => 0]);
 
-            $this->syncStatus($applicantId);
+            if ($applicantId) {
+                try {
+                    $this->syncStatus($applicantId);
+                } catch (\Exception $e) {
+                    Log::error('Failed to sync status for applicant ' . $applicantId . ': ' . $e->getMessage());
+                }
+            }
 
-            return response()->json([
+            $response = [
                 'status' => true,
-                'message' => 'License uploaded and verification started',
-                'applicantId' => $applicantId,
+                'message' => $sumsub_error ? 'License uploaded. Verification pending.' : 'License uploaded and verification started',
                 'license' => $license,
-                'sumsub' => [
+            ];
+
+            if (!$sumsub_error) {
+                $response['applicantId'] = $applicantId;
+                $response['sumsub'] = [
                     'front' => $frontRes,
                     'back' => $backRes,
                     'verify' => $verify
-                ]
-            ]);
+                ];
+            }
+
+            return response()->json($response);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
