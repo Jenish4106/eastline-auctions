@@ -819,8 +819,8 @@ class BiddingController extends Controller
 
             if ($order) {
                 $order->update([
-                    'delivery_status' => 1,
-                    'sales_agreement_date' => now(),
+                    'delivery_status' => 2,
+                    'awaiting_invoice_date' => now(),
                 ]);
             }
 
