@@ -93,13 +93,13 @@
 
         .summary-table {
             width: 100%;
-            margin-top: 25px;
+            margin-top: 15px;
         }
 
         .bank-box {
             width: 50%;
             border: 1px solid #ccc;
-            padding: 14px;
+            padding: 18px 20px;
             font-size: 12px;
             vertical-align: top;
         }
@@ -150,14 +150,15 @@
             </td>
 
             <td width="50%" align="right" valign="top">
-                <div class="invoice-title">INVOICE</div>
+                <div class="company-info" style="text-align: right;">
+                    <strong>{{ $companyInfo['beneficiary_name'] ?? $companyInfo['name'] }}</strong><br>
+                    {{ $companyInfo['beneficiary_address'] ?? $companyInfo['address'] ?? '' }}<br>
+                    @if(!empty($companyInfo['phone'])){{ $companyInfo['phone'] }}<br>@endif
+                    {{ $companyInfo['email'] ?? '' }}
+                </div>
                 <div class="invoice-meta">
                     <strong>#{{ $order->order_id }}</strong><br>
                     Date: {{ $order->purchase_date->format('F d, Y') }}
-                </div>
-                <div class="company-info" style="text-align: right;">
-                    <strong>{{ $companyInfo['beneficiary_name'] }}</strong><br>
-                    {{ $companyInfo['beneficiary_address'] }}
                 </div>
             </td>
         </tr>
@@ -230,40 +231,8 @@
 
     <table class="summary-table">
         <tr>
-            <td width="25%"></td>
-
-            <td class="bank-box" width="40%">
-                @if(
-                    (!empty($companyInfo['bank_name'])) ||
-                    (!empty($companyInfo['beneficiary_name'])) ||
-                    (!empty($companyInfo['beneficiary_address'])) ||
-                    (!empty($companyInfo['account_number'])) ||
-                    (!empty($companyInfo['routing_number'])) ||
-                    (!empty($companyInfo['branch_address']))
-                )
-                    <strong>Bank Details:</strong><br>
-                    @if(!empty($companyInfo['bank_name']))
-                        Bank: {{ $companyInfo['bank_name'] }}<br>
-                    @endif
-                    @if(!empty($companyInfo['beneficiary_name']))
-                        Beneficiary: {{ $companyInfo['beneficiary_name'] }}<br>
-                    @endif
-                    @if(!empty($companyInfo['beneficiary_address']))
-                        Address: {!! nl2br(e($companyInfo['beneficiary_address'])) !!}<br>
-                    @endif
-                    @if(!empty($companyInfo['account_number']))
-                        Account #: {{ $companyInfo['account_number'] }}<br>
-                    @endif
-                    @if(!empty($companyInfo['routing_number']))
-                        Routing #: {{ $companyInfo['routing_number'] }}<br>
-                    @endif
-                    @if(!empty($companyInfo['branch_address']))
-                        Branch Address: {!! nl2br(e($companyInfo['branch_address'])) !!}<br>
-                    @endif
-                @endif
-            </td>
-
-            <td width="35%" valign="top">
+            <td width="55%"></td>
+            <td width="45%" valign="top">
                 <table class="total-table">
                     <tr>
                         <td>Subtotal:</td>
@@ -285,6 +254,39 @@
                     </tr>
                 </table>
             </td>
+        </tr>
+        <tr>
+            <td class="bank-box" width="45%" valign="top" style="padding-top: 25px;">
+                @if(
+                    (!empty($companyInfo['bank_name'])) ||
+                    (!empty($companyInfo['beneficiary_name'])) ||
+                    (!empty($companyInfo['beneficiary_address'])) ||
+                    (!empty($companyInfo['account_number'])) ||
+                    (!empty($companyInfo['routing_number'])) ||
+                    (!empty($companyInfo['branch_address']))
+                )
+                    <strong>Bank Details:</strong><br>
+                    @if(!empty($companyInfo['bank_name']))
+                        <strong>Bank:</strong> {{ $companyInfo['bank_name'] }}<br>
+                    @endif
+                    @if(!empty($companyInfo['beneficiary_name']))
+                        <strong>Beneficiary:</strong> {{ $companyInfo['beneficiary_name'] }}<br>
+                    @endif
+                    @if(!empty($companyInfo['beneficiary_address']))
+                        <strong>Address:</strong> {!! nl2br(e($companyInfo['beneficiary_address'])) !!}<br>
+                    @endif
+                    @if(!empty($companyInfo['account_number']))
+                        <strong>Account #:</strong> {{ $companyInfo['account_number'] }}<br>
+                    @endif
+                    @if(!empty($companyInfo['routing_number']))
+                        <strong>Routing #:</strong> {{ $companyInfo['routing_number'] }}<br>
+                    @endif
+                    @if(!empty($companyInfo['branch_address']))
+                        <strong>Branch Address:</strong> {!! nl2br(e($companyInfo['branch_address'])) !!}<br>
+                    @endif
+                @endif
+            </td>
+            <td width="55%"></td>
         </tr>
     </table>
 
