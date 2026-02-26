@@ -16,6 +16,7 @@
         .container {
             width: 100%;
             padding: 15px;
+            padding-bottom: 60px;
             min-height: 100vh;
             position: relative;
         }
@@ -122,13 +123,13 @@
 
         .footer {
             position: absolute;
-            bottom: 10px;
+            bottom: 0;
             left: 0;
             right: 0;
             font-size: 11px;
             text-align: center;
             border-top: 1px solid #eee;
-            padding-top: 8px;
+            padding: 12px 15px;
         }
     </style>
 </head>
@@ -146,12 +147,6 @@
                     <img src="{{ $companyInfo['logoUrl'] }}" class="logo"><br>
                 @endif
 
-                <div class="company-info">
-                    <strong>{{ $companyInfo['name'] }}</strong><br>
-                    {{ $companyInfo['address'] }}<br>
-                    {{ $companyInfo['email'] ?? '' }}
-                </div>
-
             </td>
 
             <td width="50%" align="right" valign="top">
@@ -159,6 +154,10 @@
                 <div class="invoice-meta">
                     <strong>#{{ $order->order_id }}</strong><br>
                     Date: {{ $order->purchase_date->format('F d, Y') }}
+                </div>
+                <div class="company-info" style="text-align: right;">
+                    <strong>{{ $companyInfo['beneficiary_name'] }}</strong><br>
+                    {{ $companyInfo['beneficiary_address'] }}
                 </div>
             </td>
         </tr>
@@ -231,9 +230,9 @@
 
     <table class="summary-table">
         <tr>
-            <td width="10%"></td>
+            <td width="25%"></td>
 
-            <td class="bank-box" width="45%">
+            <td class="bank-box" width="40%">
                 @if(
                     (!empty($companyInfo['bank_name'])) ||
                     (!empty($companyInfo['beneficiary_name'])) ||
@@ -264,7 +263,7 @@
                 @endif
             </td>
 
-            <td width="45%" valign="top">
+            <td width="35%" valign="top">
                 <table class="total-table">
                     <tr>
                         <td>Subtotal:</td>
