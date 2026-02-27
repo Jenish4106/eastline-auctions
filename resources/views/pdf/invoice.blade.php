@@ -217,13 +217,17 @@
 
             <td>
                 <strong>{{ $order->machinery->make }} {{ $order->machinery->model }}</strong><br>
-                Serial: {{ $order->machinery->serial_number ?? 'N/A' }}
+                Make: {{ $order->machinery->make }}<br>
+                Model: {{ $order->machinery->model }}<br>
+                Working Hours: {{ $order->machinery->working_hours }}<br>
+                Serial: {{ $order->machinery->serial_number }}<br>
+                30 Days Return Policy & 6 Months of Warranty
             </td>
 
             <td>{{ $order->machinery->year }}</td>
 
             <td align="right">
-                {{ number_format($order->price, 2) }}
+                $ {{ number_format($order->price, 2) }}
             </td>
         </tr>
         </tbody>
@@ -236,20 +240,20 @@
                 <table class="total-table">
                     <tr>
                         <td>Subtotal:</td>
-                        <td align="right">{{ number_format($order->price, 2) }}</td>
+                        <td align="right">$ {{ number_format($order->price, 2) }}</td>
                     </tr>
                     <tr>
                         <td>Shipping:</td>
-                        <td align="right">{{ number_format($order->shipping_cost, 2) }}</td>
+                        <td align="right">$ {{ number_format($order->shipping_cost, 2) }}</td>
                     </tr>
                     <tr>
                         <td>Tax (0%):</td>
-                        <td align="right">0.00</td>
+                        <td align="right">$ 0.00</td>
                     </tr>
                     <tr class="total-row">
                         <td>Total:</td>
                         <td align="right">
-                            {{ number_format($order->price + $order->shipping_cost, 2) }}
+                            $ {{ number_format($order->price + $order->shipping_cost, 2) }}
                         </td>
                     </tr>
                 </table>
