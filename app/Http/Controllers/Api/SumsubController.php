@@ -230,6 +230,7 @@ class SumsubController extends Controller
                 'front_side' => $frontPath,
                 'back_side' => $backPath,
                 'status' => 0,
+                'is_sumsub' => 0,
             ];
 
             if ($applicantId) {
@@ -364,16 +365,26 @@ class SumsubController extends Controller
 
             if ($license) {
                 $newStatus = null;
+                $setIsSumsub = ($answer === 'GREEN' || $answer === 'RED') ? 1 : 0;
+
                 if ($answer === 'GREEN') {
                     $newStatus = License::STATUS_APPROVED;
                 } elseif ($answer === 'RED') {
                     $newStatus = License::STATUS_DECLINED;
                 }
 
+                $updates = [];
                 if ($newStatus !== null && $license->status != $newStatus) {
-                    $license->update(['status' => $newStatus]);
-                    if ($license->user) {
-                        $license->user->update(['is_license' => $newStatus]);
+                    $updates['status'] = $newStatus;
+                }
+                if ($setIsSumsub && !$license->is_sumsub) {
+                    $updates['is_sumsub'] = 1;
+                }
+
+                if (!empty($updates)) {
+                    $license->update($updates);
+                    if (isset($updates['status']) && $license->user) {
+                        $license->user->update(['is_license' => $updates['status']]);
                     }
                 }
             }

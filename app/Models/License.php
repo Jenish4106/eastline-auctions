@@ -15,6 +15,7 @@ class License extends Model
         'front_side',
         'back_side',
         'status',
+        'is_sumsub',
     ];
 
     protected $appends = ['front_side_url', 'back_side_url'];
@@ -26,6 +27,7 @@ class License extends Model
         'front_side',
         'back_side',
         'status',
+        'is_sumsub',
         'front_side_url',
         'back_side_url'
     ];
@@ -35,6 +37,7 @@ class License extends Model
         return [
             'user_id' => 'integer',
             'status'  => 'integer',
+            'is_sumsub' => 'integer',
         ];
     }
 

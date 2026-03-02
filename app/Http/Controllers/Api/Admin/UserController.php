@@ -429,6 +429,7 @@ class UserController extends Controller
 
             if ($action === 'approve') {
                 $latestLicense->status = 1;
+                $latestLicense->is_sumsub = 0;
                 $user->is_license = 1;
                 $message = 'License approved successfully';
                 
@@ -445,6 +446,7 @@ class UserController extends Controller
                 }
             } else {
                 $latestLicense->status = 2;
+                $latestLicense->is_sumsub = 0;
                 $user->is_license = 2;
                 $message = 'License declined successfully';
                 
