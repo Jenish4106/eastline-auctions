@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Machinery;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
@@ -41,7 +41,7 @@ class Order extends Model
         'payment_slip_path',
         'payment_slip_status',
     ];
-    
+
     protected $appends = [
         'invoice_url',
         'contract_url',
@@ -62,12 +62,12 @@ class Order extends Model
         'delivery_status' => 'integer',
         'payment_slip_status' => 'integer',
     ];
-    
+
     public function machinery()
     {
         return $this->belongsTo(Machinery::class);
     }
-    
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -99,7 +99,7 @@ class Order extends Model
     {
         return $this->payment_slip_path ? asset($this->payment_slip_path) : null;
     }
-    
+
     public function getPaymentSlipStatusTextAttribute()
     {
         $statusMap = [
@@ -107,7 +107,7 @@ class Order extends Model
             1 => 'Approve',
             2 => 'Decline',
         ];
-        
+
         return $statusMap[$this->payment_slip_status] ?? 'Unknown';
     }
 
@@ -118,14 +118,14 @@ class Order extends Model
             1 => 'Sales Agreement',
             2 => 'Awaiting Invoice',
             3 => 'Settle Payment',
-            4 => 'Confirmation',
+            4 => 'Payment Confirmed',
             5 => 'Processing',
-            6 => 'Shipping',
+            6 => 'Shipping Started',
             7 => 'In Transit',
             8 => 'Delivered',
             9 => 'Cancelled',
         ];
-        
+
         return $statusMap[$this->delivery_status] ?? 'Unknown';
     }
 }
