@@ -861,9 +861,9 @@ class BiddingController extends Controller
                     1 => 'Sales Agreement',
                     2 => 'Awaiting Invoice',
                     3 => 'Settle Payment',
-                    4 => 'Confirmation',
+                    4 => 'Payment Confirmed',
                     5 => 'Processing',
-                    6 => 'Shipping',
+                    6 => 'Shipping Started',
                     7 => 'In Transit',
                     8 => 'Delivered',
                     9 => 'Cancelled',
@@ -883,13 +883,13 @@ class BiddingController extends Controller
                     $deliveryTimeline[] = ['status' => 'Settle Payment', 'date' => $order->settle_payment_date, 'status_code' => 3];
                 }
                 if ($order->confirmation_date) {
-                    $deliveryTimeline[] = ['status' => 'Confirmation', 'date' => $order->confirmation_date, 'status_code' => 4];
+                    $deliveryTimeline[] = ['status' => 'Payment Confirmed', 'date' => $order->confirmation_date, 'status_code' => 4];
                 }
                 if ($order->process_date) {
                     $deliveryTimeline[] = ['status' => 'Processing', 'date' => $order->process_date, 'status_code' => 5];
                 }
                 if ($order->shipped_date) {
-                    $deliveryTimeline[] = ['status' => 'Shipping', 'date' => $order->shipped_date, 'status_code' => 6];
+                    $deliveryTimeline[] = ['status' => 'Shipping Started', 'date' => $order->shipped_date, 'status_code' => 6];
                 }
                 if ($order->in_transit_date) {
                     $deliveryTimeline[] = ['status' => 'In Transit', 'date' => $order->in_transit_date, 'status_code' => 7];

@@ -296,7 +296,17 @@ class CheckoutController extends Controller
                 $mail = new BuyNowOrderMail($winningUser, $order, $machinery);
                 $smtp2goService = new SMTP2GOService();
                 $htmlContent = $mail->renderHtmlContent();
-                $smtp2goService->sendEmail($winningUser->email, $mail->getSubject(), $htmlContent);
+
+                $attachments = [];
+                if (file_exists(public_path($finalContractPath))) {
+                    $attachments[] = [
+                        'path' => public_path($finalContractPath),
+                        'name' => 'Sales-Agreement-' . $order->order_id . '.pdf',
+                        'type' => 'application/pdf',
+                    ];
+                }
+
+                $smtp2goService->sendEmail($winningUser->email, $mail->getSubject(), $htmlContent, $attachments);
             } catch (\Exception $e) {
                 return response()->json([
                     'success' => false,
