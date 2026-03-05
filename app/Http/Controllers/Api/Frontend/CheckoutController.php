@@ -301,7 +301,7 @@ class CheckoutController extends Controller
                 if (file_exists(public_path($finalContractPath))) {
                     $attachments[] = [
                         'path' => public_path($finalContractPath),
-                        'name' => 'Sales-Agreement-' . $order->order_id . '.pdf',
+                        'name' => 'Contract-' . $order->order_id . '.pdf',
                         'type' => 'application/pdf',
                     ];
                 }
