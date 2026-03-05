@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FeedController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,3 +17,5 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return response()->json(['message' => 'Welcome to the API']);
 });
+
+Route::get('/meta-catalog-feed.csv', [FeedController::class, 'metaCatalogFeed']);
