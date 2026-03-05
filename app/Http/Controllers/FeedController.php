@@ -91,7 +91,7 @@ class FeedController extends Controller
                     $categorySlug,
                     $makeSlug,
                     $modelSlug,
-                    $machinery->id
+                    $machinery->auction_id
                 ]);
                 $link = $frontendUrl . '/' . implode('/', $pathSegments);
 
