@@ -12,6 +12,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use App\Services\SMTP2GOService;
+use Illuminate\Support\Facades\View;
+use App\Models\User;
 
 class BiddingController extends Controller
 {
@@ -556,6 +559,47 @@ class BiddingController extends Controller
                         'image_path' => $invoicePath,
                         'type' => 'invoice',
                     ]);
+
+                    $user = User::find($machinery->won_user);
+                    if ($user) {
+                        $machineryName = trim($machinery->year . ' ' . $machinery->make . ' ' . $machinery->model);
+                        $htmlContent = View::make('emails.contract-approved', [
+                            'user' => $user,
+                            'machineryName' => $machineryName
+                        ])->render();
+                        
+                        $attachments = [];
+                        
+                        if (File::exists(public_path($invoicePath))) {
+                            $attachments[] = [
+                                'path' => public_path($invoicePath),
+                                'name' => $invoiceFileName,
+                                'type' => 'application/pdf',
+                            ];
+                        }
+                        
+                        $contractFile = MachineryFileManager::where('machinery_id', $machinery->id)
+                            ->where('type', 'contract_pdf')
+                            ->latest()
+                            ->first();
+                            
+                        if ($contractFile && File::exists(public_path($contractFile->image_path))) {
+                            $contractFilePath = public_path($contractFile->image_path);
+                            $attachments[] = [
+                                'path' => $contractFilePath,
+                                'name' => 'contract_' . basename($contractFilePath),
+                                'type' => 'application/pdf',
+                            ];
+                        }
+                        
+                        $smtp2goService = new SMTP2GOService();
+                        $smtp2goService->sendEmail(
+                            $user->email, 
+                            'Contract Approved - ' . $machineryName, 
+                            $htmlContent, 
+                            $attachments
+                        );
+                    }
                 }
             } elseif ($action === 'reject') {
                 $machinery->contract_status = 4;
@@ -569,6 +613,23 @@ class BiddingController extends Controller
                             'delivery_status' => 9,
                             'cancelled_date' => now()
                         ]);
+                    }
+
+                    $user = User::find($machinery->won_user);
+                    if ($user) {
+                        $machineryName = trim($machinery->year . ' ' . $machinery->make . ' ' . $machinery->model);
+                        $htmlContent = View::make('emails.contract-rejected', [
+                            'user' => $user,
+                            'machineryName' => $machineryName
+                        ])->render();
+                        
+                        $smtp2goService = new SMTP2GOService();
+                        $smtp2goService->sendEmail(
+                            $user->email, 
+                            'Contract Rejected - ' . $machineryName, 
+                            $htmlContent,
+                            []
+                        );
                     }
                 }
             }
