@@ -72,7 +72,6 @@ class UserDashboardController extends Controller
                 continue;
             }
 
-            // Check if bid is for the current auction
             if ($bid->auction_id !== $bid->machinery->auction_id) {
                 continue;
             }

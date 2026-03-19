@@ -25,18 +25,21 @@ class DashboardController extends Controller
             ->limit(5)
             ->get()
             ->map(function ($bid) {
-                $year = $bid->machinery->year ?? '';
-                $make = $bid->machinery->make ?? '';
-                $model = $bid->machinery->model ?? '';
+                $machinery = $bid->machinery;
+                $year = $machinery->year ?? '';
+                $make = $machinery->make ?? '';
+                $model = $machinery->model ?? '';
                 $machineryName = trim("$year $make $model");
 
                 $totalBids = Bid::where('machinery_id', $bid->machinery_id)->count();
 
                 return [
-                    'auction_id' => $bid->machinery->auction_id,
+                    'auction_id' => $machinery->auction_id ?? null,
                     'machinery_name' => $machineryName,
                     'total_bids' => $totalBids,
-                    'bid_end_time' => $bid->machinery->bid_end_time->format('Y-m-d H:i:s') ?? null
+                    'bid_end_time' => $machinery && $machinery->bid_end_time
+                        ? $machinery->bid_end_time->format('Y-m-d H:i:s')
+                        : null,
                 ];
             });
 
@@ -51,11 +54,12 @@ class DashboardController extends Controller
                 $make = $machinery->make ?? '';
                 $model = $machinery->model ?? '';
                 $machineryName = trim("$year $make $model");
+                $wonUserName = trim(($machinery->wonUser->first_name ?? '') . ' ' . ($machinery->wonUser->last_name ?? ''));
 
                 return [
                     'machinery_name' => $machineryName,
-                    'won_user_name' => $machinery->wonUser->first_name . ' ' . $machinery->wonUser->last_name ?? 'N/A',
-                    'won_bid_price' => $machinery->buy_now_price ?? 0
+                    'won_user_name' => $wonUserName !== '' ? $wonUserName : 'N/A',
+                    'won_bid_price' => $machinery->buy_now_price ?? 0,
                 ];
             });
 
@@ -102,11 +106,15 @@ class DashboardController extends Controller
             ->limit(5)
             ->get()
             ->map(function ($order) {
+                $userName = trim(($order->user->first_name ?? '') . ' ' . ($order->user->last_name ?? ''));
+
                 return [
                     'order_id' => $order->order_id,
-                    'user_name' => ($order->user->first_name ?? '') . ' ' . ($order->user->last_name ?? ''),
+                    'user_name' => $userName !== '' ? $userName : 'N/A',
                     'phone_no' => $order->user->phone_no ?? 'N/A',
-                    'order_date' => $order->purchase_date->format('Y-m-d H:i:s') ?? null,
+                    'order_date' => $order->purchase_date
+                        ? $order->purchase_date->format('Y-m-d H:i:s')
+                        : null,
                     'type' => $order->type,
                     'type_text' => $order->type == 1 ? 'Checkout' : 'Bidding',
                     'amount' => $order->price,
