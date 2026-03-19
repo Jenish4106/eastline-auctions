@@ -93,26 +93,6 @@ class MachineryController extends Controller
             $machinery = $query->orderBy($sortBy, $sortOrder)->paginate($perPage, ['*'], 'page', $page);
 
             $machineryWithUrls = $machinery->getCollection()->map(function ($item) {
-                $isSign = null;
-
-                if ($item->bid_won_date) {
-                    $bidWonDate = $item->bid_won_date instanceof \Carbon\Carbon ? $item->bid_won_date : \Carbon\Carbon::parse($item->bid_won_date);
-                    $limitDate  = $bidWonDate->copy()->addDays(7);
-
-                    $contract = $item->images->first(function ($file) {
-                        return $file->type === 'contract_pdf';
-                    });
-
-                    if ($contract) {
-                        $isSign = true;
-                    } else {
-                        if (\Carbon\Carbon::now()->gt($limitDate)) {
-                            $isSign = false;
-                        }
-                    }
-                }
-                $item->is_sign = $isSign;
-
                 $images = $item->images->filter(function ($file) {
                     return $file->type === 'image';
                 });
