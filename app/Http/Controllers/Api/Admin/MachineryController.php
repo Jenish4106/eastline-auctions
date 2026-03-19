@@ -98,7 +98,6 @@ class MachineryController extends Controller
                 });
 
                 $item->image_urls = $images->map(function ($image) {
-
                     $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
                     if (file_exists($machineryImagePath)) {
                         return asset('uploads/machinery/images/' . ltrim($image->image_path, '/'));

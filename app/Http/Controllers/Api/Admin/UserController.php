@@ -70,7 +70,6 @@ class UserController extends Controller
                       ->orWhere('state', 'LIKE', "%{$search}%")
                       ->orWhere('zip_code', 'LIKE', "%{$search}%");
 
-                    // Status search
                     $statusMap = ['inactive' => 0, 'active' => 1, 'blocked' => 2];
                     foreach ($statusMap as $label => $value) {
                         if (stripos($label, $search) !== false) {
@@ -78,7 +77,6 @@ class UserController extends Controller
                         }
                     }
 
-                    // License Status search
                     $licenseStatusMap = ['pending' => 0, 'approved' => 1, 'rejected' => 2];
                     foreach ($licenseStatusMap as $label => $value) {
                         if (stripos($label, $search) !== false) {
@@ -318,6 +316,54 @@ class UserController extends Controller
                     'status'  => false,
                     'message' => 'User not found',
                 ], 404);
+            }
+
+            $wonMachines = \App\Models\Machinery::where('won_user', $user->id)->get();
+            foreach ($wonMachines as $machine) {
+                $orderCreated = \App\Models\Order::where('machinery_id', $machine->id)->exists();
+                
+                if ($machine->contract_status != 3 && !$orderCreated) {
+                    $topBid = \App\Models\Bid::where('machinery_id', $machine->id)
+                                             ->orderBy('amount', 'desc')
+                                             ->first();
+                                             
+                    if ($topBid && $topBid->user_id == $user->id) {
+                        \App\Models\Bid::where('machinery_id', $machine->id)
+                                       ->where('user_id', $user->id)
+                                       ->delete();
+                        
+                        $nextTopBid = \App\Models\Bid::where('machinery_id', $machine->id)
+                                                     ->orderBy('amount', 'desc')
+                                                     ->first();
+                        
+                        $files = \App\Models\MachineryFileManager::where('machinery_id', $machine->id)
+                            ->whereIn('type', ['contract_pdf', 'invoice'])
+                            ->get();
+                        foreach ($files as $file) {
+                            $filePath = public_path($file->image_path);
+                            if (file_exists($filePath)) {
+                                @unlink($filePath);
+                            }
+                            $file->delete();
+                        }
+                                                     
+                        if ($nextTopBid) {
+                            $machine->won_user = $nextTopBid->user_id;
+                            $machine->bid_won_date = \Carbon\Carbon::now();
+                            $machine->contract_status = 0;
+                            $machine->bid_status = '2';
+                            $machine->status = 2;
+                        } else {
+                            $machine->won_user = null;
+                            $machine->bid_won_date = null;
+                            $machine->contract_status = 0;
+                            $machine->bid_status = '0';
+                            $machine->status = 1;
+                            $machine->is_purchase = 0;
+                        }
+                        $machine->save();
+                    }
+                }
             }
 
             if ($user->license) {
