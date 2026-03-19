@@ -104,12 +104,7 @@ class MachineryController extends Controller
                     });
 
                     if ($contract) {
-                        $signedDate = $contract->created_at instanceof \Carbon\Carbon ? $contract->created_at : \Carbon\Carbon::parse($contract->created_at);
-                        if ($signedDate->lte($limitDate)) {
-                            $isSign = true;
-                        } else {
-                            $isSign = false;
-                        }
+                        $isSign = true;
                     } else {
                         if (\Carbon\Carbon::now()->gt($limitDate)) {
                             $isSign = false;
