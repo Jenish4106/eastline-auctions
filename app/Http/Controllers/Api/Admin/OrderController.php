@@ -33,7 +33,9 @@ class OrderController extends Controller
                 $sortOrder = 'desc';
             }
 
-            $query = Order::with(['user:id,first_name,last_name,phone_no', 'machinery:id,make,model,year'])->select([
+            $query = Order::with(['user:id,first_name,last_name,phone_no', 'machinery:id,make,model,year'])
+                ->whereHas('user')
+                ->select([
                 'id',
                 'order_id',
                 'machinery_id',
@@ -114,7 +116,7 @@ class OrderController extends Controller
                 $order->user_full_name = $order->user ? $order->user->first_name . ' ' . $order->user->last_name : 'N/A';
                 $order->phone_no = $order->user ? $order->user->phone_no : 'N/A';
                 $order->machinery_name = $order->machinery ? $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model : 'N/A';
-                $order->order_date = $order->purchase_date->format('M d, Y h:i A');
+                $order->order_date = $order->purchase_date ? $order->purchase_date->format('M d, Y h:i A') : null;
                 $order->order_amount = $order->price;
                 $order->type = $order->type;
                 $order->type_text = $order->type == 1 ? 'Checkout' : 'Bidding';
@@ -180,12 +182,14 @@ class OrderController extends Controller
         }
 
         try {
-            $order = Order::with(['user', 'machinery'])->find($request->order_id);
+            $order = Order::with(['user', 'machinery'])
+                ->whereHas('user')
+                ->find($request->order_id);
 
             if (!$order) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Order not found',
+                    'message' => 'Order not found or user does not exist',
                 ], 404);
             }
 
@@ -315,12 +319,14 @@ class OrderController extends Controller
         }
 
         try {
-            $order = Order::with(['user', 'machinery', 'invoice', 'contract'])->find($request->order_id);
+            $order = Order::with(['user', 'machinery', 'invoice', 'contract'])
+                ->whereHas('user')
+                ->find($request->order_id);
 
             if (!$order) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Order not found',
+                    'message' => 'Order not found or user does not exist',
                 ], 404);
             }
 

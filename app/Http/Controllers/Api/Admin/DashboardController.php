@@ -21,6 +21,7 @@ class DashboardController extends Controller
         $pendingLicenseUsers = User::where('is_license', 0)->count();
 
         $recentBids = Bid::with(['machinery:id,auction_id,make,model,year,bid_end_time'])
+            ->whereHas('user')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
@@ -31,7 +32,9 @@ class DashboardController extends Controller
                 $model = $machinery->model ?? '';
                 $machineryName = trim("$year $make $model");
 
-                $totalBids = Bid::where('machinery_id', $bid->machinery_id)->count();
+                $totalBids = Bid::where('machinery_id', $bid->machinery_id)
+                    ->whereHas('user')
+                    ->count();
 
                 return [
                     'auction_id' => $machinery->auction_id ?? null,
@@ -46,6 +49,7 @@ class DashboardController extends Controller
         $recentWonUsers = Machinery::with(['wonUser:id,first_name,last_name', 'category:id,category_name'])
             ->whereNotNull('won_user')
             ->whereNotNull('bid_won_date')
+            ->whereHas('wonUser')
             ->orderBy('bid_won_date', 'desc')
             ->limit(5)
             ->get()
@@ -102,6 +106,7 @@ class DashboardController extends Controller
             });
 
         $recentOrders = Order::with('user:id,first_name,last_name,phone_no')
+            ->whereHas('user')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
