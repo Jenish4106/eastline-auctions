@@ -206,6 +206,7 @@ class BiddingController extends Controller
                 return $bid->auction_id === $machinery->auction_id;
             })->map(function ($bid) use ($highestBid, $machinery) {
                 $bidData = [
+                    'id' => $bid->id,
                     'user_full_name' => trim(($bid->user->first_name ?? '') . ' ' . ($bid->user->last_name ?? '')),
                     'user_email' => $bid->user->email ?? '',
                     'user_phone' => $bid->user->phone_no ?? '',
