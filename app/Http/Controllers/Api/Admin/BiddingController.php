@@ -441,10 +441,8 @@ class BiddingController extends Controller
 
                 if ($nextHighest) {
                     $machinery->won_user = $nextHighest->user_id;
-                    $machinery->won_bid_amount = $nextHighest->amount;
                 } else {
                     $machinery->won_user = null;
-                    $machinery->won_bid_amount = null;
                 }
 
                 $machinery->save();
@@ -459,6 +457,7 @@ class BiddingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong, please try again.',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
