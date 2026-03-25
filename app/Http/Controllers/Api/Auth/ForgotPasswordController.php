@@ -10,7 +10,6 @@ use App\Models\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Services\SMTP2GOService;
 
@@ -38,14 +37,13 @@ class ForgotPasswordController extends Controller
 
             PasswordReset::where('user_id', $user->id)->delete();
 
-            $passwordReset = PasswordReset::create([
+            PasswordReset::create([
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'otp' => $otp,
                 'expire_at' => $expireAt,
             ]);
 
-            // Use SMTP2GO service instead of Laravel Mail facade
             $mail = new SendOtpMail($otp, $request->email);
             $smtp2goService = new SMTP2GOService();
             $htmlContent = $mail->renderHtmlContent();
@@ -62,6 +60,7 @@ class ForgotPasswordController extends Controller
                 'status' => true,
                 'message' => 'OTP sent successfully to your email'
             ], 200);
+
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
@@ -87,6 +86,7 @@ class ForgotPasswordController extends Controller
 
             $passwordReset = PasswordReset::where('email', $request->email)
                 ->where('otp', $request->otp)
+                ->latest()
                 ->first();
 
             if (!$passwordReset) {
@@ -106,12 +106,15 @@ class ForgotPasswordController extends Controller
             }
 
             $passwordReset->verified_at = Carbon::now();
+            $passwordReset->expire_at = Carbon::now()->addMinutes(10);
+
             $passwordReset->save();
 
             return response()->json([
                 'status' => true,
                 'message' => 'OTP verified successfully',
             ], 200);
+
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
@@ -137,6 +140,7 @@ class ForgotPasswordController extends Controller
 
             $passwordReset = PasswordReset::where('email', $request->email)
                 ->whereNotNull('verified_at')
+                ->latest()
                 ->first();
 
             if (!$passwordReset) {
