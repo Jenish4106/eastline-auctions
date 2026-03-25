@@ -199,6 +199,7 @@ class BiddingController extends Controller
                 'highest_bid' => $highestBid,
                 'bid_end_time' => $machinery->bid_end_time,
                 'bid_status' => $bidStatusText,
+                'status' => $machinery->status,
             ];
 
             $biddingDetails = $machinery->bids->filter(function ($bid) use ($machinery) {
