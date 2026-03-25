@@ -64,6 +64,7 @@ Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
         Route::post('/bidding-won-users', [AdminBiddingController::class, 'getBiddingWonUsers']);
         Route::post('/machinery-wise-won-details', [AdminBiddingController::class, 'getMachineryWiseWonDetails']);
         Route::post('/update-contract-status', [AdminBiddingController::class, 'updateContractStatus']);
+        Route::post('/delete-bid', [AdminBiddingController::class, 'deleteBid']);
     });
 
     Route::prefix('orders')->group(function () {

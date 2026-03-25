@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
 use App\Services\SMTP2GOService;
 use Illuminate\Support\Facades\View;
 use App\Models\User;
+use Illuminate\Support\Facades\Validator;
 
 class BiddingController extends Controller
 {
@@ -377,6 +378,81 @@ class BiddingController extends Controller
                     'to' => $wonMachineries->lastItem(),
                 ],
             ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong, please try again.',
+            ], 500);
+        }
+    }
+
+    public function deleteBid(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'bid_id' => 'required|exists:bids,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors(),
+            ], 400);
+        }
+
+        try {
+            $bid = Bid::find($request->bid_id);
+
+            if (!$bid) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bid not found',
+                ], 404);
+            }
+
+            $machinery = Machinery::with(['bids' => function ($q) {
+                $q->whereHas('user');
+            }])->where('id', $bid->machinery_id)->first();
+
+            if (!$machinery) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Machinery not found',
+                ], 404);
+            }
+
+            $bids = $machinery->bids->where('auction_id', $machinery->auction_id);
+
+            $highestBid = $bids->sortByDesc('amount')->first();
+
+            $isHighest = $highestBid && $highestBid->id == $bid->id;
+
+            $bid->delete();
+
+            if ($isHighest) {
+                $remainingBids = Bid::where('machinery_id', $machinery->id)
+                    ->where('auction_id', $machinery->auction_id)
+                    ->whereHas('user')
+                    ->orderByDesc('amount')
+                    ->get();
+
+                $nextHighest = $remainingBids->first();
+
+                if ($nextHighest) {
+                    $machinery->won_user = $nextHighest->user_id;
+                    $machinery->won_bid_amount = $nextHighest->amount;
+                } else {
+                    $machinery->won_user = null;
+                    $machinery->won_bid_amount = null;
+                }
+
+                $machinery->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bid deleted successfully',
+            ], 200);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
