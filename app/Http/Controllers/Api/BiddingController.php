@@ -112,7 +112,13 @@ class BiddingController extends Controller
                     'bid_won_date' => Carbon::now(),
                     'contract_status' => '0',
                 ]);
+            } elseif ((string) $machinery->bid_status === '0') {
+                $machinery->update([
+                    'bid_status' => '1',
+                ]);
+            }
 
+            if ($isWon) {
                 try {
                     $mail = new SendContractMail($user, $machinery, null);
                     $smtp2goService = new SMTP2GOService();
