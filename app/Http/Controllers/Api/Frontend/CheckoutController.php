@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AuctionCancelledMail;
 use App\Mail\BuyNowOrderMail;
+use App\Models\Bid;
 use App\Models\Machinery;
 use App\Models\MachineryFileManager;
 use App\Models\Order;
@@ -14,6 +16,7 @@ use App\Services\SMTP2GOService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
@@ -121,14 +124,24 @@ class CheckoutController extends Controller
                 'shipping_country' => $isShippingDifferent ? ($shipping['shipping_country'] ?? null) : null,
             ]);
 
+            $activeAuctionBids = Bid::where('machinery_id', $machinery->id)
+                ->where('auction_id', $machinery->auction_id)
+                ->get();
+
+            $hasActiveAuctionBids = $activeAuctionBids->isNotEmpty();
+
             $machinery->update([
                 'is_purchase' => true,
-                'bid_status' => '2',
+                'bid_status' => $hasActiveAuctionBids ? '3' : '2',
                 'won_user' => $user->id,
                 'bid_won_date' => now(),
                 'contract_status' => '3',
                 'status' => 2,
             ]);
+
+            if ($hasActiveAuctionBids) {
+                $this->sendAuctionCancelledEmails($machinery, $user, $activeAuctionBids);
+            }
 
             $companyName = Settings::get('company_name', 'Stiopa Equipment');
             $companyAddress = Settings::get('address') ?? '';
@@ -482,5 +495,38 @@ class CheckoutController extends Controller
             return 'data:image/' . $type . ';base64,' . base64_encode($data);
         }
         return null;
+    }
+
+    private function sendAuctionCancelledEmails(Machinery $machinery, User $purchaser, $bids): void
+    {
+        $bidderIds = $bids
+            ->pluck('user_id')
+            ->filter(fn ($userId) => (int) $userId !== (int) $purchaser->id)
+            ->unique()
+            ->values();
+
+        if ($bidderIds->isEmpty()) {
+            return;
+        }
+
+        $bidders = User::whereIn('id', $bidderIds)->get();
+        $smtp2goService = new SMTP2GOService();
+
+        foreach ($bidders as $bidder) {
+            if (empty($bidder->email)) {
+                continue;
+            }
+
+            try {
+                $mail = new AuctionCancelledMail($bidder, $machinery, $purchaser);
+                $smtp2goService->sendEmail(
+                    $bidder->email,
+                    $mail->getSubject(),
+                    $mail->renderHtmlContent()
+                );
+            } catch (\Throwable $e) {
+                Log::error('Failed to send auction cancellation email to ' . $bidder->email . ': ' . $e->getMessage());
+            }
+        }
     }
 }

@@ -68,7 +68,11 @@ class UserDashboardController extends Controller
         $activeBidCount = 0;
 
         foreach ($userBids as $bid) {
-            if (!$bid->machinery || $bid->machinery->bid_end_time < now()) {
+            if (
+                !$bid->machinery ||
+                $bid->machinery->bid_end_time < now() ||
+                (string) $bid->machinery->bid_status === '3'
+            ) {
                 continue;
             }
 
@@ -152,4 +156,3 @@ class UserDashboardController extends Controller
         return $recentBuyOrders;
     }
 }
-

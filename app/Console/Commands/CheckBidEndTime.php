@@ -36,6 +36,8 @@ class CheckBidEndTime extends Command
         $machineries = Machinery::where('bid_end_time', '<', $currentTime)
             ->where('bid_status', '!=', '2')
             ->where('bid_status', '!=', 2)
+            ->where('bid_status', '!=', '3')
+            ->where('bid_status', '!=', 3)
             ->get();
 
         foreach ($machineries as $machinery) {

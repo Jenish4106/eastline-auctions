@@ -60,10 +60,12 @@ class BiddingController extends Controller
 
             $machinery = Machinery::find($request->machinery_id);
 
-            if ($machinery->bid_status == '2') {
+            if ($machinery->bid_status == '2' || $machinery->bid_status == '3') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This machinery has already been sold.',
+                    'message' => $machinery->bid_status == '3'
+                        ? 'This auction has been cancelled because the machinery was purchased.'
+                        : 'This machinery has already been sold.',
                 ], 400);
             }
 
@@ -209,7 +211,9 @@ class BiddingController extends Controller
 
                     // Basic status search
                     if (stripos('sold', $search) !== false) {
-                        $q->orWhere('bid_status', 'sold')->orWhereNotNull('won_user');
+                        $q->orWhere('bid_status', 'sold')
+                            ->orWhere('bid_status', '3')
+                            ->orWhereNotNull('won_user');
                     }
                 });
             }
@@ -226,7 +230,9 @@ class BiddingController extends Controller
 
                 $status = 'Active';
 
-                if ($machinery->bid_status === 'sold' || $machinery->won_user) {
+                if ((string) $machinery->bid_status === '3') {
+                    $status = 'cancelled';
+                } elseif ($machinery->bid_status === 'sold' || $machinery->won_user) {
                     if ($machinery->won_user == $user->id) {
                         $status = 'won';
                     } else {
@@ -326,7 +332,9 @@ class BiddingController extends Controller
 
             $status = 'Active';
 
-            if ($machinery->bid_status === 'sold' || $machinery->won_user) {
+            if ((string) $machinery->bid_status === '3') {
+                $status = 'cancelled';
+            } elseif ($machinery->bid_status === 'sold' || $machinery->won_user) {
                 if ($machinery->won_user == $user->id) {
                     $status = 'won';
                 } else {

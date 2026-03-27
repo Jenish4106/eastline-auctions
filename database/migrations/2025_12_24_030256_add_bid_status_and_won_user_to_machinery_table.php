@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('machinery', function (Blueprint $table) {
-            $table->tinyInteger('bid_status')->default(0)->after('bid_end_time')->comment('0: pending ,1: active ,2: completed');
+            $table->tinyInteger('bid_status')->default(0)->after('bid_end_time')->comment('0: pending, 1: active, 2: completed, 3: cancelled');
             $table->unsignedBigInteger('won_user')->nullable()->after('bid_status')->index();
         });
     }

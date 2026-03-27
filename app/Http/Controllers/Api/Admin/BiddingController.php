@@ -60,7 +60,7 @@ class BiddingController extends Controller
                         ->orWhereRaw("CONCAT_WS(' ', machinery.year, machinery.make, machinery.model) LIKE ?", ["%{$search}%"]);
 
                     // Status search
-                    $statusMap = ['pending' => '0', 'active' => '1', 'sold' => '2'];
+                    $statusMap = ['pending' => '0', 'active' => '1', 'sold' => '2', 'cancelled' => '3'];
                     foreach ($statusMap as $label => $value) {
                         if (stripos($label, $search) !== false) {
                             $q->orWhere('machinery.bid_status', $value);
@@ -94,6 +94,10 @@ class BiddingController extends Controller
                     case '2':
                     case 2:
                         $status = 'sold';
+                        break;
+                    case '3':
+                    case 3:
+                        $status = 'cancelled';
                         break;
                     case '0':
                     case 0:
@@ -187,6 +191,10 @@ class BiddingController extends Controller
                 case '2':
                 case 2:
                     $bidStatusText = 'sold';
+                    break;
+                case '3':
+                case 3:
+                    $bidStatusText = 'cancelled';
                     break;
                 default:
                     $bidStatusText = $machinery->bid_status;

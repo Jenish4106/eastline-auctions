@@ -105,7 +105,7 @@ class InventoryController extends Controller
                       });
                 
                 // Status search
-                $statusMap = ['pending' => '0', 'active' => '1', 'sold' => '2'];
+                $statusMap = ['pending' => '0', 'active' => '1', 'sold' => '2', 'cancelled' => '3'];
                 foreach ($statusMap as $label => $value) {
                     if (stripos($label, $search) !== false) {
                         $query->orWhere('bid_status', $value);
