@@ -104,8 +104,7 @@ class InventoryController extends Controller
                           $q->where('category_name', 'LIKE', "%{$search}%");
                       });
                 
-                // Status search
-                $statusMap = ['pending' => '0', 'active' => '1', 'sold' => '2', 'cancelled' => '3'];
+                $statusMap = ['pending' => '0', 'active' => '1', 'completed' => '2', 'cancelled' => '3'];
                 foreach ($statusMap as $label => $value) {
                     if (stripos($label, $search) !== false) {
                         $query->orWhere('bid_status', $value);

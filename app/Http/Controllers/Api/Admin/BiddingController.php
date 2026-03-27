@@ -59,8 +59,7 @@ class BiddingController extends Controller
                         ->orWhere('machinery.model', 'LIKE', "%{$search}%")
                         ->orWhereRaw("CONCAT_WS(' ', machinery.year, machinery.make, machinery.model) LIKE ?", ["%{$search}%"]);
 
-                    // Status search
-                    $statusMap = ['pending' => '0', 'active' => '1', 'sold' => '2', 'cancelled' => '3'];
+                    $statusMap = ['pending' => '0', 'active' => '1', 'completed' => '2', 'cancelled' => '3'];
                     foreach ($statusMap as $label => $value) {
                         if (stripos($label, $search) !== false) {
                             $q->orWhere('machinery.bid_status', $value);
@@ -93,7 +92,7 @@ class BiddingController extends Controller
                         break;
                     case '2':
                     case 2:
-                        $status = 'sold';
+                        $status = 'completed';
                         break;
                     case '3':
                     case 3:
@@ -190,7 +189,7 @@ class BiddingController extends Controller
                     break;
                 case '2':
                 case 2:
-                    $bidStatusText = 'sold';
+                    $bidStatusText = 'completed';
                     break;
                 case '3':
                 case 3:
@@ -466,6 +465,63 @@ class BiddingController extends Controller
                 'success' => false,
                 'message' => 'Something went wrong, please try again.',
                 'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function updateBidStatus(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'machinery_id' => 'required|exists:machinery,id',
+            'bid_status' => 'required|in:0,1,2,3',
+        ], [
+            'machinery_id.required' => 'The machinery id field is required.',
+            'machinery_id.exists' => 'The selected machinery does not exist.',
+            'bid_status.required' => 'The bid status field is required.',
+            'bid_status.in' => 'The bid status must be 0 (Pending), 1 (Active), 2 (Completed), or 3 (Cancelled).',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors(),
+            ], 400);
+        }
+
+        try {
+            $machinery = Machinery::find($request->machinery_id);
+
+            if (!$machinery) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Machinery not found',
+                ], 404);
+            }
+
+            $machinery->bid_status = (string) $request->bid_status;
+            $machinery->save();
+
+            $statusMap = [
+                '0' => 'pending',
+                '1' => 'active',
+                '2' => 'completed',
+                '3' => 'cancelled',
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bid status updated successfully',
+                'data' => [
+                    'machinery_id' => $machinery->id,
+                    'auction_id' => $machinery->auction_id,
+                    'bid_status' => $machinery->bid_status,
+                    'bid_status_text' => $statusMap[(string) $machinery->bid_status] ?? 'unknown',
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong, please try again.',
             ], 500);
         }
     }

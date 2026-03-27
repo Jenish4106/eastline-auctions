@@ -65,7 +65,7 @@ class BiddingController extends Controller
                     'success' => false,
                     'message' => $machinery->bid_status == '3'
                         ? 'This auction has been cancelled because the machinery was purchased.'
-                        : 'This machinery has already been sold.',
+                        : 'This auction has already been completed.',
                 ], 400);
             }
 
@@ -216,7 +216,7 @@ class BiddingController extends Controller
                         ->orWhere('bid_end_time', 'LIKE', "%{$search}%");
 
                     // Basic status search
-                    if (stripos('sold', $search) !== false) {
+                    if (stripos('completed', $search) !== false || stripos('sold', $search) !== false) {
                         $q->orWhere('bid_status', 'sold')
                             ->orWhere('bid_status', '3')
                             ->orWhereNotNull('won_user');
@@ -242,7 +242,7 @@ class BiddingController extends Controller
                     if ($machinery->won_user == $user->id) {
                         $status = 'won';
                     } else {
-                        $status = 'sold';
+                        $status = 'completed';
                     }
                 } else {
                     if ($currentUserBids->count() > 0) {
@@ -344,7 +344,7 @@ class BiddingController extends Controller
                 if ($machinery->won_user == $user->id) {
                     $status = 'won';
                 } else {
-                    $status = 'sold';
+                    $status = 'completed';
                 }
             } else {
                 if ($currentUserBids->count() > 0) {
