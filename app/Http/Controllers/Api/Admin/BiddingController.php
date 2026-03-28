@@ -16,9 +16,17 @@ use App\Services\SMTP2GOService;
 use Illuminate\Support\Facades\View;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
+use App\Services\AuctionCompletionService;
 
 class BiddingController extends Controller
 {
+    protected $auctionCompletionService;
+
+    public function __construct(AuctionCompletionService $auctionCompletionService)
+    {
+        $this->auctionCompletionService = $auctionCompletionService;
+    }
+
     public function getMachineryBiddingInfo(Request $request)
     {
         try {
@@ -498,8 +506,15 @@ class BiddingController extends Controller
                 ], 404);
             }
 
-            $machinery->bid_status = (string) $request->bid_status;
-            $machinery->save();
+            $bidStatus = (string) $request->bid_status;
+
+            if ($bidStatus === '2') {
+                $result = $this->auctionCompletionService->complete($machinery);
+                $machinery = $result['machinery'];
+            } else {
+                $machinery->bid_status = $bidStatus;
+                $machinery->save();
+            }
 
             $statusMap = [
                 '0' => 'pending',
@@ -516,6 +531,7 @@ class BiddingController extends Controller
                     'auction_id' => $machinery->auction_id,
                     'bid_status' => $machinery->bid_status,
                     'bid_status_text' => $statusMap[(string) $machinery->bid_status] ?? 'unknown',
+                    'won_user' => $machinery->won_user,
                 ],
             ], 200);
         } catch (\Exception $e) {

@@ -1,16 +1,21 @@
 <?php
 namespace App\Console\Commands;
 
-use App\Mail\SendContractMail;
-use App\Models\Bid;
 use App\Models\Machinery;
-use App\Models\User;
-use App\Services\SMTP2GOService;
+use App\Services\AuctionCompletionService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class CheckBidEndTime extends Command
 {
+    protected $auctionCompletionService;
+
+    public function __construct(AuctionCompletionService $auctionCompletionService)
+    {
+        parent::__construct();
+        $this->auctionCompletionService = $auctionCompletionService;
+    }
+
     /**
      * The name and signature of the console command.
      *
@@ -41,38 +46,20 @@ class CheckBidEndTime extends Command
             ->get();
 
         foreach ($machineries as $machinery) {
-            $highestBid = Bid::where('machinery_id', $machinery->id)
-                ->where('auction_id', $machinery->auction_id)
-                ->orderBy('amount', 'desc')
-                ->first();
+            $result = $this->auctionCompletionService->complete($machinery);
 
-            if ($highestBid) {
-                $machinery->update([
-                    'bid_status'      => '2',
-                    'won_user'        => $highestBid->user_id,
-                    'bid_won_date'    => Carbon::now(),
-                    'contract_status' => '0',
-                    'status'          => 2,
-                ]);
-
-                $user = User::find($highestBid->user_id);
-
-                if ($user) {
-                    $mail           = new SendContractMail($user, $machinery, null);
-                    $smtp2goService = new SMTP2GOService();
-                    $htmlContent    = $mail->renderHtmlContent();
-                    $result         = $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
-
-                    if ($result) {
-                        $this->info("Machinery ID {$machinery->id} updated to sold status. Notification sent to user {$user->email}");
+            if ($result['highest_bid']) {
+                if ($result['winner']) {
+                    if ($result['email_sent']) {
+                        $this->info("Machinery ID {$machinery->id} updated to completed status. Notification sent to user {$result['winner']->email}");
                     } else {
-                        $this->info("Machinery ID {$machinery->id} updated to sold status. Failed to send email to user {$user->email}");
+                        $this->info("Machinery ID {$machinery->id} updated to completed status. Failed to send email to user {$result['winner']->email}");
                     }
                 } else {
-                    $this->info("Machinery ID {$machinery->id} updated to sold status. Won by user ID {$highestBid->user_id}, but user not found");
+                    $this->info("Machinery ID {$machinery->id} updated to completed status. Won by user ID {$result['highest_bid']->user_id}, but user not found");
                 }
             } else {
-                $this->info("Machinery ID {$machinery->id} expired (No bids found)");
+                $this->info("Machinery ID {$machinery->id} updated to completed status (No bids found)");
             }
         }
 
