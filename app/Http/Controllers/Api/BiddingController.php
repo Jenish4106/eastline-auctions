@@ -111,6 +111,8 @@ class BiddingController extends Controller
                     'won_user' => $user->id,
                     'bid_won_date' => Carbon::now(),
                     'contract_status' => '0',
+                    'status' => 2,
+                    'is_purchase' => 1,
                 ]);
             } elseif ((string) $machinery->bid_status === '0') {
                 $machinery->update([
@@ -1100,6 +1102,7 @@ class BiddingController extends Controller
                 'bid_status' => '2',
                 'won_user' => $user->id,
                 'bid_won_date' => now(),
+                'status' => 2,
             ]);
 
             try {

@@ -458,6 +458,7 @@ class BiddingController extends Controller
                     $machinery->won_user = $nextHighest->user_id;
                     $machinery->bid_won_date = \Carbon\Carbon::now();
                     $machinery->contract_status = 0;
+                    $machinery->bid_status = 2;
                     $machinery->status = 2;
                     $machinery->is_purchase = 1;
                 } else {

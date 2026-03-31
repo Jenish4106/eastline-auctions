@@ -28,6 +28,7 @@ class AuctionCompletionService
                 'won_user' => $highestBid->user_id,
                 'bid_won_date' => Carbon::now(),
                 'contract_status' => 0,
+                'bid_status' => 2,
                 'status' => 2,
                 'is_purchase' => 1,
             ]);
