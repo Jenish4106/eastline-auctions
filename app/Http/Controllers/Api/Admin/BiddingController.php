@@ -456,8 +456,17 @@ class BiddingController extends Controller
 
                 if ($nextHighest) {
                     $machinery->won_user = $nextHighest->user_id;
+                    $machinery->bid_won_date = \Carbon\Carbon::now();
+                    $machinery->contract_status = 0;
+                    $machinery->status = 2;
+                    $machinery->is_purchase = 1;
                 } else {
+                    $machinery->bid_status = 1;
                     $machinery->won_user = null;
+                    $machinery->bid_won_date = null;
+                    $machinery->contract_status = 0;
+                    $machinery->status = 1;
+                    $machinery->is_purchase = 0;
                 }
 
                 $machinery->save();
@@ -472,7 +481,6 @@ class BiddingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong, please try again.',
-                'error' => $e->getMessage(),
             ], 500);
         }
     }

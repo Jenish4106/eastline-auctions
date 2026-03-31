@@ -61,9 +61,9 @@ class SMTP2GOService
                             'mimetype'  => $attachment['type'],
                         ];
 
-                        Log::info('SMTP2GO attachment added', [
-                            'file' => $attachment['path'],
-                        ]);
+                        // Log::info('SMTP2GO attachment added', [
+                        //     'file' => $attachment['path'],
+                        // ]);
                     } else {
                         Log::warning('SMTP2GO attachment missing or not found', $attachment);
                     }
@@ -75,18 +75,18 @@ class SMTP2GOService
                 'Accept'       => 'application/json',
             ])->post($this->apiUrl, $payload);
 
-            Log::info('SMTP2GO response', [
-                'status' => $response->status(),
-                'body'   => $response->json(),
-            ]);
+            // Log::info('SMTP2GO response', [
+            //     'status' => $response->status(),
+            //     'body'   => $response->json(),
+            // ]);
 
             return $response->successful();
 
         } catch (\Throwable $e) {
-            Log::error('SMTP2GO send failed', [
-                'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
-            ]);
+            // Log::error('SMTP2GO send failed', [
+            //     'message' => $e->getMessage(),
+            //     'trace'   => $e->getTraceAsString(),
+            // ]);
 
             return false;
         }
