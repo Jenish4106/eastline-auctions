@@ -677,52 +677,37 @@ class MachineryController extends Controller
      * Update machinery status only
      */
     public function updateStatus(Request $request)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'id'     => 'required|exists:machinery,id',
-                'status' => 'required|in:0,1,2',
-            ], [
-                'id.required'     => 'The machinery id field is required.',
-                'id.exists'       => 'The selected machinery does not exist.',
-                'status.required' => 'The status field is required.',
-                'status.in'       => 'The status must be 0 (Draft), 1 (Publish), or 2 (Sold).',
-            ]);
+{
+    try {
+        $validator = Validator::make($request->all(), [
+            'id'     => 'required|array',
+            'id.*'   => 'exists:machinery,id',
+            'status' => 'required|in:0,1,2',
+        ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'Validation errors',
-                    'errors'  => $validator->errors(),
-                ], 422);
-            }
-
-            $machinery = Machinery::find($request->id);
-
-            if (! $machinery) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'Machinery not found',
-                ], 404);
-            }
-
-            $machinery->status = (int) $request->status;
-            $machinery->save();
-
-            return response()->json([
-                'status'  => true,
-                'message' => 'Machinery status updated successfully',
-                'data'    => [
-                    'id' => $machinery->id,
-                    'status' => $machinery->status,
-                ],
-            ], 200);
-        } catch (\Exception $e) {
+        if ($validator->fails()) {
             return response()->json([
                 'status'  => false,
-                'message' => 'Something went wrong, please try again.',
-            ], 500);
+                'message' => 'Validation errors',
+                'errors'  => $validator->errors(),
+            ], 422);
         }
+
+        $updated = Machinery::whereIn('id', $request->id)
+            ->update(['status' => (int) $request->status]);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Machinery status updated successfully',
+            'updated_count' => $updated
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Something went wrong, please try again.',
+        ], 500);
     }
+}
 
 }
