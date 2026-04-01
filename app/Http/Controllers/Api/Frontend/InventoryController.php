@@ -188,15 +188,6 @@ class InventoryController extends Controller
 
             $machinery->category = $machinery->category ? $machinery->category->category_name : null;
 
-            if ($machinery->bid_end_time) {
-                $bidEndTime = Carbon::parse($machinery->bid_end_time);
-                $currentTime = Carbon::now();
-
-                $machinery->is_view = $bidEndTime->gt($currentTime) ? 1 : 0;
-            } else {
-                $machinery->is_view = 0;
-            }
-
             $machineryImages = $imagesByMachineryId->get($machinery->id, collect());
 
             if ($machineryImages && $machineryImages->count() > 0) {
