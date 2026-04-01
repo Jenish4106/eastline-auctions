@@ -36,6 +36,8 @@ class AuctionCompletionService
             $updateData = array_merge($updateData, [
                 'won_user' => null,
                 'bid_won_date' => null,
+                'status' => 2,
+                'is_purchase' => 1,
             ]);
         }
 

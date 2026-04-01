@@ -522,6 +522,10 @@ class BiddingController extends Controller
                 $machinery = $result['machinery'];
             } else {
                 $machinery->bid_status = $bidStatus;
+                if ($bidStatus === '3') {
+                    $machinery->is_purchase = 1;
+                    $machinery->status = 2;
+                }
                 $machinery->save();
             }
 
