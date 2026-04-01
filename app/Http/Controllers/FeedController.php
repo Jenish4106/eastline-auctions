@@ -64,7 +64,7 @@ class FeedController extends Controller
 
                 $categoryName = $machinery->category ? $machinery->category->category_name : '';
                 $productType = $categoryName && $make ? "$categoryName > $make" : $categoryName;
-                $customLabel1 = $machinery->is_purchase ? 'buy_now' : 'auction';
+                $customLabel1 = $machinery->buy_now_price > 0 ? 'buy_now' : 'auction';
 
                 $priceVal = $machinery->buy_now_price && $machinery->buy_now_price > 0
                     ? $machinery->buy_now_price

@@ -460,14 +460,12 @@ class BiddingController extends Controller
                     $machinery->contract_status = 0;
                     $machinery->bid_status = 2;
                     $machinery->status = 2;
-                    $machinery->is_purchase = 1;
                 } else {
                     $machinery->bid_status = 1;
                     $machinery->won_user = null;
                     $machinery->bid_won_date = null;
                     $machinery->contract_status = 0;
                     $machinery->status = 1;
-                    $machinery->is_purchase = 0;
                 }
 
                 $machinery->save();
@@ -523,7 +521,6 @@ class BiddingController extends Controller
             } else {
                 $machinery->bid_status = $bidStatus;
                 if ($bidStatus === '3') {
-                    $machinery->is_purchase = 1;
                     $machinery->status = 2;
                 }
                 $machinery->save();

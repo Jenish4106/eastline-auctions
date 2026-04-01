@@ -67,7 +67,7 @@ class CheckoutController extends Controller
                 return response()->json(['success' => false, 'message' => 'Machinery not found'], 404);
             }
 
-            if ($machinery->is_purchase || $machinery->bid_status == '2' || $machinery->bid_status === 'sold') {
+            if ((int) $machinery->status === 2 || in_array((string) $machinery->bid_status, ['2', '3', 'sold'], true)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'This machinery has already been purchased.'
@@ -131,7 +131,6 @@ class CheckoutController extends Controller
             $hasActiveAuctionBids = $activeAuctionBids->isNotEmpty();
 
             $machinery->update([
-                'is_purchase' => true,
                 'bid_status' => $hasActiveAuctionBids ? '3' : '2',
                 'won_user' => $user->id,
                 'bid_won_date' => now(),
@@ -501,7 +500,9 @@ class CheckoutController extends Controller
     {
         $bidderIds = $bids
             ->pluck('user_id')
-            ->filter(fn ($userId) => (int) $userId !== (int) $purchaser->id)
+            ->filter(function ($userId) use ($purchaser) {
+                return (int) $userId !== (int) $purchaser->id;
+            })
             ->unique()
             ->values();
 

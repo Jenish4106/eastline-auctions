@@ -52,7 +52,6 @@ class Machinery extends Model
         'bid_status',
         'won_user',
         'bid_won_date',
-        'is_purchase',
         'contract_status',
         'description',
         'offer',
@@ -69,7 +68,7 @@ class Machinery extends Model
         'contract_status' => 'integer',
         'won_user' => 'integer',
         'bid_won_date' => 'datetime',
-        'is_purchase' => 'boolean'
+        'status' => 'integer',
     ];
 
     protected $appends = [

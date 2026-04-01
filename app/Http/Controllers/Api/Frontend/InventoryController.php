@@ -162,7 +162,6 @@ class InventoryController extends Controller
                 'buy_now_price',
                 'bid_start_price',
                 'category_id',
-                'is_purchase',
                 'year',
                 'make',
                 'model',

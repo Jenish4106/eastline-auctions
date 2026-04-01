@@ -30,14 +30,12 @@ class AuctionCompletionService
                 'contract_status' => 0,
                 'bid_status' => 2,
                 'status' => 2,
-                'is_purchase' => 1,
             ]);
         } else {
             $updateData = array_merge($updateData, [
                 'won_user' => null,
                 'bid_won_date' => null,
                 'status' => 2,
-                'is_purchase' => 1,
             ]);
         }
 

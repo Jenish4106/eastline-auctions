@@ -112,7 +112,6 @@ class BiddingController extends Controller
                     'bid_won_date' => Carbon::now(),
                     'contract_status' => '0',
                     'status' => 2,
-                    'is_purchase' => 1,
                 ]);
             } elseif ((string) $machinery->bid_status === '0') {
                 $machinery->update([
@@ -1080,7 +1079,7 @@ class BiddingController extends Controller
             //     ], 400);
             // }
 
-            if ($machinery->is_purchase) {
+            if ((int) $machinery->status === 2 || in_array((string) $machinery->bid_status, ['2', '3', 'sold'], true)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'This machinery has already been purchased',
@@ -1098,7 +1097,6 @@ class BiddingController extends Controller
             ]);
 
             $machinery->update([
-                'is_purchase' => true,
                 'bid_status' => '2',
                 'won_user' => $user->id,
                 'bid_won_date' => now(),

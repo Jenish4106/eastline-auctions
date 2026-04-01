@@ -353,14 +353,12 @@ class UserController extends Controller
                             $machine->contract_status = 0;
                             $machine->bid_status = '2';
                             $machine->status = 2;
-                            $machine->is_purchase = 1;
                         } else {
                             $machine->won_user = null;
                             $machine->bid_won_date = null;
                             $machine->contract_status = 0;
                             $machine->bid_status = '0';
                             $machine->status = 1;
-                            $machine->is_purchase = 0;
                         }
                         $machine->save();
                     }

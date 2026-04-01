@@ -81,7 +81,7 @@ class MachineryController extends Controller
                             $query->where('category_name', 'LIKE', "%{$search}%");
                         });
                         
-                    $statusMap = ['active' => 1, 'sold' => 2, 'closed' => 3];
+                    $statusMap = ['draft' => 0, 'publish' => 1, 'sold' => 2];
                     foreach ($statusMap as $label => $value) {
                         if (stripos($label, $search) !== false) {
                             $q->orWhere('status', $value);
@@ -234,7 +234,7 @@ class MachineryController extends Controller
                 'image_urls.*'    => 'required|url',
                 'video_urls'      => 'nullable|array',
                 'video_urls.*'    => 'nullable|url',
-                'status'          => 'required|in:1,2,3',
+                'status'          => 'required|in:0,1,2',
             ], [
                 'category_id.required'     => 'The category field is required.',
                 'category_id.exists'       => 'The selected category does not exist.',
@@ -255,7 +255,7 @@ class MachineryController extends Controller
                 'video_urls.array'         => 'Video URLs must be an array.',
                 'video_urls.*.url'         => 'Each video URL must be a valid URL.',
                 'status.required'          => 'The status field is required.',
-                'status.in'                => 'The status must be 1 (Active), 2 (Sold), or 3 (Closed).',
+                'status.in'                => 'The status must be 0 (Draft), 1 (Publish), or 2 (Sold).',
             ]);
 
             if ($validator->fails()) {
@@ -385,7 +385,7 @@ class MachineryController extends Controller
                 'image_urls.*'    => 'required|url',
                 'video_urls'      => 'nullable|array',
                 'video_urls.*'    => 'nullable|url',
-                'status'          => 'required|in:1,2,3',
+                'status'          => 'required|in:0,1,2',
             ], [
                 'category_id.required'     => 'The category field is required.',
                 'category_id.exists'       => 'The selected category does not exist.',
@@ -405,7 +405,7 @@ class MachineryController extends Controller
                 'video_urls.array'         => 'Video URLs must be an array.',
                 'video_urls.*.url'         => 'Each video URL must be a valid URL.',
                 'status.required'          => 'The status field is required.',
-                'status.in'                => 'The status must be 1 (Active), 2 (Sold), or 3 (Closed).',
+                'status.in'                => 'The status must be 0 (Draft), 1 (Publish), or 2 (Sold).',
             ]);
 
             if ($validator->fails()) {
@@ -646,7 +646,6 @@ class MachineryController extends Controller
             $machinery->status          = 1;
             $machinery->won_user        = null;
             $machinery->bid_won_date    = null;
-            $machinery->is_purchase     = 0;
             $machinery->contract_status = 0;
             $machinery->bid_status      = '0';
             $machinery->bid_start_time  = Carbon::now();
