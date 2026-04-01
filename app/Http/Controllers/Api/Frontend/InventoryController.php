@@ -166,7 +166,8 @@ class InventoryController extends Controller
                 'make',
                 'model',
                 'bid_end_time',
-                'created_at'
+                'status',
+                'created_at',
             ], 'page', $page);
 
         $machineryIds = $machineryList->getCollection()->pluck('id')->toArray();
