@@ -185,6 +185,7 @@ class InventoryController extends Controller
 
             $machinery->name = trim("$year $make $model");
             $machinery->working_hours = $workingHours;
+            $machinery->is_purchase = (int) ($machinery->status == 2);
 
             $machinery->category = $machinery->category ? $machinery->category->category_name : null;
 
