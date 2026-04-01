@@ -234,7 +234,7 @@ class MachineryController extends Controller
                 'image_urls.*'    => 'required|url',
                 'video_urls'      => 'nullable|array',
                 'video_urls.*'    => 'nullable|url',
-                'status'          => 'required|in:0,1,2',
+                'status'          => 'nullable|in:0,1,2',
             ], [
                 'category_id.required'     => 'The category field is required.',
                 'category_id.exists'       => 'The selected category does not exist.',
@@ -254,7 +254,6 @@ class MachineryController extends Controller
                 'image_urls.*.url'         => 'Each image URL must be a valid URL.',
                 'video_urls.array'         => 'Video URLs must be an array.',
                 'video_urls.*.url'         => 'Each video URL must be a valid URL.',
-                'status.required'          => 'The status field is required.',
                 'status.in'                => 'The status must be 0 (Draft), 1 (Publish), or 2 (Sold).',
             ]);
 
@@ -283,7 +282,7 @@ class MachineryController extends Controller
             $machinery->bid_end_time    = Carbon::parse($machinery->bid_start_time)->addDays($request->bid_end_days);
             $machinery->description     = $request->description;
             $machinery->offer           = $request->offer;
-            $machinery->status          = $request->status;
+            $machinery->status          = $request->input('status', 0);
 
             $machinery->save();
 
@@ -367,6 +366,7 @@ class MachineryController extends Controller
             $machinery = Machinery::findOrFail($id);
 
             $validator = Validator::make($request->all(), [
+                'id'              => 'required|exists:machinery,id',
                 'category_id'     => 'required|exists:categories,id',
                 'make'            => 'required|string|max:255',
                 'model'           => 'required|string|max:255',
@@ -385,8 +385,10 @@ class MachineryController extends Controller
                 'image_urls.*'    => 'required|url',
                 'video_urls'      => 'nullable|array',
                 'video_urls.*'    => 'nullable|url',
-                'status'          => 'required|in:0,1,2',
+                'status'          => 'nullable|in:0,1,2',
             ], [
+                'id.required'              => 'The machinery id field is required.',
+                'id.exists'                => 'The selected machinery does not exist.',
                 'category_id.required'     => 'The category field is required.',
                 'category_id.exists'       => 'The selected category does not exist.',
                 'make.required'            => 'The make field is required.',
@@ -404,7 +406,6 @@ class MachineryController extends Controller
                 'image_urls.*.url'         => 'Each image URL must be a valid URL.',
                 'video_urls.array'         => 'Video URLs must be an array.',
                 'video_urls.*.url'         => 'Each video URL must be a valid URL.',
-                'status.required'          => 'The status field is required.',
                 'status.in'                => 'The status must be 0 (Draft), 1 (Publish), or 2 (Sold).',
             ]);
 
@@ -431,7 +432,9 @@ class MachineryController extends Controller
             $machinery->bid_end_time    = Carbon::parse($machinery->bid_start_time)->addDays($request->bid_end_days);
             $machinery->description     = $request->description;
             $machinery->offer           = $request->offer;
-            $machinery->status          = $request->status;
+            if ($request->has('status')) {
+                $machinery->status = $request->status;
+            }
 
             if ($request->has('video_urls') && $request->video_urls !== null) {
                 $existingVideos = $machinery->images()->where('type', 'video')->get();
@@ -662,6 +665,58 @@ class MachineryController extends Controller
                 ]
             ], 200);
 
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong, please try again.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Update machinery status only
+     */
+    public function updateStatus(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'id'     => 'required|exists:machinery,id',
+                'status' => 'required|in:0,1,2',
+            ], [
+                'id.required'     => 'The machinery id field is required.',
+                'id.exists'       => 'The selected machinery does not exist.',
+                'status.required' => 'The status field is required.',
+                'status.in'       => 'The status must be 0 (Draft), 1 (Publish), or 2 (Sold).',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Validation errors',
+                    'errors'  => $validator->errors(),
+                ], 422);
+            }
+
+            $machinery = Machinery::find($request->id);
+
+            if (! $machinery) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Machinery not found',
+                ], 404);
+            }
+
+            $machinery->status = (int) $request->status;
+            $machinery->save();
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Machinery status updated successfully',
+                'data'    => [
+                    'id' => $machinery->id,
+                    'status' => $machinery->status,
+                ],
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'status'  => false,
