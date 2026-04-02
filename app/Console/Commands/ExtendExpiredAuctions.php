@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Bid;
 use App\Models\Machinery;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -39,8 +40,12 @@ class ExtendExpiredAuctions extends Command
 
         foreach ($expiredMachinery as $machinery) {
             try {
-                if ($machinery->bids()->exists()) {
-                    $this->info("Skipping machinery ID {$machinery->id}: Already has bids.");
+                $hasActiveAuctionBids = Bid::where('machinery_id', $machinery->id)
+                    ->where('auction_id', $machinery->auction_id)
+                    ->exists();
+
+                if ($hasActiveAuctionBids) {
+                    $this->info("Skipping machinery ID {$machinery->id} / Auction ID {$machinery->auction_id}: Already has bids.");
                     continue;
                 }
 
