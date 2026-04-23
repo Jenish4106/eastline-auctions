@@ -408,7 +408,7 @@ class OrderController extends Controller
 
         try {
             $order = Order::find($request->order_id);
-            $order->deleted = 1;
+            $order->is_deleted = 1;
             $order->save();
 
             return response()->json([
