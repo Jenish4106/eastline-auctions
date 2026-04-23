@@ -33,7 +33,8 @@ class OrderController extends Controller
                 $sortOrder = 'desc';
             }
 
-            $query = Order::with(['user:id,first_name,last_name,phone_no', 'machinery:id,make,model,year'])
+            $query = Order::with(['user:id,first_name,last_name,phone_no,email', 'machinery:id,make,model,year,auction_id'])
+                ->where('deleted', 0)
                 ->whereHas('user')
                 ->select([
                 'id',
@@ -385,6 +386,39 @@ class OrderController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Soft delete order
+     */
+    public function delete(Request $request)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'order_id' => 'required|exists:orders,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ], 400);
+        }
+
+        try {
+            $order = Order::find($request->order_id);
+            $order->deleted = 1;
+            $order->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order deleted successfully',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong, please try again.',
             ], 500);
         }
     }

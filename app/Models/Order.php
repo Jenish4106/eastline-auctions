@@ -5,9 +5,17 @@ namespace App\Models;
 use App\Models\Machinery;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class Order extends Model
 {
+    protected static function booted()
+    {
+        static::addGlobalScope('not_deleted', function (Builder $builder) {
+            $builder->where('is_deleted', 0);
+        });
+    }
+
     protected $fillable = [
         'order_id',
         'machinery_id',
@@ -40,6 +48,7 @@ class Order extends Model
         'shipping_country',
         'payment_slip_path',
         'payment_slip_status',
+        'is_deleted',
     ];
 
     protected $appends = [
@@ -61,6 +70,7 @@ class Order extends Model
         'cancelled_date' => 'datetime',
         'delivery_status' => 'integer',
         'payment_slip_status' => 'integer',
+        'is_deleted' => 'integer',
     ];
 
     public function machinery()

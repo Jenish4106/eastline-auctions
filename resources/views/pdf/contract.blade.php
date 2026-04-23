@@ -202,7 +202,7 @@
 
     <div class="section-title">1. Sale of Goods</div>
     <div class="content">
-        The Seller agrees to sell, transfer, and deliver to the Buyer the following goods within 14 days after the payment is processed:
+        The Seller agrees to sell, transfer, and deliver to the Buyer the following goods within 10–14 days after the payment is processed:
         <ul>
             <li class="bold">{{ trim($machinery->year . ' ' . $machinery->make . ' ' . $machinery->model) }}</li>
             <li>Hours: {{ $machinery->working_hours }}</li>
