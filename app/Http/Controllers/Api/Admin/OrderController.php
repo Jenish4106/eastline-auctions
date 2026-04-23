@@ -411,6 +411,11 @@ class OrderController extends Controller
             $order->is_deleted = 1;
             $order->save();
 
+            if ($order->machinery) {
+                $order->machinery->status = 1;
+                $order->machinery->save();
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Order deleted successfully',
