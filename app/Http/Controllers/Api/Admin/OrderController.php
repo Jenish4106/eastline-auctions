@@ -34,7 +34,7 @@ class OrderController extends Controller
             }
 
             $query = Order::with(['user:id,first_name,last_name,phone_no,email', 'machinery:id,make,model,year,auction_id'])
-                ->where('deleted', 0)
+                ->where('is_deleted', 0)
                 ->whereHas('user')
                 ->select([
                 'id',
