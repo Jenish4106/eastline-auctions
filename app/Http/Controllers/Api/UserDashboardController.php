@@ -27,6 +27,9 @@ class UserDashboardController extends Controller
             $recentBids = $this->getRecentBids($user->id);
 
             $recentBuyOrders = $this->getRecentBuyOrders($user->id);
+            $latestWon = Machinery::where('won_user', $user->id)
+                ->orderBy('bid_won_date', 'desc')
+                ->first();
 
             $dashboardData = [
                 'user_info' => [
@@ -41,6 +44,11 @@ class UserDashboardController extends Controller
                 'items_purchased' => $itemsPurchased,
                 'recent_bids' => $recentBids,
                 'recent_buy_orders' => $recentBuyOrders,
+                'is_won' => ($latestWon && $latestWon->contract_status == 0) ? 1 : 0,
+                'machinery_details' => ($latestWon && $latestWon->contract_status == 0) ? [
+                    'id' => $latestWon->id,
+                    'name' => trim($latestWon->year . ' ' . $latestWon->make . ' ' . $latestWon->model),
+                ] : null,
             ];
 
             return response()->json([
