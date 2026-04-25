@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Bid;
 use App\Models\Machinery;
+use App\Models\MachineryFileManager;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,6 +31,23 @@ class UserDashboardController extends Controller
             $latestWon = Machinery::where('won_user', $user->id)
                 ->orderBy('bid_won_date', 'desc')
                 ->first();
+            $orderWithInvoice = Order::where('user_id', $user->id)
+                ->where('delivery_status', 2)
+                ->latest()
+                ->first();
+
+                
+
+            $pdfUrl = null;
+            if ($orderWithInvoice) {
+                $invoiceFile = MachineryFileManager::where('machinery_id', $orderWithInvoice->machinery_id)
+                    ->where('order_id', $orderWithInvoice->id)
+                    ->where('type', 'invoice')
+                    ->first();
+                if ($invoiceFile) {
+                    $pdfUrl = asset($invoiceFile->image_path);
+                }
+            }
 
             $dashboardData = [
                 'user_info' => [
@@ -48,6 +66,7 @@ class UserDashboardController extends Controller
                 'machinery_details' => ($latestWon && $latestWon->contract_status == 0) ? [
                     'id' => $latestWon->id,
                     'name' => trim($latestWon->year . ' ' . $latestWon->make . ' ' . $latestWon->model),
+                    'pdf_url' => $pdfUrl,
                 ] : null,
             ];
 

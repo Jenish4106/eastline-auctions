@@ -73,6 +73,7 @@ class Machinery extends Model
 
     protected $appends = [
         'contract_url',
+        'invoice_url',
     ];
 
     public function category()
@@ -99,6 +100,12 @@ class Machinery extends Model
     {
         $contract = $this->contract;
         return $contract ? asset($contract->image_path) : null;
+    }
+
+    public function getInvoiceUrlAttribute()
+    {
+        $invoice = $this->invoice;
+        return $invoice ? asset($invoice->image_path) : null;
     }
 
     public function bids()
