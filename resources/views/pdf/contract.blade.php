@@ -323,7 +323,7 @@
             <li>All representations and warranties survive the closing of this Agreement.</li>
             <li>Neither party may assign obligations without written consent.</li>
             <li>Modifications must be in writing and signed by both parties.</li>
-            <li>This Agreement is governed by the laws of California and the California Uniform Commercial Code.</li>
+            <li>This Agreement is governed by the laws of Colorado and the Colorado Uniform Commercial Code.</li>
             <li>If any clause is unenforceable, the remainder remains in effect.</li>
             <li>This Agreement benefits and binds the parties and their successors.</li>
             <li>Execution in counterparts and facsimile signatures are valid.</li>
