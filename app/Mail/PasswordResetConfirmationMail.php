@@ -21,7 +21,7 @@ class PasswordResetConfirmationMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Password Reset Successful - ' . Settings::get('company_name', 'Stiopa Equipment'))
+        return $this->subject('Password Reset Successful - ' . Settings::get('company_name', 'Mcfarland Equipment'))
                     ->view('emails.password-reset-confirmation')
                     ->with(['user' => $this->user]);
     }
@@ -33,6 +33,6 @@ class PasswordResetConfirmationMail extends Mailable
 
     public function getSubject()
     {
-        return 'Password Reset Successful - ' . Settings::get('company_name', 'Stiopa Equipment');
+        return 'Password Reset Successful - ' . Settings::get('company_name', 'Mcfarland Equipment');
     }
 }

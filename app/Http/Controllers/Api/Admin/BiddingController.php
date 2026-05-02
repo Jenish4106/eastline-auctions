@@ -700,7 +700,7 @@ class BiddingController extends Controller
                     }
 
                     // Generate Invoice
-                    $companyName = Settings::get('company_name', 'Stiopa Equipment');
+                    $companyName = Settings::get('company_name', 'Mcfarland Equipment');
                     $companyAddress = Settings::get('address') ?? '';
                     $companyPhone = Settings::get('phone_no') ?? '';
                     $companyEmail = Settings::get('email') ?? '';

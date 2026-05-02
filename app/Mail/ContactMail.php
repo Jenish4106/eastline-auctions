@@ -29,7 +29,7 @@ class ContactMail extends Mailable
     {
         $fullName = $this->contactData['firstName'] . ' ' . $this->contactData['lastName'];
         
-        return $this->subject('New Contact Form Submission - ' . Settings::get('company_name', 'Stiopa Equipment'))
+        return $this->subject('New Contact Form Submission - ' . Settings::get('company_name', 'Mcfarland Equipment'))
                     ->view('emails.contact')
                     ->with(array_merge($this->contactData, ['fullName' => $fullName]));
     }
@@ -49,6 +49,6 @@ class ContactMail extends Mailable
      */
     public function getSubject()
     {
-        return 'New Contact Form Submission - ' . Settings::get('company_name', 'Stiopa Equipment');
+        return 'New Contact Form Submission - ' . Settings::get('company_name', 'Mcfarland Equipment');
     }
 }

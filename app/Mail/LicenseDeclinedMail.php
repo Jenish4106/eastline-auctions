@@ -21,7 +21,7 @@ class LicenseDeclinedMail extends Mailable
 
     public function build()
     {
-        return $this->subject('License Declined - ' . Settings::get('company_name', 'Stiopa Equipment'))
+        return $this->subject('License Declined - ' . Settings::get('company_name', 'Mcfarland Equipment'))
                     ->view('emails.license-declined')
                     ->with(['user' => $this->user]);
     }
@@ -33,6 +33,6 @@ class LicenseDeclinedMail extends Mailable
 
     public function getSubject()
     {
-        return 'License Declined - ' . Settings::get('company_name', 'Stiopa Equipment');
+        return 'License Declined - ' . Settings::get('company_name', 'Mcfarland Equipment');
     }
 }

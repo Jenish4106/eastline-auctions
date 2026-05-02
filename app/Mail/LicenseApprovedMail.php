@@ -21,7 +21,7 @@ class LicenseApprovedMail extends Mailable
 
     public function build()
     {
-        return $this->subject('License Approved - ' . Settings::get('company_name', 'Stiopa Equipment'))
+        return $this->subject('License Approved - ' . Settings::get('company_name', 'Mcfarland Equipment'))
                     ->view('emails.license-approved')
                     ->with(['user' => $this->user]);
     }
@@ -33,6 +33,6 @@ class LicenseApprovedMail extends Mailable
 
     public function getSubject()
     {
-        return 'License Approved - ' . Settings::get('company_name', 'Stiopa Equipment');
+        return 'License Approved - ' . Settings::get('company_name', 'Mcfarland Equipment');
     }
 }

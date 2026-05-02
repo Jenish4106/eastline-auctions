@@ -142,7 +142,7 @@ class CheckoutController extends Controller
                 $this->sendAuctionCancelledEmails($machinery, $user, $activeAuctionBids);
             }
 
-            $companyName = Settings::get('company_name', 'Stiopa Equipment');
+            $companyName = Settings::get('company_name', 'Mcfarland Equipment');
             $companyAddress = Settings::get('address') ?? '';
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';
@@ -389,7 +389,7 @@ class CheckoutController extends Controller
 
             $order = null;
 
-            $companyName = Settings::get('company_name', 'Stiopa Equipment');
+            $companyName = Settings::get('company_name', 'Mcfarland Equipment');
             $companyAddress = Settings::get('address') ?? '';
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';

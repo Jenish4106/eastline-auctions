@@ -122,8 +122,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'info@stiopa-equipment.com'),
-        'name' => env('MAIL_FROM_NAME', 'Stiopa Equipment'),
+        'address' => env('MAIL_FROM_ADDRESS', 'info@mcfarland-equipment.com'),
+        'name' => env('MAIL_FROM_NAME', 'Mcfarland Equipment'),
     ],
 
 ];

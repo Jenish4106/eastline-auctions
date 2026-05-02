@@ -29,7 +29,7 @@ class ContactController extends Controller
         }
 
         try {
-            $adminEmail = 'sales@stiopa-equipment.com';
+            $adminEmail = 'sales@mcfarland-equipment.com';
 
             if (!$adminEmail) {
                 return response()->json([
