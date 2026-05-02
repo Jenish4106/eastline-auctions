@@ -19,24 +19,21 @@ class AuctionCompletionService
             ->orderBy('id')
             ->first();
 
-        $updateData = [
-            'bid_status' => '2',
-        ];
-
         if ($highestBid) {
-            $updateData = array_merge($updateData, [
+            $updateData = [
                 'won_user' => $highestBid->user_id,
                 'bid_won_date' => Carbon::now(),
                 'contract_status' => 0,
                 'bid_status' => 2,
                 'status' => 2,
-            ]);
+            ];
         } else {
-            $updateData = array_merge($updateData, [
+            $updateData = [
                 'won_user' => null,
                 'bid_won_date' => null,
-                'status' => 2,
-            ]);
+                'status' => 1,
+                'bid_status' => 0,
+            ];
         }
 
         $machinery->update($updateData);
