@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Machinery;
+use App\Models\OrderTracking;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
@@ -91,6 +92,11 @@ class Order extends Model
     public function contract()
     {
         return $this->hasOne(MachineryFileManager::class, 'order_id', 'id')->where('type', 'contract_pdf');
+    }
+
+    public function trackingEntries()
+    {
+        return $this->hasMany(OrderTracking::class, 'order_id', 'id')->orderBy('tracking_date', 'asc');
     }
 
     public function getInvoiceUrlAttribute()

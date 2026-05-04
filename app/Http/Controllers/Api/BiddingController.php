@@ -916,6 +916,18 @@ class BiddingController extends Controller
                     $deliveryTimeline[] = ['status' => 'Cancelled', 'date' => $order->cancelled_date, 'status_code' => 9];
                 }
 
+                $trackingData = [];
+                if ($order->trackingEntries) {
+                    foreach ($order->trackingEntries as $entry) {
+                        $trackingData[] = [
+                            'id' => $entry->id,
+                            'tracking_date' => $entry->tracking_date ? $entry->tracking_date->format('Y-m-d H:i:s') : null,
+                            'city' => $entry->city,
+                            'status' => $entry->status,
+                        ];
+                    }
+                }
+
                 return [
                     'id' => $order->id,
                     'order_id' => $order->order_id,
@@ -940,13 +952,14 @@ class BiddingController extends Controller
                     'serial_no' => $order->machinery->serial_number,
                     'delivery_contact' => $deliveryContact,
                     'delivery_timeline' => $deliveryTimeline,
+                    'order_tracking' => $trackingData,
                 ];
             };
 
             $query = Order::where('user_id', $user->id)
                 ->with(['machinery' => function ($query) {
                     $query->select('id', 'make', 'model', 'year', 'working_hours', 'weight', 'serial_number', 'description', 'auction_id');
-                }, 'machinery.images']);
+                }, 'machinery.images', 'trackingEntries']);
 
             if ($request->has('order_id')) {
                 $validator = Validator::make($request->all(), [
