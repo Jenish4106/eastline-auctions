@@ -413,6 +413,10 @@ class OrderController extends Controller
 
             if ($order->machinery) {
                 $order->machinery->status = 1;
+                $order->machinery->bid_status = 0;
+                $order->machinery->contract_status = 0;
+                $order->machinery->won_user = null;
+                $order->machinery->bid_won_date = null;
                 $order->machinery->save();
             }
 
