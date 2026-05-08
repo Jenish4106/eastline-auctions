@@ -13,6 +13,8 @@ class OrderTracking extends Model
         'tracking_date',
         'city',
         'status',
+        'lat',
+        'lng',
     ];
 
     protected $casts = [

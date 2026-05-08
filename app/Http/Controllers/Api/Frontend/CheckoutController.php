@@ -13,6 +13,7 @@ use App\Models\Settings;
 use App\Models\User;
 use App\Services\GoogleMapsService;
 use App\Services\SMTP2GOService;
+use App\Services\TwilioSmsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -325,6 +326,11 @@ class CheckoutController extends Controller
                     'message' => 'Failed to send email',
                 ], 500);
             }
+
+            (new TwilioSmsService())->sendMessage(
+                $winningUser->phone_no,
+                'Thank you for your purchase with McFarland Equipment Sales & Auctions! Your Buy It Now item is secured. Sign in to view your invoice and complete payment.'
+            );
 
             return response()->json([
                 'success' => true,

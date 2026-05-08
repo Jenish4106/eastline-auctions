@@ -17,6 +17,8 @@ class OrderTrackingController extends Controller
             'tracking_date' => 'required|date_format:Y-m-d',
             'city'          => 'required|string|max:150',
             'status'        => 'required|string|max:100',
+            'lat'           => 'nullable|numeric',
+            'lng'           => 'nullable|numeric',
         ]);
 
         if ($validator->fails()) {
@@ -43,6 +45,8 @@ class OrderTrackingController extends Controller
                 'tracking_date' => $request->tracking_date,
                 'city'          => trim($request->city),
                 'status'        => trim($request->status),
+                'lat'           => $request->lat,
+                'lng'           => $request->lng,
             ]);
 
             return response()->json([
@@ -111,6 +115,8 @@ class OrderTrackingController extends Controller
             'tracking_date' => 'required|date_format:Y-m-d',
             'city'          => 'required|string|max:150',
             'status'        => 'required|string|max:100',
+            'lat'           => 'nullable|numeric',
+            'lng'           => 'nullable|numeric',
         ]);
 
         if ($validator->fails()) {
@@ -135,6 +141,8 @@ class OrderTrackingController extends Controller
                 'tracking_date' => $request->tracking_date,
                 'city'          => trim($request->city),
                 'status'        => trim($request->status),
+                'lat'           => $request->lat,
+                'lng'           => $request->lng,
             ]);
 
             return response()->json([
@@ -201,6 +209,8 @@ class OrderTrackingController extends Controller
                 : null,
             'city'          => $entry->city,
             'status'        => $entry->status,
+            'lat'           => $entry->lat,
+            'lng'           => $entry->lng,
             'created_at'    => $entry->created_at
                 ? $entry->created_at->format('Y-m-d H:i:s')
                 : null,

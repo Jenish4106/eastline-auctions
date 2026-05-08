@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Mail\SendContractMail;
+use App\Services\TwilioSmsService;
 use App\Models\Bid;
 use App\Models\Machinery;
 use App\Models\User;
@@ -10,6 +11,11 @@ use Carbon\Carbon;
 
 class AuctionCompletionService
 {
+    protected TwilioSmsService $smsService;
+    public function __construct(TwilioSmsService $smsService)
+    {
+        $this->smsService = $smsService;
+    }
     public function complete(Machinery $machinery, bool $sendWinnerEmail = true): array
     {
         $highestBid = Bid::where('machinery_id', $machinery->id)
@@ -44,11 +50,21 @@ class AuctionCompletionService
         if ($highestBid) {
             $winner = User::find($highestBid->user_id);
 
-            if ($sendWinnerEmail && $winner) {
-                $mail = new SendContractMail($winner, $machinery->fresh(), null);
-                $smtp2goService = new SMTP2GOService();
-                $htmlContent = $mail->renderHtmlContent();
-                $emailSent = $smtp2goService->sendEmail($winner->email, $mail->getSubject(), $htmlContent);
+            if ($winner) {
+                //Email
+                if ($sendWinnerEmail) {
+                    $mail = new SendContractMail($winner, $machinery->fresh(), null);
+                    $smtp2goService = new SMTP2GOService();
+                    $htmlContent = $mail->renderHtmlContent();
+                    $emailSent = $smtp2goService->sendEmail($winner->email, $mail->getSubject(), $htmlContent);
+                }
+
+                //Sms
+                $message = "Thank you for your purchase with McFarland Equipment Sales & Auctions! Your Won item is secured. Sign in to view your invoice and complete payment.";
+                $smsSent = $this->smsService->sendMessage(
+                    $winner->phone_no,
+                    $message
+                );
             }
         }
 

@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\SumsubController;
 use App\Http\Controllers\Api\UserDashboardController;
 use App\Http\Controllers\Api\UsersController;
 use Illuminate\Support\Facades\Route;
+//use App\Services\TwilioSmsService;
 
 Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/login', [LoginController::class, 'login']);
@@ -142,3 +143,10 @@ Route::post('/settings/key-wise', [FrontendSettingsController::class, 'getSettin
 Route::post('/contact-email-send', [App\Http\Controllers\Api\ContactController::class, 'sendContactEmail']);
 
 Route::post('/calculate-distance', [DistanceController::class, 'calculateDistance']);
+
+// Route::get('/test-sms', function () {
+//     (new \App\Services\TwilioSmsService())->sendMessage(
+//         '13468604903',
+//         'Test SMS from Twilio Laravel'
+//     );
+// });

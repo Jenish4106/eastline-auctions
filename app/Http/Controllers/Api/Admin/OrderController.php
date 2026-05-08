@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\OrderStatusChangeMail;
 use App\Models\Order;
 use App\Services\SMTP2GOService;
+use App\Services\TwilioSmsService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -277,6 +278,13 @@ class OrderController extends Controller
                         'success' => false,
                         'message' => 'Order status updated but failed to send email notification.',
                     ], 200);
+                }
+
+                if ((int) $request->status === 3) {
+                    (new TwilioSmsService())->sendMessage(
+                        $order->user->phone_no,
+                        'Thank you for your purchase with McFarland Equipment Sales & Auctions! Your Won item is secured. Sign in to view your invoice and complete payment.'
+                    );
                 }
             }
 

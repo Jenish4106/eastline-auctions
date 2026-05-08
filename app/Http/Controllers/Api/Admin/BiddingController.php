@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\View;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use App\Services\AuctionCompletionService;
+use App\Services\TwilioSmsService;
 
 class BiddingController extends Controller
 {
@@ -795,6 +796,14 @@ class BiddingController extends Controller
                             'Contract Approved - ' . $machineryName, 
                             $htmlContent, 
                             $attachments
+                        );
+
+                        //Sms
+                        $smsMessage = "Hi {$user->first_name}, your contract for {$machineryName} has been approved. Please check your email for details.";
+                        $twilio = new \App\Services\TwilioSmsService();
+                        $smsSent = $twilio->sendMessage(
+                            $user->phone_no,
+                            $smsMessage
                         );
                     }
                 }
