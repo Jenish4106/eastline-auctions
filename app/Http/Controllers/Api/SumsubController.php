@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\License;
 use App\Models\User;
+use App\Services\TwilioSmsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class SumsubController extends Controller
@@ -385,6 +387,14 @@ class SumsubController extends Controller
                     $license->update($updates);
                     if (isset($updates['status']) && $license->user) {
                         $license->user->update(['is_license' => $updates['status']]);
+
+                        if ($updates['status'] == License::STATUS_APPROVED) {
+                            (new TwilioSmsService())->sendMessage(
+                                $license->user->phone_no,
+                                'Welcome to Mcfarland Equipment Sales & Auctions! Your registration is complete. Start browsing, bidding, or use Buy It Now.'
+                            );
+
+                        }
                     }
                 }
             }

@@ -34,9 +34,7 @@ class UserDashboardController extends Controller
             $orderWithInvoice = Order::where('user_id', $user->id)
                 ->where('delivery_status', 2)
                 ->latest()
-                ->first();
-
-                
+                ->first();                
 
             $pdfUrl = null;
             if ($orderWithInvoice) {
@@ -62,8 +60,8 @@ class UserDashboardController extends Controller
                 'items_purchased' => $itemsPurchased,
                 'recent_bids' => $recentBids,
                 'recent_buy_orders' => $recentBuyOrders,
-                'is_won' => ($latestWon && $latestWon->contract_status == 0) ? 1 : 0,
-                'machinery_details' => ($latestWon && $latestWon->contract_status == 0) ? [
+                'is_won' => ($latestWon && $latestWon->contract_status == 1) ? 1 : 0,
+                'machinery_details' => ($latestWon && $latestWon->contract_status == 1) ? [
                     'id' => $latestWon->id,
                     'name' => trim($latestWon->year . ' ' . $latestWon->make . ' ' . $latestWon->model),
                     'pdf_url' => $pdfUrl,

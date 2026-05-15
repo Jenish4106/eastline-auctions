@@ -216,7 +216,6 @@ class BiddingController extends Controller
                         ->orWhere('bid_start_price', 'LIKE', "%{$search}%")
                         ->orWhere('bid_end_time', 'LIKE', "%{$search}%");
 
-                    // Basic status search
                     if (stripos('completed', $search) !== false || stripos('sold', $search) !== false) {
                         $q->orWhere('bid_status', 'sold')
                             ->orWhere('bid_status', '3')
@@ -329,7 +328,6 @@ class BiddingController extends Controller
             }
 
             $bids = $machinery->bids->where('auction_id', $machinery->auction_id);
-            // $bids = $machinery->bids;
 
             $highestBid = $bids->max('amount');
             $lastBid = $highestBid ?: $machinery->bid_start_price;
@@ -459,7 +457,6 @@ class BiddingController extends Controller
                             $q2->where('category_name', 'LIKE', "%{$search}%");
                         });
 
-                    // Contract Status search
                     $contractStatusMap = ['pending' => 0, 'approved' => 1, 'signed' => 3, 'rejected' => 4];
                     foreach ($contractStatusMap as $label => $value) {
                         if (stripos($label, $search) !== false) {

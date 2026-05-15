@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Mail\RegistrationMail;
 use App\Services\SMTP2GOService;
+use App\Services\TwilioSmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -57,6 +58,11 @@ class RegisterController extends Controller
                     'message' => 'Unable to create token after registration',
                 ], 500);
             }
+
+            (new TwilioSmsService())->sendMessage(
+                $user->phone_no,
+                'Welcome to Mcfarland Equipment Sales & Auctions! Your registration is pending. Complete identity verification to be able to start bidding, or use Buy It Now.'
+            );
 
             try {
                 $mail = new RegistrationMail($user);

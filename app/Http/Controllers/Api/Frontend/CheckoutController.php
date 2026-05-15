@@ -329,7 +329,7 @@ class CheckoutController extends Controller
 
             (new TwilioSmsService())->sendMessage(
                 $winningUser->phone_no,
-                'Thank you for your purchase with McFarland Equipment Sales & Auctions! Your Buy It Now item is secured. Sign in to view your invoice and complete payment.'
+                'Thank you for your purchase with McFarland Equipment Sales & Auctions! Your Buy It Now item is secured. You will get the invoice shortly to complete payment.'
             );
 
             return response()->json([

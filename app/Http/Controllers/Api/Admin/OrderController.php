@@ -283,7 +283,7 @@ class OrderController extends Controller
                 if ((int) $request->status === 3) {
                     (new TwilioSmsService())->sendMessage(
                         $order->user->phone_no,
-                        'Thank you for your purchase with McFarland Equipment Sales & Auctions! Your Won item is secured. Sign in to view your invoice and complete payment.'
+                        'Thank you for your purchase with McFarland Equipment Sales & Auctions! Your invoice is now available. Please sign in to your account to review the invoice and complete payment.'
                     );
                 }
             }

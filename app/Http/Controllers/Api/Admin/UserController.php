@@ -8,6 +8,7 @@ use App\Models\License;
 use App\Mail\LicenseApprovedMail;
 use App\Mail\LicenseDeclinedMail;
 use App\Services\SMTP2GOService;
+use App\Services\TwilioSmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
@@ -477,6 +478,11 @@ class UserController extends Controller
                 $latestLicense->is_sumsub = 0;
                 $user->is_license = 1;
                 $message = 'License approved successfully';
+
+                (new TwilioSmsService())->sendMessage(
+                    $user->phone_no,
+                    'Welcome to Mcfarland Equipment Sales & Auctions! Your registration is complete. Start browsing, bidding, or use Buy It Now.'
+                );
                 
                 try {
                     $mail = new LicenseApprovedMail($user);
@@ -507,9 +513,6 @@ class UserController extends Controller
                     ], 200);
                 }
             }
-
-            $latestLicense->save();
-            $user->save();
 
             return response()->json([
                 'status'  => true,
