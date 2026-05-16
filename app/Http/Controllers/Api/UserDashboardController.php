@@ -21,7 +21,9 @@ class UserDashboardController extends Controller
 
             $activeBids = $this->getActiveBids($user->id);
 
-            $itemsWon = Machinery::where('won_user', $user->id)->count();
+            $itemsWon = Machinery::where('won_user', $user->id)
+                ->whereIn('contract_status', [1, 3])
+                ->count();
 
             $itemsPurchased = Order::where('user_id', $user->id)->count();
 
@@ -29,6 +31,7 @@ class UserDashboardController extends Controller
 
             $recentBuyOrders = $this->getRecentBuyOrders($user->id);
             $latestWon = Machinery::where('won_user', $user->id)
+                ->whereIn('contract_status', [1, 3])
                 ->orderBy('bid_won_date', 'desc')
                 ->first();
             $orderWithInvoice = Order::where('user_id', $user->id)
@@ -60,8 +63,8 @@ class UserDashboardController extends Controller
                 'items_purchased' => $itemsPurchased,
                 'recent_bids' => $recentBids,
                 'recent_buy_orders' => $recentBuyOrders,
-                'is_won' => ($latestWon && $latestWon->contract_status == 1) ? 1 : 0,
-                'machinery_details' => ($latestWon && $latestWon->contract_status == 1) ? [
+                'is_won' => $latestWon ? 1 : 0,
+                'machinery_details' => $latestWon ? [
                     'id' => $latestWon->id,
                     'name' => trim($latestWon->year . ' ' . $latestWon->make . ' ' . $latestWon->model),
                     'pdf_url' => $pdfUrl,
