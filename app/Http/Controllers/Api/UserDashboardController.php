@@ -39,6 +39,7 @@ class UserDashboardController extends Controller
                 ->latest()
                 ->first();                
 
+            $isCheckout = $latestWon && $latestWon->contract_status == 3;
             $pdfUrl = null;
             if ($orderWithInvoice) {
                 $invoiceFile = MachineryFileManager::where('machinery_id', $orderWithInvoice->machinery_id)
@@ -64,6 +65,7 @@ class UserDashboardController extends Controller
                 'recent_bids' => $recentBids,
                 'recent_buy_orders' => $recentBuyOrders,
                 'is_won' => $latestWon ? 1 : 0,
+                'is_checkout' => $isCheckout,
                 'machinery_details' => $latestWon ? [
                     'id' => $latestWon->id,
                     'name' => trim($latestWon->year . ' ' . $latestWon->make . ' ' . $latestWon->model),
