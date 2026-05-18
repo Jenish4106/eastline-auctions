@@ -77,12 +77,11 @@ Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
         Route::post('/update-payment-slip-status', [OrderController::class, 'updatePaymentSlipStatus']);
         Route::post('/delete', [OrderController::class, 'delete']);
 
-        // Order Tracking
         Route::prefix('tracking')->group(function () {
-            Route::post('/', [OrderTrackingController::class, 'index']); // GET all entries
-            Route::post('/add', [OrderTrackingController::class, 'store']); // POST add entry
-            Route::post('/update', [OrderTrackingController::class, 'update']); // Update entry
-            Route::post('/delete', [OrderTrackingController::class, 'delete']); // DELETE entry
+            Route::post('/', [OrderTrackingController::class, 'index']);
+            Route::post('/add', [OrderTrackingController::class, 'store']);
+            Route::post('/update', [OrderTrackingController::class, 'update']);
+            Route::post('/delete', [OrderTrackingController::class, 'delete']);
         });
     });
 

@@ -30,7 +30,6 @@ class OrderTrackingController extends Controller
         }
 
         try {
-            // Verify order exists (global scope already filters soft-deleted)
             $order = Order::find($request->order_id);
             if (!$order) {
                 return response()->json([

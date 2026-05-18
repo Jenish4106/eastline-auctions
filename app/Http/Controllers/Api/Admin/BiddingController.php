@@ -454,19 +454,32 @@ class BiddingController extends Controller
                     ->get();
 
                 $nextHighest = $remainingBids->first();
+                $isAuctionCompleted = $machinery->bid_end_time && $machinery->bid_end_time->isPast();
 
-                if ($nextHighest) {
-                    $machinery->won_user = $nextHighest->user_id;
-                    $machinery->bid_won_date = \Carbon\Carbon::now();
-                    $machinery->contract_status = 0;
-                    $machinery->bid_status = 2;
-                    $machinery->status = 2;
+                if ($isAuctionCompleted) {
+                    if ($nextHighest) {
+                        $machinery->won_user = $nextHighest->user_id;
+                        $machinery->bid_won_date = \Carbon\Carbon::now();
+                        $machinery->contract_status = 0;
+                        $machinery->bid_status = 2;
+                        $machinery->status = 2;
+                    } else {
+                        $machinery->bid_status = 0;
+                        $machinery->won_user = null;
+                        $machinery->bid_won_date = null;
+                        $machinery->contract_status = 0;
+                        $machinery->status = 1;
+                    }
                 } else {
-                    $machinery->bid_status = 1;
                     $machinery->won_user = null;
                     $machinery->bid_won_date = null;
                     $machinery->contract_status = 0;
                     $machinery->status = 1;
+                    if ($nextHighest) {
+                        $machinery->bid_status = 1;
+                    } else {
+                        $machinery->bid_status = 0;
+                    }
                 }
 
                 $machinery->save();
