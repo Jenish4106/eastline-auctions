@@ -920,7 +920,6 @@ class BiddingController extends Controller
                             'id' => $entry->id,
                             'tracking_date' => $entry->tracking_date ? $entry->tracking_date->format('Y-m-d H:i:s') : null,
                             'city' => $entry->city,
-                            'status' => $entry->status,
                             'lat' => $entry->lat,
                             'lng' => $entry->lng,
                         ];

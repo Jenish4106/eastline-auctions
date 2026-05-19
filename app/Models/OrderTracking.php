@@ -12,7 +12,6 @@ class OrderTracking extends Model
         'order_id',
         'tracking_date',
         'city',
-        'status',
         'lat',
         'lng',
     ];

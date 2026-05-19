@@ -12,52 +12,76 @@ class OrderTrackingController extends Controller
 {
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $isBulk = $request->has('trackings') && is_array($request->input('trackings'));
+
+        $rules = $isBulk ? [
+            'trackings'                  => 'required|array|min:1',
+            'trackings.*.order_id'       => 'required|integer|exists:orders,id',
+            'trackings.*.tracking_date'  => 'required|date_format:Y-m-d',
+            'trackings.*.city'           => 'required|string|max:150',
+            'trackings.*.lat'            => 'required|numeric',
+            'trackings.*.lng'            => 'required|numeric',
+        ] : [
             'order_id'      => 'required|integer|exists:orders,id',
             'tracking_date' => 'required|date_format:Y-m-d',
             'city'          => 'required|string|max:150',
-            'status'        => 'required|string|max:100',
-            'lat'           => 'nullable|numeric',
-            'lng'           => 'nullable|numeric',
-        ]);
+            'lat'           => 'required|numeric',
+            'lng'           => 'required|numeric',
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json([
                 'status'  => false,
                 'message' => $validator->errors()->first(),
-                'data'    => null,
             ], 422);
         }
 
         try {
-            $order = Order::find($request->order_id);
-            if (!$order) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'Order not found.',
-                    'data'    => null,
-                ], 404);
-            }
+            $entries = $isBulk ? $request->input('trackings') : [
+                [
+                    'order_id'      => $request->order_id,
+                    'tracking_date' => $request->tracking_date,
+                    'city'          => $request->city,
+                    'lat'           => $request->lat,
+                    'lng'           => $request->lng,
+                ],
+            ];
 
-            $tracking = OrderTracking::create([
-                'order_id'      => $request->order_id,
-                'tracking_date' => $request->tracking_date,
-                'city'          => trim($request->city),
-                'status'        => trim($request->status),
-                'lat'           => $request->lat,
-                'lng'           => $request->lng,
-            ]);
+            $created = [];
+
+            foreach ($entries as $entry) {
+                $order = Order::find($entry['order_id']);
+                if (!$order) {
+                    return response()->json([
+                        'status'  => false,
+                        'message' => 'Order not found.',
+                    ], 404);
+                }
+
+                $tracking = OrderTracking::create([
+                    'order_id'      => $entry['order_id'],
+                    'tracking_date' => $entry['tracking_date'],
+                    'city'          => trim($entry['city']),
+                    'lat'           => $entry['lat'] ?? null,
+                    'lng'           => $entry['lng'] ?? null,
+                ]);
+
+                $created[] = $this->formatEntry($tracking);
+            }
 
             return response()->json([
                 'status'  => true,
-                'message' => 'Tracking entry added successfully.',
-                'data'    => $this->formatEntry($tracking),
+                'message' => count($created) > 1
+                    ? 'Tracking entries added successfully.'
+                    : 'Tracking entry added successfully.',
+                'data'    => $isBulk ? $created : $created[0],
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'status'  => false,
                 'message' => 'Something went wrong, please try again.',
-                'data'    => null,
             ], 500);
         }
     }
@@ -107,97 +131,6 @@ class OrderTrackingController extends Controller
         }
     }
 
-    public function update(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'id'            => 'required|integer|exists:order_tracking,id',
-            'tracking_date' => 'required|date_format:Y-m-d',
-            'city'          => 'required|string|max:150',
-            'status'        => 'required|string|max:100',
-            'lat'           => 'nullable|numeric',
-            'lng'           => 'nullable|numeric',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status'  => false,
-                'message' => $validator->errors()->first(),
-                'data'    => null,
-            ], 422);
-        }
-
-        try {
-            $tracking = OrderTracking::find($request->id);
-            if (!$tracking) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'Tracking entry not found.',
-                    'data'    => null,
-                ], 404);
-            }
-
-            $tracking->update([
-                'tracking_date' => $request->tracking_date,
-                'city'          => trim($request->city),
-                'status'        => trim($request->status),
-                'lat'           => $request->lat,
-                'lng'           => $request->lng,
-            ]);
-
-            return response()->json([
-                'status'  => true,
-                'message' => 'Tracking entry updated successfully.',
-                'data'    => $this->formatEntry($tracking->fresh()),
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Something went wrong, please try again.',
-                'data'    => null,
-            ], 500);
-        }
-    }
-
-    public function delete(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'id' => 'required|integer|exists:order_tracking,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status'  => false,
-                'message' => $validator->errors()->first(),
-                'data'    => null,
-            ], 422);
-        }
-
-        try {
-            $tracking = OrderTracking::find($request->id);
-            if (!$tracking) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'Tracking entry not found.',
-                    'data'    => null,
-                ], 404);
-            }
-
-            $tracking->delete();
-
-            return response()->json([
-                'status'  => true,
-                'message' => 'Tracking entry deleted successfully.',
-                'data'    => null,
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Something went wrong, please try again.',
-                'data'    => null,
-            ], 500);
-        }
-    }
-
     private function formatEntry(OrderTracking $entry): array
     {
         return [
@@ -207,7 +140,6 @@ class OrderTrackingController extends Controller
                 ? $entry->tracking_date->format('Y-m-d H:i:s')
                 : null,
             'city'          => $entry->city,
-            'status'        => $entry->status,
             'lat'           => $entry->lat,
             'lng'           => $entry->lng,
             'created_at'    => $entry->created_at
