@@ -514,6 +514,9 @@ class UserController extends Controller
                 }
             }
 
+            $latestLicense->save();
+            $user->save();
+
             return response()->json([
                 'status'  => true,
                 'message' => $message,
