@@ -111,8 +111,11 @@ class UploadController extends Controller
         try {
             ini_set('memory_limit', '512M');
             set_time_limit(300);
-            
-            if (!$request->hasFile('videos')) {
+
+            if (
+                !$request->hasFile('videos') &&
+                !$request->hasFile('videos.*')
+            ) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Please provide videos.',
@@ -120,21 +123,33 @@ class UploadController extends Controller
             }
 
             $files = $request->file('videos');
-            $isMultiple = is_array($files);
+
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+
             $type = $request->input('type', 'general');
-            
+
             $allowedTypes = ['category', 'machinery'];
+
             if (!in_array($type, $allowedTypes)) {
                 $type = 'general';
             }
 
-            $filesArray = $isMultiple ? $files : [$files];
-
             $validator = Validator::make(
-                $request->all(),
                 [
-                    'videos' => $isMultiple ? 'required|array' : 'required',
-                    'videos.*' => 'required|mimes:mp4,avi,mov,wmv,flv,webm,3gp|max:204800',
+                    'videos' => $files,
+                    'type' => $type,
+                ],
+                [
+                    'videos' => 'required|array',
+                    'videos.*' => [
+                        'required',
+                        'file',
+                        'max:204800',
+                        'mimes:mp4,m4v,avi,mov,wmv,flv,webm,3gp',
+                        'mimetypes:video/mp4,video/x-m4v,video/x-msvideo,video/quicktime,video/x-ms-wmv,video/x-flv,video/webm,video/3gpp,application/octet-stream',
+                    ],
                     'type' => 'sometimes|in:category,machinery',
                 ],
                 [
@@ -142,50 +157,71 @@ class UploadController extends Controller
                     'videos.array' => 'Videos must be an array.',
                     'videos.*.required' => 'Each video is required.',
                     'videos.*.mimes' => 'Videos must be of type: mp4, avi, mov, wmv, flv, webm, 3gp.',
+                    'videos.*.mimetypes' => 'Invalid video format detected.',
                     'videos.*.max' => 'Each video may not be greater than 200MB.',
                     'type.in' => 'Type must be either category or machinery.',
                 ]
             );
 
             if ($validator->fails()) {
+                $debug = [];
+
+                foreach ($files as $video) {
+                    $debug[] = [
+                        'name' => $video->getClientOriginalName(),
+                        'extension' => $video->getClientOriginalExtension(),
+                        'mime_type' => $video->getMimeType(),
+                    ];
+                }
+
                 return response()->json([
                     'status' => false,
                     'message' => 'Validation errors',
                     'errors' => $validator->errors(),
+                    'debug' => $debug,
                 ], 422);
             }
 
             $uploadedVideos = [];
+
             $destinationPath = public_path('uploads/' . $type . '/videos');
-            
+
             if (!File::exists($destinationPath)) {
                 File::makeDirectory($destinationPath, 0755, true);
             }
 
-            foreach ($filesArray as $video) {
+            foreach ($files as $video) {
+
                 $originalName = $video->getClientOriginalName();
                 $size = $video->getSize();
                 $mimeType = $video->getMimeType();
-                
+
                 $videoName = time() . '_' . Str::random(10) . '_' . uniqid() . '.' . $video->getClientOriginalExtension();
+
                 $video->move($destinationPath, $videoName);
-                
+
                 $videoUrl = asset('uploads/' . $type . '/videos/' . $videoName);
-                
+
                 $uploadedVideos[] = [
+                    'original_name' => $originalName,
                     'filename' => $videoName,
                     'url' => $videoUrl,
+                    'size' => $size,
+                    'mime_type' => $mimeType,
                 ];
             }
 
             return response()->json([
                 'status' => true,
-                'message' => count($uploadedVideos) > 1 ? 'Videos uploaded successfully' : 'Video uploaded successfully',
+                'message' => count($uploadedVideos) > 1
+                    ? 'Videos uploaded successfully'
+                    : 'Video uploaded successfully',
                 'data' => [
                     'videos' => $uploadedVideos,
                     'count' => count($uploadedVideos),
                 ],
             ], 200);
+
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
