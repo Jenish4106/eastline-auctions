@@ -376,6 +376,7 @@ class CheckoutController extends Controller
             'shipping_details.shipping_state' => 'nullable|string|max:255',
             'shipping_details.shipping_zip' => 'required_if:shipping_details.is_different,true|nullable|string|max:20',
             'shipping_details.shipping_country' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
+            'is_bid' => 'required|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -479,9 +480,13 @@ class CheckoutController extends Controller
                     'logoUrl' => $companyLogo ? asset($companyLogo) : null,
                 ],
                 'contractDate' => now()->format('Y-m-d'),
-                'is_checkout' => true,
-                'buy_now_price' => $machinery->buy_now_price,
             ];
+            
+            $is_bid = $request->input('is_bid', false);
+            if (!empty($is_bid) && $is_bid == true) {
+                $contractDataView['is_checkout'] = true;
+                $contractDataView['buy_now_price'] = $machinery->buy_now_price;
+            }
 
             $contractHtml = View::make('pdf.contract', $contractDataView)->render();
 
