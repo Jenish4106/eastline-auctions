@@ -279,6 +279,8 @@ class CheckoutController extends Controller
                     'signature_path' => File::exists(public_path('uploads/signatures/seller_signature.png')) ? $this->imageToBase64(public_path('uploads/signatures/seller_signature.png')) : null,  // For PDF
                 ],
                 'contractDate' => now()->format('Y-m-d'),
+                'is_checkout' => true,
+                'buy_now_price' => $machinery->buy_now_price,
             ];
 
             $contractPdf = Pdf::loadView('pdf.contract', $contractDataView);
