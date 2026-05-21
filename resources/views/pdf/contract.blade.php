@@ -214,13 +214,13 @@
         <div class="content">
             @php
                 $equipmentCost = (
-                    isset($order) && isset($order->is_checkout) && $order->is_checkout == true
+                    isset($order) && isset($is_checkout) && $is_checkout == true
                 )
-                    ? ($order->buy_now_price ?? 0)
+                    ? ($buy_now_price ?? 0)
                     : ($highestBid->amount ?? 0);
 
-                $deliveryCost = isset($order) && $order->shipping_cost
-                    ? $order->shipping_cost
+                $deliveryCost = isset($order) && $shipping_cost
+                    ? $shipping_cost
                     : ($shipping_cost ?? 0);
 
                 $totalAmount = $equipmentCost + $deliveryCost;
