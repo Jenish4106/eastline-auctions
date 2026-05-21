@@ -476,6 +476,8 @@ class CheckoutController extends Controller
                     'logoUrl' => $companyLogo ? asset($companyLogo) : null,
                 ],
                 'contractDate' => now()->format('Y-m-d'),
+                'is_checkout' => true,
+                'buy_now_price' => $machinery->buy_now_price,
             ];
 
             $contractHtml = View::make('pdf.contract', $contractDataView)->render();
