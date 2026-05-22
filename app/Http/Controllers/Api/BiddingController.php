@@ -772,6 +772,7 @@ class BiddingController extends Controller
                 'buyerAddress' => $buyerAddress,
                 'shippingAddress' => $shippingAddress,
                 'signaturePath' => $signaturePath,
+                'shipping_cost' => $shippingCost,
                 'absoluteSignaturePath' => File::exists(public_path($signaturePath)) ? $this->imageToBase64(public_path($signaturePath)) : null,
                 'companyInfo' => [
                     'name' => $companyName,
