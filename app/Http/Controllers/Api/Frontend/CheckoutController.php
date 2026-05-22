@@ -483,7 +483,8 @@ class CheckoutController extends Controller
             ];
             
             $is_bid = $request->input('is_bid', false);
-            if (!empty($is_bid) && $is_bid == true) {
+
+            if (empty($is_bid) || $is_bid == false) {
                 $contractDataView['is_checkout'] = true;
                 $contractDataView['buy_now_price'] = $machinery->buy_now_price;
             }
