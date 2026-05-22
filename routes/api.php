@@ -76,6 +76,7 @@ Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
         Route::post('/update-status', [OrderController::class, 'updateOrderStatus']);
         Route::post('/update-payment-slip-status', [OrderController::class, 'updatePaymentSlipStatus']);
         Route::post('/delete', [OrderController::class, 'delete']);
+        Route::post('/regenerate-invoice', [OrderController::class, 'regenerateInvoice']);
 
         Route::prefix('tracking')->group(function () {
             Route::post('/', [OrderTrackingController::class, 'index']);

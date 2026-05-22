@@ -4,9 +4,14 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\OrderStatusChangeMail;
 use App\Models\Order;
+use App\Models\Settings;
+use App\Models\MachineryFileManager;
 use App\Services\SMTP2GOService;
 use App\Services\TwilioSmsService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\View;
 
 class OrderController extends Controller
 {
@@ -438,5 +443,172 @@ class OrderController extends Controller
                 'message' => 'Something went wrong, please try again.',
             ], 500);
         }
+    }
+
+    /**
+     * Regenerate invoice for an order
+     */
+    public function regenerateInvoice(Request $request)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'order_id' => 'required|exists:orders,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ], 400);
+        }
+
+        try {
+            $orderIdInput = $request->input('order_id');
+            
+            $order = Order::with(['user', 'machinery'])
+                ->find($orderIdInput);
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found',
+                ], 404);
+            }
+
+            if (!$order->user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order user not found',
+                ], 400);
+            }
+
+            if (!$order->machinery) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order machinery not found',
+                ], 400);
+            }
+
+            $oldInvoices = MachineryFileManager::where('order_id', $order->id)
+                ->where('type', 'invoice')
+                ->get();
+
+            $oldInvoiceRecord = null;
+            if ($oldInvoices->isNotEmpty()) {
+                $oldInvoiceRecord = $oldInvoices->first();
+                if ($oldInvoices->count() > 1) {
+                    foreach ($oldInvoices->slice(1) as $extraInvoice) {
+                        $extraPath = public_path($extraInvoice->image_path);
+                        if (File::exists($extraPath)) {
+                            File::delete($extraPath);
+                        }
+                        $extraInvoice->delete();
+                    }
+                }
+            }
+
+            $companyName = Settings::get('company_name', 'Mcfarland Equipment');
+            $companyAddress = Settings::get('address') ?? '';
+            $companyPhone = Settings::get('phone_no') ?? '';
+            $companyEmail = Settings::get('email') ?? '';
+            $companyLogo = Settings::get('dark_logo');
+
+            $machinery = $order->machinery;
+            $machinery->load('images');
+            $firstImage = $machinery->images->firstWhere('type', 'image');
+            $machineryImage = null;
+            $machineryImageUrl = null;
+
+            if ($firstImage) {
+                $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
+                if (File::exists(public_path($imagePathRel))) {
+                    $machineryImage = $this->imageToBase64(public_path($imagePathRel));
+                    $machineryImageUrl = asset($imagePathRel);
+                }
+            }
+
+            $invoiceData = [
+                'order' => $order,
+                'machineryImage' => $machineryImage,
+                'machineryImageUrl' => $machineryImageUrl,
+                'companyInfo' => [
+                    'name' => $companyName,
+                    'address' => $companyAddress,
+                    'phone' => $companyPhone,
+                    'email' => $companyEmail,
+                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,
+                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,
+                    'bank_name' => Settings::get('bank_name'),
+                    'beneficiary_name' => Settings::get('beneficiary_name'),
+                    'beneficiary_address' => Settings::get('beneficiary_address'),
+                    'account_number' => Settings::get('account_number'),
+                    'routing_number' => Settings::get('routing_number'),
+                    'branch_address' => Settings::get('branch_address'),
+                ]
+            ];
+
+            $invoicePdf = Pdf::loadView('pdf.invoice', $invoiceData);
+            $invoiceFileName = 'invoice_' . $order->order_id . '.pdf';
+            $invoicePath = 'uploads/invoices/' . $invoiceFileName;
+
+            $invoicePublicDir = public_path('uploads/invoices');
+            if (!File::exists($invoicePublicDir)) {
+                File::makeDirectory($invoicePublicDir, 0755, true);
+            }
+
+            // Unlink/remove old file if it existed
+            if ($oldInvoiceRecord) {
+                $oldPath = public_path($oldInvoiceRecord->image_path);
+                if (File::exists($oldPath)) {
+                    File::delete($oldPath);
+                }
+            }
+
+            // Save the newly generated PDF
+            $invoicePdf->save(public_path($invoicePath));
+
+            // Create or update database record in MachineryFileManager
+            if ($oldInvoiceRecord) {
+                $oldInvoiceRecord->image_path = $invoicePath;
+                $oldInvoiceRecord->save();
+            } else {
+                MachineryFileManager::create([
+                    'machinery_id' => $machinery->id,
+                    'order_id' => $order->id,
+                    'image_path' => $invoicePath,
+                    'type' => 'invoice',
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invoice regenerated successfully',
+                'data' => [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_id,
+                    'invoice_url' => asset($invoicePath),
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong, please try again.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Helper to encode image path to base64
+     */
+    private function imageToBase64($path)
+    {
+        if (File::exists($path)) {
+            $type = pathinfo($path, PATHINFO_EXTENSION);
+            $data = @file_get_contents($path);
+            if ($data !== false) {
+                return 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+        return null;
     }
 }
