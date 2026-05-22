@@ -547,6 +547,7 @@ class OrderController extends Controller
             ];
 
             $invoicePdf = Pdf::loadView('pdf.invoice', $invoiceData);
+            
             $invoiceFileName = 'invoice_' . $order->order_id . '.pdf';
             $invoicePath = 'uploads/invoices/' . $invoiceFileName;
 
@@ -555,7 +556,6 @@ class OrderController extends Controller
                 File::makeDirectory($invoicePublicDir, 0755, true);
             }
 
-            // Unlink/remove old file if it existed
             if ($oldInvoiceRecord) {
                 $oldPath = public_path($oldInvoiceRecord->image_path);
                 if (File::exists($oldPath)) {
@@ -563,10 +563,8 @@ class OrderController extends Controller
                 }
             }
 
-            // Save the newly generated PDF
             $invoicePdf->save(public_path($invoicePath));
 
-            // Create or update database record in MachineryFileManager
             if ($oldInvoiceRecord) {
                 $oldInvoiceRecord->image_path = $invoicePath;
                 $oldInvoiceRecord->save();
@@ -579,13 +577,15 @@ class OrderController extends Controller
                 ]);
             }
 
+            $cacheBustedUrl = asset($invoicePath) . '?t=' . time();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Invoice regenerated successfully',
                 'data' => [
                     'order_id' => $order->id,
                     'order_number' => $order->order_id,
-                    'invoice_url' => asset($invoicePath),
+                    'invoice_url' => $cacheBustedUrl,
                 ]
             ], 200);
 

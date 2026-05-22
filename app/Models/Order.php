@@ -102,7 +102,14 @@ class Order extends Model
     public function getInvoiceUrlAttribute()
     {
         $invoice = $this->invoice;
-        return $invoice ? asset($invoice->image_path) : null;
+        if ($invoice) {
+            $path = public_path($invoice->image_path);
+            if (file_exists($path)) {
+                return asset($invoice->image_path) . '?t=' . filemtime($path);
+            }
+            return asset($invoice->image_path);
+        }
+        return null;
     }
 
     public function getContractUrlAttribute()
