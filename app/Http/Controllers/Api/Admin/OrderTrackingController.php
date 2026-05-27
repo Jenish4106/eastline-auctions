@@ -131,6 +131,96 @@ class OrderTrackingController extends Controller
         }
     }
 
+    public function update(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id'            => 'required|integer',
+            'tracking_date' => 'sometimes|required|date_format:Y-m-d',
+            'city'          => 'sometimes|required|string|max:150',
+            'lat'           => 'sometimes|required|numeric',
+            'lng'           => 'sometimes|required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        try {
+            $tracking = OrderTracking::find($request->id);
+            if (!$tracking) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Tracking entry not found.',
+                ], 404);
+            }
+
+            if ($request->has('tracking_date')) {
+                $tracking->tracking_date = $request->tracking_date;
+            }
+            if ($request->has('city')) {
+                $tracking->city = trim($request->city);
+            }
+            if ($request->has('lat')) {
+                $tracking->lat = $request->lat;
+            }
+            if ($request->has('lng')) {
+                $tracking->lng = $request->lng;
+            }
+
+            $tracking->save();
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Tracking entry updated successfully.',
+                'data'    => $this->formatEntry($tracking),
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong, please try again.',
+            ], 500);
+        }
+    }
+
+    public function destroy(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        try {
+            $tracking = OrderTracking::find($request->id);
+            if (!$tracking) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Tracking entry not found.',
+                ], 404);
+            }
+
+            $tracking->delete();
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Tracking entry deleted successfully.',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong, please try again.',
+            ], 500);
+        }
+    }
+
     private function formatEntry(OrderTracking $entry): array
     {
         return [

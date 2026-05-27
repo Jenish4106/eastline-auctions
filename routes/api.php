@@ -81,6 +81,8 @@ Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
         Route::prefix('tracking')->group(function () {
             Route::post('/', [OrderTrackingController::class, 'index']);
             Route::post('/add', [OrderTrackingController::class, 'store']);
+            Route::post('/update', [OrderTrackingController::class, 'update']);
+            Route::post('/delete', [OrderTrackingController::class, 'destroy']);
         });
     });
 
