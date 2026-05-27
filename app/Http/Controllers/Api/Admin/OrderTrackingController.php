@@ -134,11 +134,23 @@ class OrderTrackingController extends Controller
     public function update(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id'            => 'required|integer',
+            'id' => 'sometimes|required_without_all:updates,new_trackings|integer',
             'tracking_date' => 'sometimes|required|date_format:Y-m-d',
             'city'          => 'sometimes|required|string|max:150',
             'lat'           => 'sometimes|required|numeric',
             'lng'           => 'sometimes|required|numeric',
+            'updates' => 'sometimes|array|min:1',
+            'updates.*.id' => 'required|integer',
+            'updates.*.tracking_date' => 'sometimes|required|date_format:Y-m-d',
+            'updates.*.city' => 'sometimes|required|string|max:150',
+            'updates.*.lat' => 'sometimes|required|numeric',
+            'updates.*.lng' => 'sometimes|required|numeric',
+            'new_trackings' => 'sometimes|array|min:1',
+            'new_trackings.*.order_id' => 'required|integer|exists:orders,id',
+            'new_trackings.*.tracking_date' => 'required|date_format:Y-m-d',
+            'new_trackings.*.city' => 'required|string|max:150',
+            'new_trackings.*.lat' => 'required|numeric',
+            'new_trackings.*.lng' => 'required|numeric',
         ]);
 
         if ($validator->fails()) {
@@ -149,33 +161,124 @@ class OrderTrackingController extends Controller
         }
 
         try {
-            $tracking = OrderTracking::find($request->id);
-            if (!$tracking) {
+            $updatedEntry = null;
+            $updatedEntries = [];
+            $createdEntries = [];
+
+            if ($request->has('updates') && is_array($request->input('updates'))) {
+                $updates = $request->input('updates', []);
+
+                foreach ($updates as $payload) {
+                    $tracking = OrderTracking::find($payload['id'] ?? null);
+                    if (!$tracking) {
+                        return response()->json([
+                            'status'  => false,
+                            'message' => 'Tracking entry not found.',
+                        ], 404);
+                    }
+
+                    if (array_key_exists('tracking_date', $payload)) {
+                        $tracking->tracking_date = $payload['tracking_date'];
+                    }
+                    if (array_key_exists('city', $payload)) {
+                        $tracking->city = trim($payload['city']);
+                    }
+                    if (array_key_exists('lat', $payload)) {
+                        $tracking->lat = $payload['lat'];
+                    }
+                    if (array_key_exists('lng', $payload)) {
+                        $tracking->lng = $payload['lng'];
+                    }
+
+                    $tracking->save();
+
+                    $entry = $this->formatEntry($tracking);
+                    $entry['is_update'] = true;
+                    $updatedEntries[] = $entry;
+                }
+            }
+
+            if ($request->filled('id')) {
+                $tracking = OrderTracking::find($request->id);
+                if (!$tracking) {
+                    return response()->json([
+                        'status'  => false,
+                        'message' => 'Tracking entry not found.',
+                    ], 404);
+                }
+
+                if ($request->has('tracking_date')) {
+                    $tracking->tracking_date = $request->tracking_date;
+                }
+                if ($request->has('city')) {
+                    $tracking->city = trim($request->city);
+                }
+                if ($request->has('lat')) {
+                    $tracking->lat = $request->lat;
+                }
+                if ($request->has('lng')) {
+                    $tracking->lng = $request->lng;
+                }
+
+                $tracking->save();
+
+                $updatedEntry = $this->formatEntry($tracking);
+                $updatedEntry['is_update'] = true;
+            }
+
+            if ($request->has('new_trackings') && is_array($request->input('new_trackings'))) {
+                $entries = $request->input('new_trackings', []);
+
+                foreach ($entries as $entry) {
+                    $order = Order::find($entry['order_id']);
+                    if (!$order) {
+                        return response()->json([
+                            'status'  => false,
+                            'message' => 'Order not found.',
+                        ], 404);
+                    }
+
+                    $tracking = OrderTracking::create([
+                        'order_id'      => $entry['order_id'],
+                        'tracking_date' => $entry['tracking_date'],
+                        'city'          => trim($entry['city']),
+                        'lat'           => $entry['lat'] ?? null,
+                        'lng'           => $entry['lng'] ?? null,
+                    ]);
+
+                    $createdEntries[] = array_merge(
+                        $this->formatEntry($tracking),
+                        ['is_update' => false]
+                    );
+                }
+            }
+
+            if ($updatedEntry !== null && empty($updatedEntries) && empty($createdEntries)) {
                 return response()->json([
-                    'status'  => false,
-                    'message' => 'Tracking entry not found.',
-                ], 404);
+                    'status'  => true,
+                    'message' => 'Tracking entry updated successfully.',
+                    'data'    => $updatedEntry,
+                ], 200);
             }
 
-            if ($request->has('tracking_date')) {
-                $tracking->tracking_date = $request->tracking_date;
+            if ($updatedEntry === null && empty($updatedEntries)) {
+                return response()->json([
+                    'status'  => true,
+                    'message' => count($createdEntries) > 1
+                        ? 'Tracking entries added successfully.'
+                        : 'Tracking entry added successfully.',
+                    'data'    => count($createdEntries) === 1 ? $createdEntries[0] : $createdEntries,
+                ], 201);
             }
-            if ($request->has('city')) {
-                $tracking->city = trim($request->city);
-            }
-            if ($request->has('lat')) {
-                $tracking->lat = $request->lat;
-            }
-            if ($request->has('lng')) {
-                $tracking->lng = $request->lng;
-            }
-
-            $tracking->save();
 
             return response()->json([
                 'status'  => true,
-                'message' => 'Tracking entry updated successfully.',
-                'data'    => $this->formatEntry($tracking),
+                'message' => 'Tracking entries updated and added successfully.',
+                'data'    => [
+                    'updated' => $updatedEntry,
+                    'updated_list' => $updatedEntries,
+                    'created' => $createdEntries,
+                ],
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -232,6 +335,9 @@ class OrderTrackingController extends Controller
             'city'          => $entry->city,
             'lat'           => $entry->lat,
             'lng'           => $entry->lng,
+            'is_update'     => $entry->updated_at && $entry->created_at
+                ? $entry->updated_at->gt($entry->created_at)
+                : false,
             'created_at'    => $entry->created_at
                 ? $entry->created_at->format('Y-m-d H:i:s')
                 : null,
