@@ -424,6 +424,18 @@ class OrderController extends Controller
             $order->is_deleted = 1;
             $order->save();
 
+            $files = MachineryFileManager::where('order_id', $order->id)
+                ->whereIn('type', ['invoice', 'contract_pdf'])
+                ->get();
+
+            foreach ($files as $file) {
+                $filePath = public_path($file->image_path);
+                if (File::exists($filePath)) {
+                    File::delete($filePath);
+                }
+                $file->delete();
+            }
+
             if ($order->machinery) {
                 $order->machinery->status = 1;
                 $order->machinery->bid_status = 0;

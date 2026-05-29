@@ -34,20 +34,23 @@ class UserDashboardController extends Controller
                 ->whereIn('contract_status', [0, 1, 3])
                 ->latest('bid_won_date')
                 ->first();
-            $orderWithInvoice = Order::where('user_id', $user->id)
-                ->where('delivery_status', 2)
-                ->latest()
-                ->first();                
-
             $isCheckout = $latestWon && $latestWon->contract_status == 3;
             $pdfUrl = null;
-            if ($orderWithInvoice) {
-                $invoiceFile = MachineryFileManager::where('machinery_id', $orderWithInvoice->machinery_id)
-                    ->where('order_id', $orderWithInvoice->id)
-                    ->where('type', 'invoice')
+
+            if ($latestWon && in_array($latestWon->contract_status, [1, 3])) {
+                $latestWonOrder = Order::where('machinery_id', $latestWon->id)
+                    ->where('user_id', $user->id)
                     ->first();
-                if ($invoiceFile) {
-                    $pdfUrl = asset($invoiceFile->image_path);
+
+                if ($latestWonOrder) {
+                    $invoiceFile = MachineryFileManager::where('machinery_id', $latestWon->id)
+                        ->where('order_id', $latestWonOrder->id)
+                        ->where('type', 'invoice')
+                        ->first();
+                    
+                    if ($invoiceFile) {
+                        $pdfUrl = asset($invoiceFile->image_path);
+                    }
                 }
             }
 
