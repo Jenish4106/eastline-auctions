@@ -36,23 +36,29 @@ class UserDashboardController extends Controller
                 ->first();
             $isCheckout = $latestWon && $latestWon->contract_status == 3;
             $pdfUrl = null;
+            $orderStatusText = null;
 
-            if ($latestWon && in_array($latestWon->contract_status, [1, 3])) {
+            if ($latestWon) {
                 $latestWonOrder = Order::where('machinery_id', $latestWon->id)
                     ->where('user_id', $user->id)
                     ->first();
 
                 if ($latestWonOrder) {
-                    $invoiceFile = MachineryFileManager::where('machinery_id', $latestWon->id)
-                        ->where('order_id', $latestWonOrder->id)
-                        ->where('type', 'invoice')
-                        ->first();
+                    $orderStatusText = $latestWonOrder->delivery_status_text;
                     
-                    if ($invoiceFile) {
-                        $pdfUrl = asset($invoiceFile->image_path);
+                    if (in_array($latestWon->contract_status, [1, 3])) {
+                        $invoiceFile = MachineryFileManager::where('machinery_id', $latestWon->id)
+                            ->where('order_id', $latestWonOrder->id)
+                            ->where('type', 'invoice')
+                            ->first();
+                        
+                        if ($invoiceFile) {
+                            $pdfUrl = asset($invoiceFile->image_path);
+                        }
                     }
                 }
             }
+
 
             $dashboardData = [
                 'user_info' => [
@@ -73,6 +79,7 @@ class UserDashboardController extends Controller
                     'id' => $latestWon->id,
                     'name' => trim($latestWon->year . ' ' . $latestWon->make . ' ' . $latestWon->model),
                     'pdf_url' => $pdfUrl,
+                    'order_status' => $orderStatusText,
                 ] : null,
             ];
 
