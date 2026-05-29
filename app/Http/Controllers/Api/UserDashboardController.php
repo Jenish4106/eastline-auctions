@@ -44,7 +44,7 @@ class UserDashboardController extends Controller
                     ->first();
 
                 if ($latestWonOrder) {
-                    $orderStatusText = $latestWonOrder->delivery_status_text;
+                    $orderStatusText = $latestWonOrder->delivery_status;
                     
                     if (in_array($latestWon->contract_status, [1, 3])) {
                         $invoiceFile = MachineryFileManager::where('machinery_id', $latestWon->id)
