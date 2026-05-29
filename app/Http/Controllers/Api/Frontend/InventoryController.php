@@ -56,7 +56,7 @@ class InventoryController extends Controller
         $categoryName = $request->input('categoryName');
         $fromYear = $request->input('from_year');
         $toYear = $request->input('to_year');
-        $sortBy = $request->input('sort_by', 'newest');
+        $sortBy = $request->input('sort_by', 'random');
         $search = $request->input('search', '');
         $make = $request->input('make', '');
         $model = $request->input('model', '');
@@ -147,9 +147,13 @@ class InventoryController extends Controller
                 $machineryQuery->orderBy('buy_now_price', 'desc');
                 break;
             case 'newest':
-            default:
-                // Newest Added (default)
+                // Newest Added
                 $machineryQuery->orderBy('created_at', 'desc');
+                break;
+            case 'random':
+            default:
+                // Random Order (default)
+                $machineryQuery->inRandomOrder();
                 break;
         }
 
