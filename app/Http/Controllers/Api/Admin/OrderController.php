@@ -3,6 +3,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\OrderStatusChangeMail;
+use App\Mail\ResendInvoiceMail;
 use App\Models\Order;
 use App\Models\Settings;
 use App\Models\MachineryFileManager;
@@ -589,6 +590,11 @@ class OrderController extends Controller
                 ]);
             }
 
+            if ((int)$order->delivery_status >= 3 && (int)$order->delivery_status <= 8) {
+                $order->is_regenerated = true;
+                $order->save();
+            }
+
             $cacheBustedUrl = asset($invoicePath) . '?t=' . time();
 
             return response()->json([
@@ -599,6 +605,92 @@ class OrderController extends Controller
                     'order_number' => $order->order_id,
                     'invoice_url' => $cacheBustedUrl,
                 ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong, please try again.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Resend invoice email to user
+     */
+    public function resendInvoiceEmail(Request $request)
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'order_id' => 'required|exists:orders,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ], 400);
+        }
+
+        try {
+            $orderIdInput = $request->input('order_id');
+            $order = Order::with(['user', 'machinery', 'invoice'])->find($orderIdInput);
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found',
+                ], 404);
+            }
+
+            if (!$order->user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order user not found',
+                ], 400);
+            }
+
+            if (!$order->machinery) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order machinery not found',
+                ], 400);
+            }
+
+            $invoice = $order->invoice;
+            if (!$invoice || !file_exists(public_path($invoice->image_path))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invoice file not found for this order. Please generate or regenerate the invoice first.',
+                ], 400);
+            }
+
+            $mail = new ResendInvoiceMail(
+                $order->user,
+                $order,
+                $order->machinery
+            );
+
+            $smtp2goService = new SMTP2GOService();
+            $htmlContent = $mail->renderHtmlContent();
+
+            $attachments = [
+                [
+                    'path' => public_path($invoice->image_path),
+                    'name' => 'Invoice-' . $order->order_id . '.pdf',
+                    'type' => 'application/pdf',
+                ]
+            ];
+
+            $smtp2goService->sendEmail(
+                $order->user->email,
+                $mail->getSubject(),
+                $htmlContent,
+                $attachments
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invoice email sent successfully to ' . $order->user->email,
             ], 200);
 
         } catch (\Exception $e) {

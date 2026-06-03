@@ -781,14 +781,6 @@ class BiddingController extends Controller
                         
                         $attachments = [];
                         
-                        if (File::exists(public_path($invoicePath))) {
-                            $attachments[] = [
-                                'path' => public_path($invoicePath),
-                                'name' => $invoiceFileName,
-                                'type' => 'application/pdf',
-                            ];
-                        }
-                        
                         $contractFile = MachineryFileManager::where('machinery_id', $machinery->id)
                             ->where('type', 'contract_pdf')
                             ->latest()

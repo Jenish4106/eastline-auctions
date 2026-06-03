@@ -50,6 +50,7 @@ class Order extends Model
         'payment_slip_path',
         'payment_slip_status',
         'is_deleted',
+        'is_regenerated',
     ];
 
     protected $appends = [
@@ -72,6 +73,7 @@ class Order extends Model
         'delivery_status' => 'integer',
         'payment_slip_status' => 'integer',
         'is_deleted' => 'integer',
+        'is_regenerated' => 'boolean',
     ];
 
     public function machinery()
