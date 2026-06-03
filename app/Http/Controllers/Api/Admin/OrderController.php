@@ -644,6 +644,13 @@ class OrderController extends Controller
                 ], 404);
             }
 
+            if (!((int)$order->delivery_status >= 3 && (int)$order->delivery_status <= 8)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invoice can only be resent when order status is between Settle Payment and Delivered.',
+                ], 400);
+            }
+
             if (!$order->user) {
                 return response()->json([
                     'success' => false,
