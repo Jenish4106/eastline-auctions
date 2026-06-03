@@ -696,8 +696,12 @@ class BiddingController extends Controller
                         ->first();
 
                     if (!$existingOrder) {
+                        do {
+                            $orderId = 'ORD-' . strtoupper(Str::random(10));
+                        } while (Order::where('order_id', $orderId)->exists());
+
                         $existingOrder = Order::create([
-                            'order_id' => 'ORD-' . strtoupper(Str::random(10)),
+                            'order_id' => $orderId,
                             'machinery_id' => $machinery->id,
                             'user_id' => $machinery->wonUser->id,
                             'type' => 2,

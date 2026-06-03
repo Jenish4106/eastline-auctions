@@ -621,7 +621,7 @@ class OrderController extends Controller
     public function resendInvoiceEmail(Request $request)
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-            'order_id' => 'required|exists:orders,id',
+            'order_id' => 'required|exists:orders,order_id',
         ]);
 
         if ($validator->fails()) {
@@ -633,7 +633,9 @@ class OrderController extends Controller
 
         try {
             $orderIdInput = $request->input('order_id');
-            $order = Order::with(['user', 'machinery', 'invoice'])->find($orderIdInput);
+            $order = Order::with(['user', 'machinery', 'invoice'])
+                ->where('order_id', $orderIdInput)
+                ->first();
 
             if (!$order) {
                 return response()->json([

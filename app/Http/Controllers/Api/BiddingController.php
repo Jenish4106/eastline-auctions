@@ -711,8 +711,12 @@ class BiddingController extends Controller
                     'shipping_country' => $isShippingDifferent ? ($shipping['shipping_country'] ?? null) : null,
                 ]);
             } else {
+                do {
+                    $orderId = 'ORD-' . strtoupper(Str::random(10));
+                } while (Order::where('order_id', $orderId)->exists());
+
                 $order = Order::create([
-                    'order_id' => 'ORD-' . strtoupper(Str::random(10)),
+                    'order_id' => $orderId,
                     'machinery_id' => $machineryId,
                     'user_id' => $user->id,
                     'type' => 2,
@@ -1098,8 +1102,12 @@ class BiddingController extends Controller
                 ], 400);
             }
 
+            do {
+                $orderId = 'ORD-' . strtoupper(Str::random(10));
+            } while (Order::where('order_id', $orderId)->exists());
+
             $order = Order::create([
-                'order_id' => 'ORD-' . strtoupper(Str::random(10)),
+                'order_id' => $orderId,
                 'machinery_id' => $machinery->id,
                 'user_id' => $user->id,
                 'type' => 1,
