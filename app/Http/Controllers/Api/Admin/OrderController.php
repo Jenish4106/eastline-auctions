@@ -523,7 +523,7 @@ class OrderController extends Controller
                 $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
                 if (File::exists(public_path($imagePathRel))) {
                     $machineryImage = $this->imageToBase64(public_path($imagePathRel));
-                    $machineryImageUrl = asset($imagePathRel);
+                    $machineryImageUrl = asset('public/' . ltrim($imagePathRel, '/'));
                 }
             }
 
@@ -537,7 +537,7 @@ class OrderController extends Controller
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
                     'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,
-                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,
+                    'logoUrl' => $companyLogo ? asset('public/' . ltrim($companyLogo, '/')) : null,
                     'bank_name' => Settings::get('bank_name'),
                     'beneficiary_name' => Settings::get('beneficiary_name'),
                     'beneficiary_address' => Settings::get('beneficiary_address'),
@@ -583,7 +583,7 @@ class OrderController extends Controller
                 $order->save();
             }
 
-            $cacheBustedUrl = asset($invoicePath) . '?t=' . time();
+            $cacheBustedUrl = asset('public/' . ltrim($invoicePath, '/')) . '?t=' . time();
 
             return response()->json([
                 'success' => true,

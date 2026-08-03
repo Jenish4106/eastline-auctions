@@ -12,7 +12,7 @@ class SettingsController extends Controller
      * Get settings by keys without authentication - key-wise data retrieval
      * If no keys provided, returns all settings
      * If keys provided, returns only those specific settings
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */

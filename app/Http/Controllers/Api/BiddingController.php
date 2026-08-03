@@ -808,7 +808,7 @@ class BiddingController extends Controller
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
                     'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,
-                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,
+                    'logoUrl' => $companyLogo ? asset('public/' . ltrim($companyLogo, '/')) : null,
                     'signature_path' => File::exists(public_path('uploads/signatures/seller_signature.png')) ? $this->imageToBase64(public_path('uploads/signatures/seller_signature.png')) : null,  // For PDF
                 ],
                 'contractDate' => now()->format('Y-m-d'),
@@ -850,7 +850,7 @@ class BiddingController extends Controller
                 $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
                 if (File::exists(public_path($imagePathRel))) {
                     $machineryImage = $this->imageToBase64(public_path($imagePathRel));
-                    $machineryImageUrl = asset($imagePathRel);
+                    $machineryImageUrl = asset('public/' . ltrim($imagePathRel, '/'));
                 }
             }
 
@@ -870,8 +870,8 @@ class BiddingController extends Controller
                 'message' => 'Contract signed and PDF generated successfully',
                 'data' => [
                     'contract_file_id' => $fileManager->id,
-                    'contract_file_path' => asset($pdfPath),
-                    'signature_path' => asset($signaturePath),
+                    'contract_file_path' => asset('public/' . ltrim($pdfPath, '/')),
+                    'signature_path' => asset('public/' . ltrim($signaturePath, '/')),
                     'machinery_id' => $machineryId,
                 ]
             ], 200);
@@ -1266,7 +1266,7 @@ class BiddingController extends Controller
                 'success' => true,
                 'message' => 'Payment slip uploaded successfully.',
                 'data' => [
-                    'payment_slip_url' => asset($order->payment_slip_path),
+                    'payment_slip_url' => asset('public/' . ltrim($order->payment_slip_path, '/')),
                     'status' => 'Pending',
                     'status_code' => 0
                 ]

@@ -71,6 +71,6 @@ class Settings extends Model
             return $default;
         }
         
-        return asset($logoPath);
+        return asset('public/' . ltrim($logoPath, '/'));
     }
 }

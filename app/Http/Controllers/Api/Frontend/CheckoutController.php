@@ -168,7 +168,7 @@ class CheckoutController extends Controller
                 $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
                 if (File::exists(public_path($imagePathRel))) {
                     $machineryImage = $this->imageToBase64(public_path($imagePathRel));
-                    $machineryImageUrl = asset($imagePathRel);
+                    $machineryImageUrl = asset('public/' . ltrim($imagePathRel, '/'));
                 }
             }
 
@@ -188,7 +188,7 @@ class CheckoutController extends Controller
                     'routing_number' => $companyRoutingNumber,
                     'branch_address' => $companyBranchAddress,
                     'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,  // For PDF
-                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,  // For Frontend
+                    'logoUrl' => $companyLogo ? asset('public/' . ltrim($companyLogo, '/')) : null,  // For Frontend
                 ]
             ];
 
@@ -280,7 +280,7 @@ class CheckoutController extends Controller
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
                     'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,  // For PDF
-                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,
+                    'logoUrl' => $companyLogo ? asset('public/' . ltrim($companyLogo, '/')) : null,
                     'signature_path' => File::exists(public_path('uploads/signatures/seller_signature.png')) ? $this->imageToBase64(public_path('uploads/signatures/seller_signature.png')) : null,  // For PDF
                 ],
                 'contractDate' => now()->format('Y-m-d'),
@@ -344,8 +344,8 @@ class CheckoutController extends Controller
                 'message' => 'Checkout successful',
                 'data' => [
                     'order_id' => $order->order_id,
-                    'invoice_url' => asset($path),
-                    'contract_url' => asset($finalContractPath),
+                    'invoice_url' => asset('public/' . ltrim($path, '/')),
+                    'contract_url' => asset('public/' . ltrim($finalContractPath, '/')),
                     'user_email' => $user->email,
                     'shipping_address' => [
                         'street' => $order->shipping_same_as_billing ? $order->billing_street : $order->shipping_street,
@@ -481,11 +481,11 @@ class CheckoutController extends Controller
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
                     'logo' => null,
-                    'logoUrl' => $companyLogo ? asset($companyLogo) : null,
+                    'logoUrl' => $companyLogo ? asset('public/' . ltrim($companyLogo, '/')) : null,
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];
-            
+
             $is_bid = $request->input('is_bid', false);
 
             if (empty($is_bid) || $is_bid == false) {

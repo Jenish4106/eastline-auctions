@@ -103,26 +103,33 @@ class Order extends Model
 
     public function getInvoiceUrlAttribute()
     {
-        $invoice = $this->invoice;
+        $invoice = MachineryFileManager::where('order_id', $this->id)
+            ->where('type', 'invoice')
+            ->first();
+
         if ($invoice) {
             $path = public_path($invoice->image_path);
             if (file_exists($path)) {
-                return asset($invoice->image_path) . '?t=' . filemtime($path);
+                return asset('public/' . ltrim($invoice->image_path, '/')) . '?t=' . filemtime($path);
             }
-            return asset($invoice->image_path);
+            return asset('public/' . ltrim($invoice->image_path, '/'));
         }
+
         return null;
     }
 
     public function getContractUrlAttribute()
     {
-        $contract = $this->contract;
-        return $contract ? asset($contract->image_path) : null;
+        $contract = MachineryFileManager::where('order_id', $this->id)
+            ->where('type', 'contract')
+            ->first();
+
+        return $contract ? asset('public/' . ltrim($contract->image_path, '/')) : null;
     }
 
     public function getPaymentSlipUrlAttribute()
     {
-        return $this->payment_slip_path ? asset($this->payment_slip_path) : null;
+        return $this->payment_slip_path ? asset('public/' . ltrim($this->payment_slip_path, '/')) : null;
     }
 
     public function getPaymentSlipStatusTextAttribute()

@@ -53,7 +53,7 @@ class UserDashboardController extends Controller
                             ->first();
                         
                         if ($invoiceFile) {
-                            $pdfUrl = asset($invoiceFile->image_path);
+                            $pdfUrl = asset('public/' . ltrim($invoiceFile->image_path, '/'));
                         }
                     }
                 }
