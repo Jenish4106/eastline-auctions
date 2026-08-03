@@ -9,9 +9,9 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('app:extend-expired-auctions')
-    ->everyTenMinutes()
+    ->everyMinute()
     ->appendOutputTo(storage_path('logs/ExpireTime.log'));
 
 Schedule::command('app:check-bid-end-time')
-    ->everyTenMinutes()
+    ->everyMinute()
     ->appendOutputTo(storage_path('logs/checkBidEndTime.log'));
