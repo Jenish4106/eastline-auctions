@@ -13,7 +13,7 @@ use App\Models\Order;
 use App\Models\Settings;
 use App\Models\User;
 use App\Services\GoogleMapsService;
-use App\Services\SMTP2GOService;
+use App\Services\PostmarkService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -122,9 +122,9 @@ class BiddingController extends Controller
             if ($isWon) {
                 try {
                     $mail = new SendContractMail($user, $machinery, null);
-                    $smtp2goService = new SMTP2GOService();
+                    $postmarkService = new PostmarkService();
                     $htmlContent = $mail->renderHtmlContent();
-                    $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+                    $postmarkService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
                 } catch (\Exception $e) {
                     return response()->json([
                         'success' => true,
@@ -134,9 +134,9 @@ class BiddingController extends Controller
             } else {
                 try {
                     $mail = new BiddingMail($user, $machinery, $request->amount);
-                    $smtp2goService = new SMTP2GOService();
+                    $postmarkService = new PostmarkService();
                     $htmlContent = $mail->renderHtmlContent();
-                    $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+                    $postmarkService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
                 } catch (\Exception $e) {
                     return response()->json([
                         'success' => true,
@@ -150,9 +150,9 @@ class BiddingController extends Controller
                     $previousBidder = User::find($previousHighestBid->user_id);
                     if ($previousBidder) {
                         $outbidMail = new OutbidMail($previousBidder, $machinery, $request->amount);
-                        $smtp2goService = new SMTP2GOService();
-                        $htmlContent = $outbidMail->renderHtmlContent();
-                        $smtp2goService->sendEmail($previousBidder->email, $outbidMail->getSubject(), $htmlContent);
+                        $postmarkService = new PostmarkService();
+                        $mailContent = $outbidMail->renderHtmlContent();
+                        $postmarkService->sendEmail($previousBidder->email, $outbidMail->getSubject(), $mailContent);
                     }
                 } catch (\Exception $e) {
                     return response()->json([
@@ -1157,9 +1157,9 @@ class BiddingController extends Controller
 
             try {
                 $mail = new BuyNowOrderMail($user, $order, $machinery);
-                $smtp2goService = new SMTP2GOService();
+                $postmarkService = new PostmarkService();
                 $htmlContent = $mail->renderHtmlContent();
-                $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+                $postmarkService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
             } catch (\Exception $e) {
                 return response()->json([
                     'success' => false,

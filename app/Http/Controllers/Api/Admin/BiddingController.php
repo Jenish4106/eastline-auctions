@@ -12,7 +12,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use App\Services\SMTP2GOService;
+use App\Services\PostmarkService;
 use Illuminate\Support\Facades\View;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
@@ -799,8 +799,8 @@ class BiddingController extends Controller
                             ];
                         }
                         
-                        $smtp2goService = new SMTP2GOService();
-                        $smtp2goService->sendEmail(
+                        $postmarkService = new PostmarkService();
+                        $postmarkService->sendEmail(
                             $user->email, 
                             'Contract Approved - ' . $machineryName, 
                             $htmlContent, 
@@ -838,8 +838,8 @@ class BiddingController extends Controller
                             'machineryName' => $machineryName
                         ])->render();
                         
-                        $smtp2goService = new SMTP2GOService();
-                        $smtp2goService->sendEmail(
+                        $postmarkService = new PostmarkService();
+                        $postmarkService->sendEmail(
                             $user->email, 
                             'Contract Rejected - ' . $machineryName, 
                             $htmlContent,

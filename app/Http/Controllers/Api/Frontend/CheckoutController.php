@@ -12,7 +12,7 @@ use App\Models\Order;
 use App\Models\Settings;
 use App\Models\User;
 use App\Services\GoogleMapsService;
-use App\Services\SMTP2GOService;
+use App\Services\PostmarkService;
 use App\Services\TwilioSmsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -314,7 +314,7 @@ class CheckoutController extends Controller
 
             try {
                 $mail = new BuyNowOrderMail($winningUser, $order, $machinery);
-                $smtp2goService = new SMTP2GOService();
+                $postmarkService = new PostmarkService();
                 $htmlContent = $mail->renderHtmlContent();
 
                 $attachments = [];
@@ -326,7 +326,7 @@ class CheckoutController extends Controller
                     ];
                 }
 
-                $smtp2goService->sendEmail($winningUser->email, $mail->getSubject(), $htmlContent, $attachments);
+                $emailSent = $postmarkService->sendEmail($winningUser->email, $mail->getSubject(), $htmlContent, $attachments);
             } catch (\Exception $e) {
                 return response()->json([
                     'success' => false,
@@ -532,7 +532,7 @@ class CheckoutController extends Controller
         }
 
         $bidders = User::whereIn('id', $bidderIds)->get();
-        $smtp2goService = new SMTP2GOService();
+        $postmarkService = new PostmarkService();
 
         foreach ($bidders as $bidder) {
             if (empty($bidder->email)) {
@@ -541,7 +541,7 @@ class CheckoutController extends Controller
 
             try {
                 $mail = new AuctionCancelledMail($bidder, $machinery, $purchaser);
-                $smtp2goService->sendEmail(
+                $postmarkService->sendEmail(
                     $bidder->email,
                     $mail->getSubject(),
                     $mail->renderHtmlContent()

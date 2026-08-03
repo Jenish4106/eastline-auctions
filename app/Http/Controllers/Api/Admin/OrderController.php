@@ -7,7 +7,7 @@ use App\Mail\ResendInvoiceMail;
 use App\Models\Order;
 use App\Models\Settings;
 use App\Models\MachineryFileManager;
-use App\Services\SMTP2GOService;
+use App\Services\PostmarkService;
 use App\Services\TwilioSmsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -248,9 +248,8 @@ class OrderController extends Controller
                         $request->status
                     );
 
-                    $smtp2goService = new SMTP2GOService();
+                    $postmarkService = new PostmarkService();
                     $htmlContent = $mail->renderHtmlContent();
-
                     $attachments = [];
 
                     if ($request->status == 1) {
@@ -273,12 +272,7 @@ class OrderController extends Controller
                         }
                     }
 
-                    $smtp2goService->sendEmail(
-                        $order->user->email,
-                        $mail->getSubject(),
-                        $htmlContent,
-                        $attachments
-                    );
+                    $postmarkService->sendEmail($order->user->email, $mail->getSubject(), $htmlContent, $attachments);
                 } catch (\Exception $e) {
                     return response()->json([
                         'success' => false,
@@ -368,17 +362,11 @@ class OrderController extends Controller
                             4
                         );
 
-                        $smtp2goService = new SMTP2GOService();
+                        $postmarkService = new PostmarkService();
                         $htmlContent = $mail->renderHtmlContent();
-
                         $attachments = [];
 
-                        $smtp2goService->sendEmail(
-                            $order->user->email,
-                            $mail->getSubject(),
-                            $htmlContent,
-                            $attachments
-                        );
+                        $postmarkService->sendEmail($order->user->email, $mail->getSubject(), $htmlContent, $attachments);
                     } catch (\Exception $e) {
                         return response()->json([
                             'success' => false,
@@ -679,7 +667,7 @@ class OrderController extends Controller
                 $order->machinery
             );
 
-            $smtp2goService = new SMTP2GOService();
+            $postmarkService = new PostmarkService();
             $htmlContent = $mail->renderHtmlContent();
 
             $attachments = [
@@ -690,7 +678,7 @@ class OrderController extends Controller
                 ]
             ];
 
-            $smtp2goService->sendEmail(
+            $postmarkService->sendEmail(
                 $order->user->email,
                 $mail->getSubject(),
                 $htmlContent,

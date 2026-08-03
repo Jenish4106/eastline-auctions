@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
-use App\Services\SMTP2GOService;
+use App\Services\PostmarkService;
 
 class ForgotPasswordController extends Controller
 {
@@ -45,9 +45,9 @@ class ForgotPasswordController extends Controller
             ]);
 
             $mail = new SendOtpMail($otp, $request->email);
-            $smtp2goService = new SMTP2GOService();
+            $postmarkService = new PostmarkService();
             $htmlContent = $mail->renderHtmlContent();
-            $result = $smtp2goService->sendEmail($request->email, $mail->getSubject(), $htmlContent);
+            $result = $postmarkService->sendEmail($request->email, $mail->getSubject(), $htmlContent);
 
             if (!$result) {
                 return response()->json([
@@ -168,9 +168,9 @@ class ForgotPasswordController extends Controller
 
             try {
                 $mail = new PasswordResetConfirmationMail($user);
-                $smtp2goService = new SMTP2GOService();
+                $postmarkService = new PostmarkService();
                 $htmlContent = $mail->renderHtmlContent();
-                $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+                $result = $postmarkService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
             } catch (\Exception $e) {
                 return response()->json([
                     'status' => true,

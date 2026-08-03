@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use App\Mail\ContactMail;
-use App\Services\SMTP2GOService;
+use App\Services\PostmarkService;
 
 class ContactController extends Controller
 {
@@ -46,9 +46,9 @@ class ContactController extends Controller
                 $request->message
             );
 
-            $smtp2goService = new SMTP2GOService();
+            $postmarkService = new PostmarkService();
             $htmlContent = $mail->renderHtmlContent();
-            $result = $smtp2goService->sendEmail($adminEmail, $mail->getSubject(), $htmlContent);
+            $result = $postmarkService->sendEmail($adminEmail, $mail->getSubject(), $htmlContent);
 
             if ($result) {
                 return response()->json([

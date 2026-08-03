@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Models\License;
 use App\Mail\LicenseApprovedMail;
 use App\Mail\LicenseDeclinedMail;
-use App\Services\SMTP2GOService;
+use App\Services\PostmarkService;
 use App\Services\TwilioSmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -486,9 +486,9 @@ class UserController extends Controller
                 
                 try {
                     $mail = new LicenseApprovedMail($user);
-                    $smtp2goService = new SMTP2GOService();
+                    $postmarkService = new PostmarkService();
                     $htmlContent = $mail->renderHtmlContent();
-                    $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+                    $postmarkService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
                 } catch (\Exception $e) {
                     return response()->json([
                         'status'  => true,
@@ -503,9 +503,9 @@ class UserController extends Controller
                 
                 try {
                     $mail = new LicenseDeclinedMail($user);
-                    $smtp2goService = new SMTP2GOService();
+                    $postmarkService = new PostmarkService();
                     $htmlContent = $mail->renderHtmlContent();
-                    $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+                    $postmarkService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
                 } catch (\Exception $e) {
                     return response()->json([
                         'status'  => true,

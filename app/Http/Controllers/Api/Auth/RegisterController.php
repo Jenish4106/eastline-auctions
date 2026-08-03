@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Mail\RegistrationMail;
-use App\Services\SMTP2GOService;
+use App\Services\PostmarkService;
 use App\Services\TwilioSmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -66,9 +66,9 @@ class RegisterController extends Controller
 
             try {
                 $mail = new RegistrationMail($user);
-                $smtp2goService = new SMTP2GOService();
+                $postmarkService = new PostmarkService();
                 $htmlContent = $mail->renderHtmlContent();
-                $smtp2goService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+                $result = $postmarkService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
             } catch (\Exception $e) {
                 return response()->json([
                     'success' => true,

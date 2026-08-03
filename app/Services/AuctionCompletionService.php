@@ -54,9 +54,9 @@ class AuctionCompletionService
                 //Email
                 if ($sendWinnerEmail) {
                     $mail = new SendContractMail($winner, $machinery->fresh(), null);
-                    $smtp2goService = new SMTP2GOService();
+                    $postmarkService = new \App\Services\PostmarkService();
                     $htmlContent = $mail->renderHtmlContent();
-                    $emailSent = $smtp2goService->sendEmail($winner->email, $mail->getSubject(), $htmlContent);
+                    $emailSent = $postmarkService->sendEmail($winner->email, $mail->getSubject(), $htmlContent);
                 }
 
                 //Sms
