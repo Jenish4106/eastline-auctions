@@ -100,8 +100,7 @@ class MachineryController extends Controller
                 if ($images->count() > 0) {
                     $item->image_urls = $images->map(function ($image) {
                         $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                        $apiPublicImagePath = base_path('api/public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                        if (file_exists($machineryImagePath) || file_exists($apiPublicImagePath)) {
+                        if (file_exists($machineryImagePath)) {
                             return asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
                         } else {
                             return asset('public/uploads/defaults/default-machine.png');
@@ -118,8 +117,7 @@ class MachineryController extends Controller
                 if ($videos->count() > 0) {
                     $item->video_urls = $videos->map(function ($video) {
                         $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                        $apiPublicVideoPath = base_path('api/public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                        if (file_exists($machineryVideoPath) || file_exists($apiPublicVideoPath)) {
+                        if (file_exists($machineryVideoPath)) {
                             return asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                         } else {
                             return asset('public/uploads/defaults/default-machine.mp4');
@@ -184,8 +182,7 @@ class MachineryController extends Controller
             if ($images->count() > 0) {
                 $machinery->image_urls = $images->map(function ($image) {
                     $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                    $apiPublicImagePath = base_path('api/public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                    if (file_exists($machineryImagePath) || file_exists($apiPublicImagePath)) {
+                    if (file_exists($machineryImagePath)) {
                         return asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
                     } else {
                         return asset('public/uploads/defaults/default-machine.png');
@@ -202,8 +199,7 @@ class MachineryController extends Controller
             if ($videos->count() > 0) {
                 $machinery->video_urls = $videos->map(function ($video) {
                     $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                    $apiPublicVideoPath = base_path('api/public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                    if (file_exists($machineryVideoPath) || file_exists($apiPublicVideoPath)) {
+                    if (file_exists($machineryVideoPath)) {
                         return asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                     } else {
                         return asset('public/uploads/defaults/default-machine.mp4');

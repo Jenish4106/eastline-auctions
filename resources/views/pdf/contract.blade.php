@@ -367,7 +367,7 @@
                 @if(isset($absoluteSignaturePath) && !empty($absoluteSignaturePath))
                     <img src="{{ $absoluteSignaturePath }}" class="signature-img">
                 @elseif(isset($signaturePath) && !empty($signaturePath))
-                    <img src="{{ Str::startsWith($signaturePath, 'http') ? $signaturePath : asset($signaturePath) }}" class="signature-img">
+                    <img src="{{ Str::startsWith($signaturePath, 'http') ? $signaturePath : asset('public/' . ltrim($signaturePath, '/')) }}" class="signature-img">
                 @else
                     <span class="signature-name">{{ $user->first_name }} {{ $user->last_name }}</span>
                 @endif
@@ -380,7 +380,7 @@
                 @if(isset($companyInfo['signature_path']) && !empty($companyInfo['signature_path']))
                     <img src="{{ $companyInfo['signature_path'] }}" class="signature-img">
                 @else
-                    <img src="{{ asset('uploads/signatures/seller_signature.png') }}" class="signature-img">
+                    <img src="{{ asset('public/uploads/signatures/seller_signature.png') }}" class="signature-img">
                 @endif
             </div>
         </div>

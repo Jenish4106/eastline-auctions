@@ -217,7 +217,8 @@ class BiddingController extends Controller
                         ->orWhere('bid_end_time', 'LIKE', "%{$search}%");
 
                     if (stripos('completed', $search) !== false || stripos('sold', $search) !== false) {
-                        $q->orWhere('bid_status', 'sold')
+                        $q
+                            ->orWhere('bid_status', 'sold')
                             ->orWhere('bid_status', '3')
                             ->orWhereNotNull('won_user');
                     }
@@ -260,8 +261,7 @@ class BiddingController extends Controller
                 $firstImageUrl = asset('public/uploads/defaults/default-machine.png');
                 if ($firstImageObj) {
                     $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
-                    $path2 = base_path('api/public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
-                    if (file_exists($path1) || file_exists($path2)) {
+                    if (file_exists($path1)) {
                         $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
                     }
                 }
@@ -369,8 +369,7 @@ class BiddingController extends Controller
             $firstImageUrl = asset('public/uploads/defaults/default-machine.png');
             if ($firstImageObj) {
                 $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
-                $path2 = base_path('api/public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
-                if (file_exists($path1) || file_exists($path2)) {
+                if (file_exists($path1)) {
                     $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
                 }
             }
@@ -495,8 +494,7 @@ class BiddingController extends Controller
                 $firstImageUrl = asset('public/uploads/defaults/default-machine.png');
                 if ($firstImageObj) {
                     $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
-                    $path2 = base_path('api/public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
-                    if (file_exists($path1) || file_exists($path2)) {
+                    if (file_exists($path1)) {
                         $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
                     }
                 }
@@ -899,8 +897,7 @@ class BiddingController extends Controller
                 $firstImageUrl = asset('public/uploads/defaults/default-machine.png');
                 if ($firstImageObj) {
                     $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
-                    $path2 = base_path('api/public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
-                    if (file_exists($path1) || file_exists($path2)) {
+                    if (file_exists($path1)) {
                         $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
                     }
                 }
@@ -1286,6 +1283,7 @@ class BiddingController extends Controller
             $data = file_get_contents($path);
             return 'data:image/' . $type . ';base64,' . base64_encode($data);
         }
+
         return null;
     }
 }

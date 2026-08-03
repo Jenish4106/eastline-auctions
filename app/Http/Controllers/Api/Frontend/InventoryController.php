@@ -20,8 +20,7 @@ class InventoryController extends Controller
                     $imageUrls = [];
                     foreach ($imageArray as $filename) {
                         $categoryImagePath = public_path('uploads/category/images/' . $filename);
-                        $apiPublicImagePath = base_path('api/public/uploads/category/images/' . $filename);
-                        if (file_exists($categoryImagePath) || file_exists($apiPublicImagePath)) {
+                        if (file_exists($categoryImagePath)) {
                             $imageUrls[] = asset('public/uploads/category/images/' . $filename);
                         } else {
                             $imageUrls[] = asset('public/uploads/defaults/default-machine.png');
@@ -30,8 +29,7 @@ class InventoryController extends Controller
                     $category->image_url = !empty($imageUrls) ? $imageUrls[0] : asset('public/uploads/defaults/default-machine.png');
                 } else {
                     $categoryImagePath = public_path('uploads/category/images/' . $category->image);
-                    $apiPublicImagePath = base_path('api/public/uploads/category/images/' . $category->image);
-                    if (file_exists($categoryImagePath) || file_exists($apiPublicImagePath)) {
+                    if (file_exists($categoryImagePath)) {
                         $category->image_url = asset('public/uploads/category/images/' . $category->image);
                     } else {
                         $category->image_url = asset('public/uploads/defaults/default-machine.png');
@@ -202,8 +200,7 @@ class InventoryController extends Controller
                 $firstImage = $machineryImages->first();
                 if ($firstImage && $firstImage->type === 'image') {
                     $machineryImagePath = public_path('uploads/machinery/images/' . $firstImage->image_path);
-                    $apiPublicImagePath = base_path('api/public/uploads/machinery/images/' . $firstImage->image_path);
-                    if (file_exists($machineryImagePath) || file_exists($apiPublicImagePath)) {
+                    if (file_exists($machineryImagePath)) {
                         $machinery->first_image_url = asset('public/uploads/machinery/images/' . $firstImage->image_path);
                     } else {
                         $machinery->first_image_url = asset('public/uploads/defaults/default-machine.png');
@@ -297,16 +294,14 @@ class InventoryController extends Controller
             $machinery->images = $machinery->images->map(function ($image) {
                 if ($image->type === 'video') {
                     $machineryFilePath = public_path('uploads/machinery/videos/' . $image->image_path);
-                    $apiPublicFilePath = base_path('api/public/uploads/machinery/videos/' . $image->image_path);
-                    if (file_exists($machineryFilePath) || file_exists($apiPublicFilePath)) {
+                    if (file_exists($machineryFilePath)) {
                         $image->full_url = asset('public/uploads/machinery/videos/' . $image->image_path);
                     } else {
                         $image->full_url = asset('public/uploads/defaults/default-machine.mp4');
                     }
                 } else {
                     $machineryFilePath = public_path('uploads/machinery/images/' . $image->image_path);
-                    $apiPublicFilePath = base_path('api/public/uploads/machinery/images/' . $image->image_path);
-                    if (file_exists($machineryFilePath) || file_exists($apiPublicFilePath)) {
+                    if (file_exists($machineryFilePath)) {
                         $image->full_url = asset('public/uploads/machinery/images/' . $image->image_path);
                     } else {
                         $image->full_url = asset('public/uploads/defaults/default-machine.png');
