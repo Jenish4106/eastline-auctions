@@ -45,7 +45,7 @@ class FeedController extends Controller
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
 
-            $frontendUrl = 'https://stiopa-equipment.com';
+            $frontendUrl = 'https://eastline-auctions.com';
             $frontendUrl = rtrim($frontendUrl, '/');
 
             foreach ($machineries as $machinery) {
@@ -54,7 +54,7 @@ class FeedController extends Controller
                 $firstImageUrl = '';
                 $firstImage = $machinery->images->first();
                 if ($firstImage && $firstImage->type === 'image') {
-                    $firstImageUrl = asset('uploads/machinery/images/' . $firstImage->image_path);
+                    $firstImageUrl = asset('public/uploads/machinery/images/' . $firstImage->image_path);
                 }
 
                 $year = $machinery->year ?? '';
@@ -80,42 +80,32 @@ class FeedController extends Controller
                 $description = preg_replace('/\s+/', ' ', $description);
                 $description = trim($description);
 
-                $condition = strtolower($machinery->condition);
+                if (empty($description)) {
+                    $description = $title;
+                }
 
-                $categorySlug = \Illuminate\Support\Str::slug($categoryName);
-                $makeSlug = \Illuminate\Support\Str::slug($make);
-                $modelSlug = \Illuminate\Support\Str::slug($model);
+                $machineryUrl = $frontendUrl . '/equipment/' . $machinery->id;
 
-                $pathSegments = array_filter([
-                    'inventory',
-                    $categorySlug,
-                    $makeSlug,
-                    $modelSlug,
-                    $machinery->auction_id
-                ]);
-                $link = $frontendUrl . '/' . implode('/', $pathSegments);
-
-                $row = [
+                fputcsv($file, [
                     $machinery->id,
                     $title,
                     $description,
                     $availability,
-                    $condition,
+                    $machinery->condition ?? 'used',
                     $price,
-                    $link,
+                    $machineryUrl,
                     $firstImageUrl,
                     $make,
                     $productType,
                     $categoryName,
                     $customLabel1,
                     $year
-                ];
-
-                fputcsv($file, $row);
+                ]);
             }
+
             fclose($file);
         };
 
-        return response()->stream($callback, 200, $headers);
+        return Response::stream($callback, 200, $headers);
     }
 }

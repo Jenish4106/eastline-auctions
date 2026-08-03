@@ -77,7 +77,7 @@ class UploadController extends Controller
                 $imageName = time() . '_' . Str::random(10) . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
                 $image->move($destinationPath, $imageName);
                 
-                $imageUrl = asset('uploads/' . $type . '/images/' . $imageName);
+                $imageUrl = asset('public/uploads/' . $type . '/images/' . $imageName);
                 
                 $uploadedImages[] = [
                     'filename' => $imageName,
@@ -200,7 +200,7 @@ class UploadController extends Controller
 
                 $video->move($destinationPath, $videoName);
 
-                $videoUrl = asset('uploads/' . $type . '/videos/' . $videoName);
+                $videoUrl = asset('public/uploads/' . $type . '/videos/' . $videoName);
 
                 $uploadedVideos[] = [
                     'original_name' => $originalName,

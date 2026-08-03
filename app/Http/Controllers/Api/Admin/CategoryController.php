@@ -60,23 +60,23 @@ class CategoryController extends Controller
                     if (is_array($imageArray)) {
                         $imageUrls = [];
                         foreach ($imageArray as $filename) {
-
                             $categoryImagePath = public_path('uploads/category/images/' . $filename);
-                            if (file_exists($categoryImagePath)) {
-                                $imageUrls[] = asset('uploads/category/images/' . $filename);
+                            $apiPublicImagePath = base_path('api/public/uploads/category/images/' . $filename);
+                            if (file_exists($categoryImagePath) || file_exists($apiPublicImagePath)) {
+                                $imageUrls[] = asset('public/uploads/category/images/' . $filename);
                             } else {
-                                $imageUrls[] = null;
+                                $imageUrls[] = asset('public/uploads/category/images/' . $filename);
                             }
                         }
 
                         $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
                     } else {
-                        
                         $categoryImagePath = public_path('uploads/category/images/' . $category->image);
-                        if (file_exists($categoryImagePath)) {
-                            $category->image_urls = [asset('uploads/category/images/' . $category->image)];
+                        $apiPublicImagePath = base_path('api/public/uploads/category/images/' . $category->image);
+                        if (file_exists($categoryImagePath) || file_exists($apiPublicImagePath)) {
+                            $category->image_urls = [asset('public/uploads/category/images/' . $category->image)];
                         } else {
-                            $category->image_urls = [null];
+                            $category->image_urls = [asset('public/uploads/category/images/' . $category->image)];
                         }
 
                         $category->image_urls = collect($category->image_urls)->filter()->values()->toArray();
@@ -138,22 +138,11 @@ class CategoryController extends Controller
                 if (is_array($imageArray)) {
                     $imageUrls = [];
                     foreach ($imageArray as $filename) {
-                        $categoryImagePath = public_path('uploads/category/images/' . $filename);
-                        if (file_exists($categoryImagePath)) {
-                            $imageUrls[] = asset('uploads/category/images/' . $filename);
-                        } else {
-                            $imageUrls[] = null;
-                        }
+                        $imageUrls[] = asset('public/uploads/category/images/' . $filename);
                     }
                     $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
                 } else {
-                    $categoryImagePath = public_path('uploads/category/images/' . $category->image);
-                    if (file_exists($categoryImagePath)) {
-                        $category->image_urls = [asset('uploads/category/images/' . $category->image)];
-                    } else {
-                        $category->image_urls = [null];
-                    }
-                    $category->image_urls = collect($category->image_urls)->filter()->values()->toArray();
+                    $category->image_urls = [asset('public/uploads/category/images/' . $category->image)];
                 }
             } else {
                 $category->image_urls = [];
@@ -219,12 +208,7 @@ class CategoryController extends Controller
             
             $imageUrls = [];
             foreach ($filenames as $filename) {
-                $categoryImagePath = public_path('uploads/category/images/' . $filename);
-                if (file_exists($categoryImagePath)) {
-                    $imageUrls[] = asset('uploads/category/images/' . $filename);
-                } else {
-                    $imageUrls[] = null;
-                }
+                $imageUrls[] = asset('public/uploads/category/images/' . $filename);
             }
             $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
             unset($category->image);
@@ -238,6 +222,7 @@ class CategoryController extends Controller
             return response()->json([
                 'status'  => false,
                 'message' => 'Something went wrong, please try again.',
+                'error'   => $e->getMessage()
             ], 500);
         }
     }
@@ -291,11 +276,13 @@ class CategoryController extends Controller
                 foreach ($existingImages as $existingImage) {
                     $existingFilename = is_string($existingImage) ? basename(parse_url($existingImage, PHP_URL_PATH)) : null;
                     if ($existingFilename && !in_array($existingFilename, $incomingFilenames)) {
-
                         $categoryImagePath = public_path('uploads/category/images/' . $existingFilename);
+                        $apiPublicImagePath = base_path('api/public/uploads/category/images/' . $existingFilename);
                         
                         if (file_exists($categoryImagePath)) {
                             unlink($categoryImagePath);
+                        } elseif (file_exists($apiPublicImagePath)) {
+                            unlink($apiPublicImagePath);
                         }
                     }
                 }
@@ -312,12 +299,7 @@ class CategoryController extends Controller
             if ($request->has('image_urls')) {
                 $imageUrls = [];
                 foreach ($filenames as $filename) {
-                    $categoryImagePath = public_path('uploads/category/images/' . $filename);
-                    if (file_exists($categoryImagePath)) {
-                        $imageUrls[] = asset('uploads/category/images/' . $filename);
-                    } else {
-                        $imageUrls[] = null;
-                    }
+                    $imageUrls[] = asset('public/uploads/category/images/' . $filename);
                 }
                 $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
                 unset($category->image);

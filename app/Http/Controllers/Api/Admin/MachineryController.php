@@ -100,9 +100,9 @@ class MachineryController extends Controller
                 $item->image_urls = $images->map(function ($image) {
                     $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
                     if (file_exists($machineryImagePath)) {
-                        return asset('uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                        return asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
                     } else {
-                        return null;
+                        return asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
                     }
                 })->filter()->values()->toArray();
 
@@ -113,9 +113,9 @@ class MachineryController extends Controller
                 $item->video_urls = $videos->map(function ($video) {
                     $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                     if (file_exists($machineryVideoPath)) {
-                        return asset('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                        return asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                     } else {
-                        return null;
+                        return asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                     }
                 })->filter()->values()->toArray();
 
@@ -172,13 +172,7 @@ class MachineryController extends Controller
             });
 
             $machinery->image_urls = $images->map(function ($image) {
-
-                $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                if (file_exists($machineryImagePath)) {
-                    return asset('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                } else {
-                    return null;
-                }
+                return asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
             })->filter()->values()->toArray();
 
             $videos = $machinery->images->filter(function ($file) {
@@ -186,12 +180,7 @@ class MachineryController extends Controller
             });
 
             $machinery->video_urls = $videos->map(function ($video) {
-                $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                if (file_exists($machineryVideoPath)) {
-                    return asset('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                } else {
-                    return null;
-                }
+                return asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
             })->filter()->values()->toArray();
 
             unset($machinery->images);
@@ -319,13 +308,7 @@ class MachineryController extends Controller
             });
 
             $machinery->image_urls = $images->map(function ($image) {
-
-                $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                if (file_exists($machineryImagePath)) {
-                    return asset('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                } else {
-                    return null;
-                }
+                return asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
             })->filter()->values()->toArray();
 
             $videos = $machinery->images->filter(function ($file) {
@@ -333,12 +316,7 @@ class MachineryController extends Controller
             });
 
             $machinery->video_urls = $videos->map(function ($video) {
-                $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                if (file_exists($machineryVideoPath)) {
-                    return asset('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                } else {
-                    return null;
-                }
+                return asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
             })->filter()->values()->toArray();
 
             unset($machinery->images);
@@ -521,12 +499,7 @@ class MachineryController extends Controller
             });
 
             $machinery->image_urls = $images->map(function ($image) {
-                $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                if (file_exists($machineryImagePath)) {
-                    return asset('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                } else {
-                    return null;
-                }
+                return asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
             })->filter()->values()->toArray();
 
             $videos = $machinery->images->filter(function ($file) {
@@ -534,12 +507,7 @@ class MachineryController extends Controller
             });
 
             $machinery->video_urls = $videos->map(function ($video) {
-                $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                if (file_exists($machineryVideoPath)) {
-                    return asset('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                } else {
-                    return null;
-                }
+                return asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
             })->filter()->values()->toArray();
 
             unset($machinery->images);

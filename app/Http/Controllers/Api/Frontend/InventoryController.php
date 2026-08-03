@@ -21,16 +21,18 @@ class InventoryController extends Controller
                     foreach ($imageArray as $filename) {
                         $categoryImagePath = public_path('uploads/category/images/' . $filename);
                         if (file_exists($categoryImagePath)) {
-                            $imageUrls[] = asset('uploads/category/images/' . $filename);
+                            $imageUrls[] = asset('public/uploads/category/images/' . $filename);
+                        } else {
+                            $imageUrls[] = asset('public/uploads/category/images/' . $filename);
                         }
                     }
                     $category->image_url = !empty($imageUrls) ? $imageUrls[0] : null;
                 } else {
                     $categoryImagePath = public_path('uploads/category/images/' . $category->image);
                     if (file_exists($categoryImagePath)) {
-                        $category->image_url = asset('uploads/category/images/' . $category->image);
+                        $category->image_url = asset('public/uploads/category/images/' . $category->image);
                     } else {
-                        $category->image_url = null;
+                        $category->image_url = asset('public/uploads/category/images/' . $category->image);
                     }
                 }
             } else {
@@ -199,9 +201,9 @@ class InventoryController extends Controller
                 if ($firstImage && $firstImage->type === 'image') {
                     $machineryImagePath = public_path('uploads/machinery/images/' . $firstImage->image_path);
                     if (file_exists($machineryImagePath)) {
-                        $machinery->first_image_url = asset('uploads/machinery/images/' . $firstImage->image_path);
+                        $machinery->first_image_url = asset('public/uploads/machinery/images/' . $firstImage->image_path);
                     } else {
-                        $machinery->first_image_url = null;
+                        $machinery->first_image_url = asset('public/uploads/machinery/images/' . $firstImage->image_path);
                     }
                 } else {
                     $machinery->first_image_url = null;
@@ -293,16 +295,16 @@ class InventoryController extends Controller
                 if ($image->type === 'video') {
                     $machineryFilePath = public_path('uploads/machinery/videos/' . $image->image_path);
                     if (file_exists($machineryFilePath)) {
-                        $image->full_url = asset('uploads/machinery/videos/' . $image->image_path);
+                        $image->full_url = asset('public/uploads/machinery/videos/' . $image->image_path);
                     } else {
-                        $image->full_url = null;
+                        $image->full_url = asset('public/uploads/machinery/videos/' . $image->image_path);
                     }
                 } else {
                     $machineryFilePath = public_path('uploads/machinery/images/' . $image->image_path);
                     if (file_exists($machineryFilePath)) {
-                        $image->full_url = asset('uploads/machinery/images/' . $image->image_path);
+                        $image->full_url = asset('public/uploads/machinery/images/' . $image->image_path);
                     } else {
-                        $image->full_url = null;
+                        $image->full_url = asset('public/uploads/machinery/images/' . $image->image_path);
                     }
                 }
                 return $image;
