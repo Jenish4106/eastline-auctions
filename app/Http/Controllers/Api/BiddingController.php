@@ -256,13 +256,21 @@ class BiddingController extends Controller
                     }
                 }
 
-                $firstImage = $machinery->images->firstWhere('type', 'image');
+                $firstImageObj = $machinery->images ? $machinery->images->firstWhere('type', 'image') : null;
+                $firstImageUrl = asset('public/uploads/defaults/default-machine.png');
+                if ($firstImageObj) {
+                    $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                    $path2 = base_path('api/public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                    if (file_exists($path1) || file_exists($path2)) {
+                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                    }
+                }
 
                 return [
                     'id' => $machinery->id,
                     'auction_id' => $machinery->auction_id,
                     'name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
-                    'first_image' => $firstImage ? asset('public/uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
+                    'first_image' => $firstImageUrl,
                     'bid_start_price' => $machinery->bid_start_price,
                     'last_bid' => $lastBid,
                     'bid_end_time' => $machinery->bid_end_time,
@@ -357,7 +365,15 @@ class BiddingController extends Controller
                 }
             }
 
-            $firstImage = $machinery->images->firstWhere('type', 'image');
+            $firstImageObj = $machinery->images->firstWhere('type', 'image');
+            $firstImageUrl = asset('public/uploads/defaults/default-machine.png');
+            if ($firstImageObj) {
+                $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                $path2 = base_path('api/public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                if (file_exists($path1) || file_exists($path2)) {
+                    $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                }
+            }
 
             $machineryDetails = [
                 'auction_id' => $machinery->auction_id,
@@ -368,7 +384,7 @@ class BiddingController extends Controller
                 'my_bid' => $currentUserHighestBid,
                 'user_full_name' => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')),
                 'status' => $status,
-                'first_image' => $firstImage ? asset('public/uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
+                'first_image' => $firstImageUrl,
             ];
 
             $biddingDetails = $bids->map(function ($bid) use ($user) {
@@ -475,7 +491,15 @@ class BiddingController extends Controller
                     ->where('auction_id', $machinery->auction_id)
                     ->max('amount');
 
-                $firstImage = $machinery->images->firstWhere('type', 'image');
+                $firstImageObj = $machinery->images->firstWhere('type', 'image');
+                $firstImageUrl = asset('public/uploads/defaults/default-machine.png');
+                if ($firstImageObj) {
+                    $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                    $path2 = base_path('api/public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                    if (file_exists($path1) || file_exists($path2)) {
+                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                    }
+                }
 
                 $contractStatusMap = [
                     0 => 'Pending',
@@ -487,7 +511,7 @@ class BiddingController extends Controller
                 return [
                     'id' => $machinery->id,
                     'auction_id' => $machinery->auction_id,
-                    'first_image' => $firstImage ? asset('public/uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
+                    'first_image' => $firstImageUrl,
                     'machinery_name' => $machinery->year . ' ' . $machinery->make . ' ' . $machinery->model,
                     'category' => $machinery->category ? $machinery->category->category_name : 'Uncategorized',
                     'won_bid_amount' => $userWonBid,
@@ -871,7 +895,15 @@ class BiddingController extends Controller
                     return null;
                 }
 
-                $firstImage = $order->machinery->images->firstWhere('type', 'image');
+                $firstImageObj = $order->machinery->images->firstWhere('type', 'image');
+                $firstImageUrl = asset('public/uploads/defaults/default-machine.png');
+                if ($firstImageObj) {
+                    $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                    $path2 = base_path('api/public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                    if (file_exists($path1) || file_exists($path2)) {
+                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                    }
+                }
 
                 $deliveryStatusMap = [
                     0 => 'Order Submitted',
@@ -934,7 +966,7 @@ class BiddingController extends Controller
                 return [
                     'id' => $order->id,
                     'order_id' => $order->order_id,
-                    'first_image' => $firstImage ? asset('public/uploads/machinery/images/' . ltrim($firstImage->image_path, '/')) : null,
+                    'first_image' => $firstImageUrl,
                     'name' => $order->machinery->year . ' ' . $order->machinery->make . ' ' . $order->machinery->model,
                     'auction_id' => $order->machinery->auction_id,
                     'price' => $order->price,
