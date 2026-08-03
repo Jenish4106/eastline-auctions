@@ -20,23 +20,25 @@ class InventoryController extends Controller
                     $imageUrls = [];
                     foreach ($imageArray as $filename) {
                         $categoryImagePath = public_path('uploads/category/images/' . $filename);
-                        if (file_exists($categoryImagePath)) {
+                        $apiPublicImagePath = base_path('api/public/uploads/category/images/' . $filename);
+                        if (file_exists($categoryImagePath) || file_exists($apiPublicImagePath)) {
                             $imageUrls[] = asset('public/uploads/category/images/' . $filename);
                         } else {
-                            $imageUrls[] = asset('public/uploads/category/images/' . $filename);
+                            $imageUrls[] = asset('public/uploads/defaults/default-machine.png');
                         }
                     }
-                    $category->image_url = !empty($imageUrls) ? $imageUrls[0] : null;
+                    $category->image_url = !empty($imageUrls) ? $imageUrls[0] : asset('public/uploads/defaults/default-machine.png');
                 } else {
                     $categoryImagePath = public_path('uploads/category/images/' . $category->image);
-                    if (file_exists($categoryImagePath)) {
+                    $apiPublicImagePath = base_path('api/public/uploads/category/images/' . $category->image);
+                    if (file_exists($categoryImagePath) || file_exists($apiPublicImagePath)) {
                         $category->image_url = asset('public/uploads/category/images/' . $category->image);
                     } else {
-                        $category->image_url = asset('public/uploads/category/images/' . $category->image);
+                        $category->image_url = asset('public/uploads/defaults/default-machine.png');
                     }
                 }
             } else {
-                $category->image_url = null;
+                $category->image_url = asset('public/uploads/defaults/default-machine.png');
             }
 
             $activeMachineryCount = Machinery::where('category_id', $category->id)->count();
