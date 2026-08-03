@@ -97,27 +97,37 @@ class MachineryController extends Controller
                     return $file->type === 'image';
                 });
 
-                $item->image_urls = $images->map(function ($image) {
-                    $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                    if (file_exists($machineryImagePath)) {
-                        return asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                    } else {
-                        return asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                    }
-                })->filter()->values()->toArray();
+                if ($images->count() > 0) {
+                    $item->image_urls = $images->map(function ($image) {
+                        $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                        $apiPublicImagePath = base_path('api/public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                        if (file_exists($machineryImagePath) || file_exists($apiPublicImagePath)) {
+                            return asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                        } else {
+                            return asset('public/uploads/defaults/default-machine.png');
+                        }
+                    })->filter()->values()->toArray();
+                } else {
+                    $item->image_urls = [asset('public/uploads/defaults/default-machine.png')];
+                }
 
                 $videos = $item->images->filter(function ($file) {
                     return $file->type === 'video';
                 });
 
-                $item->video_urls = $videos->map(function ($video) {
-                    $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                    if (file_exists($machineryVideoPath)) {
-                        return asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                    } else {
-                        return asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                    }
-                })->filter()->values()->toArray();
+                if ($videos->count() > 0) {
+                    $item->video_urls = $videos->map(function ($video) {
+                        $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                        $apiPublicVideoPath = base_path('api/public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                        if (file_exists($machineryVideoPath) || file_exists($apiPublicVideoPath)) {
+                            return asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                        } else {
+                            return asset('public/uploads/defaults/default-machine.mp4');
+                        }
+                    })->filter()->values()->toArray();
+                } else {
+                    $item->video_urls = [asset('public/uploads/defaults/default-machine.mp4')];
+                }
 
                 unset($item->images);
                 return $item;

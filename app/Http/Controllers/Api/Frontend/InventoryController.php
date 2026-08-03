@@ -200,16 +200,17 @@ class InventoryController extends Controller
                 $firstImage = $machineryImages->first();
                 if ($firstImage && $firstImage->type === 'image') {
                     $machineryImagePath = public_path('uploads/machinery/images/' . $firstImage->image_path);
-                    if (file_exists($machineryImagePath)) {
+                    $apiPublicImagePath = base_path('api/public/uploads/machinery/images/' . $firstImage->image_path);
+                    if (file_exists($machineryImagePath) || file_exists($apiPublicImagePath)) {
                         $machinery->first_image_url = asset('public/uploads/machinery/images/' . $firstImage->image_path);
                     } else {
-                        $machinery->first_image_url = asset('public/uploads/machinery/images/' . $firstImage->image_path);
+                        $machinery->first_image_url = asset('public/uploads/defaults/default-machine.png');
                     }
                 } else {
-                    $machinery->first_image_url = null;
+                    $machinery->first_image_url = asset('public/uploads/defaults/default-machine.png');
                 }
             } else {
-                $machinery->first_image_url = null;
+                $machinery->first_image_url = asset('public/uploads/defaults/default-machine.png');
             }
 
             return $machinery;
@@ -294,17 +295,19 @@ class InventoryController extends Controller
             $machinery->images = $machinery->images->map(function ($image) {
                 if ($image->type === 'video') {
                     $machineryFilePath = public_path('uploads/machinery/videos/' . $image->image_path);
-                    if (file_exists($machineryFilePath)) {
+                    $apiPublicFilePath = base_path('api/public/uploads/machinery/videos/' . $image->image_path);
+                    if (file_exists($machineryFilePath) || file_exists($apiPublicFilePath)) {
                         $image->full_url = asset('public/uploads/machinery/videos/' . $image->image_path);
                     } else {
-                        $image->full_url = asset('public/uploads/machinery/videos/' . $image->image_path);
+                        $image->full_url = asset('public/uploads/defaults/default-machine.mp4');
                     }
                 } else {
                     $machineryFilePath = public_path('uploads/machinery/images/' . $image->image_path);
-                    if (file_exists($machineryFilePath)) {
+                    $apiPublicFilePath = base_path('api/public/uploads/machinery/images/' . $image->image_path);
+                    if (file_exists($machineryFilePath) || file_exists($apiPublicFilePath)) {
                         $image->full_url = asset('public/uploads/machinery/images/' . $image->image_path);
                     } else {
-                        $image->full_url = asset('public/uploads/machinery/images/' . $image->image_path);
+                        $image->full_url = asset('public/uploads/defaults/default-machine.png');
                     }
                 }
                 return $image;

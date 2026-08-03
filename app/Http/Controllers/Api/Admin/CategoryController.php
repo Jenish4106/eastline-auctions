@@ -65,7 +65,7 @@ class CategoryController extends Controller
                             if (file_exists($categoryImagePath) || file_exists($apiPublicImagePath)) {
                                 $imageUrls[] = asset('public/uploads/category/images/' . $filename);
                             } else {
-                                $imageUrls[] = asset('public/uploads/category/images/' . $filename);
+                                $imageUrls[] = asset('public/uploads/defaults/default-machine.png');
                             }
                         }
 
@@ -76,7 +76,7 @@ class CategoryController extends Controller
                         if (file_exists($categoryImagePath) || file_exists($apiPublicImagePath)) {
                             $category->image_urls = [asset('public/uploads/category/images/' . $category->image)];
                         } else {
-                            $category->image_urls = [asset('public/uploads/category/images/' . $category->image)];
+                            $category->image_urls = [asset('public/uploads/defaults/default-machine.png')];
                         }
 
                         $category->image_urls = collect($category->image_urls)->filter()->values()->toArray();
