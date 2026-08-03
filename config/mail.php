@@ -122,7 +122,7 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'info@mcfarland-equipment.com'),
+        'address' => env('MAIL_FROM_ADDRESS', 'info@eastline-auctions.com'),
         'name' => env('MAIL_FROM_NAME', 'Mcfarland Equipment'),
     ],
 
