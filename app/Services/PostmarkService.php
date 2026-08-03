@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\Settings;
 
 class PostmarkService
 {
@@ -13,9 +14,9 @@ class PostmarkService
 
     public function __construct()
     {
-        $this->apiKey = env('POSTMARK_TOKEN', 'c546ed14-ad26-48ee-a342-99052b6118b6');
-        $this->senderEmail = env('POSTMARK_SENDER_EMAIL', 'info@eastline-auctions.com');
-        $this->senderName = env('POSTMARK_SENDER_NAME', 'Eastline Auctions');
+        $this->apiKey      = Settings::get('postmark_api_key');
+        $this->senderEmail = Settings::get('mail_from_address');
+        $this->senderName  = Settings::get('mail_from_name');
     }
 
     /**
