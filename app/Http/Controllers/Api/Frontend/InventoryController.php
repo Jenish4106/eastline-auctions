@@ -289,37 +289,35 @@ class InventoryController extends Controller
         $machinery->offer = $existingOffer;
 
         if ($machinery->images) {
-            $validImages = collect();
-            $hasValidImage = false;
+            $defaultUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
+            $seenDefault = false;
 
-            foreach ($machinery->images as $image) {
+            $machinery->images = $machinery->images->map(function ($image) use ($defaultUrl, &$seenDefault) {
                 if ($image->type === 'video') {
                     $machineryFilePath = public_path('uploads/machinery/videos/' . ltrim($image->image_path, '/'));
                     if (file_exists($machineryFilePath)) {
                         $image->full_url = asset('public/uploads/machinery/videos/' . ltrim($image->image_path, '/')) . '?time=' . time();
-                        $validImages->push($image);
+                    } else {
+                        $image->full_url = asset('public/uploads/defaults/default-machine.mp4') . '?time=' . time();
                     }
                 } else {
                     $machineryFilePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
                     if (file_exists($machineryFilePath)) {
                         $image->full_url = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/')) . '?time=' . time();
-                        $validImages->push($image);
-                        $hasValidImage = true;
+                    } else {
+                        $image->full_url = $defaultUrl;
                     }
                 }
-            }
-
-            if (!$hasValidImage) {
-                $defaultImg = new \stdClass();
-                $defaultImg->id = 0;
-                $defaultImg->machinery_id = $machinery->id;
-                $defaultImg->type = 'image';
-                $defaultImg->image_path = 'default.png';
-                $defaultImg->full_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
-                $validImages->prepend($defaultImg);
-            }
-
-            $machinery->images = $validImages->values();
+                return $image;
+            })->filter(function ($image) use ($defaultUrl, &$seenDefault) {
+                if ($image->full_url === $defaultUrl) {
+                    if ($seenDefault) {
+                        return false;
+                    }
+                    $seenDefault = true;
+                }
+                return true;
+            })->values();
         }
 
         return response()->json([
