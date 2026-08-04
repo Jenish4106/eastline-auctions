@@ -290,36 +290,31 @@ class InventoryController extends Controller
 
         if ($machinery->images) {
             $validImages = collect();
-            $hasDefaultAdded = false;
+            $hasValidImage = false;
 
             foreach ($machinery->images as $image) {
                 if ($image->type === 'video') {
-                    $machineryFilePath = public_path('uploads/machinery/videos/' . $image->image_path);
+                    $machineryFilePath = public_path('uploads/machinery/videos/' . ltrim($image->image_path, '/'));
                     if (file_exists($machineryFilePath)) {
-                        $image->full_url = asset('public/uploads/machinery/videos/' . $image->image_path) . '?time=' . time();
+                        $image->full_url = asset('public/uploads/machinery/videos/' . ltrim($image->image_path, '/')) . '?time=' . time();
                         $validImages->push($image);
                     }
                 } else {
-                    $machineryFilePath = public_path('uploads/machinery/images/' . $image->image_path);
+                    $machineryFilePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
                     if (file_exists($machineryFilePath)) {
-                        $image->full_url = asset('public/uploads/machinery/images/' . $image->image_path) . '?time=' . time();
+                        $image->full_url = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/')) . '?time=' . time();
                         $validImages->push($image);
-                    } else {
-                        if (!$hasDefaultAdded) {
-                            $image->full_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
-                            $validImages->push($image);
-                            $hasDefaultAdded = true;
-                        }
+                        $hasValidImage = true;
                     }
                 }
             }
 
-            if ($validImages->isEmpty()) {
+            if (!$hasValidImage) {
                 $defaultImg = new \stdClass();
                 $defaultImg->type = 'image';
                 $defaultImg->image_path = 'default.png';
                 $defaultImg->full_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
-                $validImages->push($defaultImg);
+                $validImages->prepend($defaultImg);
             }
 
             $machinery->images = $validImages->values();
