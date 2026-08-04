@@ -258,7 +258,7 @@ class BiddingController extends Controller
                 }
 
                 $firstImageObj = $machinery->images ? $machinery->images->firstWhere('type', 'image') : null;
-                $firstImageUrl = asset('public/uploads/defaults/default.png');
+                $firstImageUrl = asset('uploads/defaults/default.png');
                 if ($firstImageObj) {
                     $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
                     if (file_exists($path1)) {
@@ -366,7 +366,7 @@ class BiddingController extends Controller
             }
 
             $firstImageObj = $machinery->images->firstWhere('type', 'image');
-            $firstImageUrl = asset('public/uploads/defaults/default.png');
+            $firstImageUrl = asset('uploads/defaults/default.png');
             if ($firstImageObj) {
                 $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
                 if (file_exists($path1)) {
@@ -491,7 +491,7 @@ class BiddingController extends Controller
                     ->max('amount');
 
                 $firstImageObj = $machinery->images->firstWhere('type', 'image');
-                $firstImageUrl = asset('public/uploads/defaults/default.png');
+                $firstImageUrl = asset('uploads/defaults/default.png');
                 if ($firstImageObj) {
                     $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
                     if (file_exists($path1)) {
@@ -894,7 +894,7 @@ class BiddingController extends Controller
                 }
 
                 $firstImageObj = $order->machinery->images->firstWhere('type', 'image');
-                $firstImageUrl = asset('public/uploads/defaults/default.png');
+                $firstImageUrl = asset('uploads/defaults/default.png');
                 if ($firstImageObj) {
                     $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
                     if (file_exists($path1)) {

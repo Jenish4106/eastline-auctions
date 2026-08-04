@@ -105,7 +105,7 @@ class MachineryController extends Controller
                     }
                 }
                 if (empty($imageUrls)) {
-                    $imageUrls = [asset('public/uploads/defaults/default.png')];
+                    $imageUrls = [asset('uploads/defaults/default.png')];
                 }
                 $item->image_urls = array_values(array_unique($imageUrls));
 
@@ -121,7 +121,7 @@ class MachineryController extends Controller
                     }
                 }
                 if (empty($videoUrls)) {
-                    $videoUrls = [asset('public/uploads/defaults/default-machine.mp4')];
+                    $videoUrls = [asset('uploads/defaults/default-machine.mp4')];
                 }
                 $item->video_urls = array_values(array_unique($videoUrls));
 
@@ -185,7 +185,7 @@ class MachineryController extends Controller
                 }
             }
             if (empty($imageUrls)) {
-                $imageUrls = [asset('public/uploads/defaults/default.png')];
+                $imageUrls = [asset('uploads/defaults/default.png')];
             }
             $machinery->image_urls = array_values(array_unique($imageUrls));
 
@@ -201,7 +201,7 @@ class MachineryController extends Controller
                 }
             }
             if (empty($videoUrls)) {
-                $videoUrls = [asset('public/uploads/defaults/default-machine.mp4')];
+                $videoUrls = [asset('uploads/defaults/default-machine.mp4')];
             }
             $machinery->video_urls = array_values(array_unique($videoUrls));
 

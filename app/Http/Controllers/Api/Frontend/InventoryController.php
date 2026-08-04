@@ -24,17 +24,17 @@ class InventoryController extends Controller
                             $imageUrls[] = asset('public/uploads/category/images/' . $filename);
                         }
                     }
-                    $category->image_url = !empty($imageUrls) ? $imageUrls[0] : asset('public/uploads/defaults/default.png');
+                    $category->image_url = !empty($imageUrls) ? $imageUrls[0] : asset('uploads/defaults/default.png');
                 } else {
                     $categoryImagePath = public_path('uploads/category/images/' . $category->image);
                     if (file_exists($categoryImagePath)) {
                         $category->image_url = asset('public/uploads/category/images/' . $category->image);
                     } else {
-                        $category->image_url = asset('public/uploads/defaults/default.png');
+                        $category->image_url = asset('uploads/defaults/default.png');
                     }
                 }
             } else {
-                $category->image_url = asset('public/uploads/defaults/default.png');
+                $category->image_url = asset('uploads/defaults/default.png');
             }
 
             $activeMachineryCount = Machinery::where('category_id', $category->id)->count();
@@ -201,13 +201,13 @@ class InventoryController extends Controller
                     if (file_exists($machineryImagePath)) {
                         $machinery->first_image_url = asset('public/uploads/machinery/images/' . $firstImage->image_path);
                     } else {
-                        $machinery->first_image_url = asset('public/uploads/defaults/default.png');
+                        $machinery->first_image_url = asset('uploads/defaults/default.png');
                     }
                 } else {
-                    $machinery->first_image_url = asset('public/uploads/defaults/default.png');
+                    $machinery->first_image_url = asset('uploads/defaults/default.png');
                 }
             } else {
-                $machinery->first_image_url = asset('public/uploads/defaults/default.png');
+                $machinery->first_image_url = asset('uploads/defaults/default.png');
             }
 
             return $machinery;
@@ -315,7 +315,7 @@ class InventoryController extends Controller
                 $defaultImg = new \stdClass();
                 $defaultImg->type = 'image';
                 $defaultImg->image_path = 'default.png';
-                $defaultImg->full_url = asset('public/uploads/defaults/default.png');
+                $defaultImg->full_url = asset('uploads/defaults/default.png');
                 $validImages->push($defaultImg);
             }
 
