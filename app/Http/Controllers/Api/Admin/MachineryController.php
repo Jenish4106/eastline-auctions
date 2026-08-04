@@ -101,11 +101,11 @@ class MachineryController extends Controller
                 foreach ($images as $image) {
                     $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
                     if (file_exists($machineryImagePath)) {
-                        $imageUrls[] = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                        $imageUrls[] = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/')) . '?time=' . time();
                     }
                 }
                 if (empty($imageUrls)) {
-                    $imageUrls = [asset('uploads/defaults/default.png')];
+                    $imageUrls = [asset('public/uploads/defaults/default.png') . '?time=' . time()];
                 }
                 $item->image_urls = array_values(array_unique($imageUrls));
 
@@ -117,11 +117,11 @@ class MachineryController extends Controller
                 foreach ($videos as $video) {
                     $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                     if (file_exists($machineryVideoPath)) {
-                        $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                        $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/')) . '?time=' . time();
                     }
                 }
                 if (empty($videoUrls)) {
-                    $videoUrls = [asset('uploads/defaults/default-machine.mp4')];
+                    $videoUrls = [asset('public/uploads/defaults/default-machine.mp4') . '?time=' . time()];
                 }
                 $item->video_urls = array_values(array_unique($videoUrls));
 
@@ -185,7 +185,7 @@ class MachineryController extends Controller
                 }
             }
             if (empty($imageUrls)) {
-                $imageUrls = [asset('uploads/defaults/default.png')];
+                $imageUrls = [asset('public/uploads/defaults/default.png') . '?time=' . time()];
             }
             $machinery->image_urls = array_values(array_unique($imageUrls));
 

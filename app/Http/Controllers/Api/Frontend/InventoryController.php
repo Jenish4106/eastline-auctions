@@ -21,20 +21,20 @@ class InventoryController extends Controller
                     foreach ($imageArray as $filename) {
                         $categoryImagePath = public_path('uploads/category/images/' . $filename);
                         if (file_exists($categoryImagePath)) {
-                            $imageUrls[] = asset('public/uploads/category/images/' . $filename);
+                            $imageUrls[] = asset('public/uploads/category/images/' . $filename) . '?time=' . time();
                         }
                     }
-                    $category->image_url = !empty($imageUrls) ? $imageUrls[0] : asset('uploads/defaults/default.png');
+                    $category->image_url = !empty($imageUrls) ? $imageUrls[0] : asset('public/uploads/defaults/default.png') . '?time=' . time();
                 } else {
                     $categoryImagePath = public_path('uploads/category/images/' . $category->image);
                     if (file_exists($categoryImagePath)) {
-                        $category->image_url = asset('public/uploads/category/images/' . $category->image);
+                        $category->image_url = asset('public/uploads/category/images/' . $category->image) . '?time=' . time();
                     } else {
-                        $category->image_url = asset('uploads/defaults/default.png');
+                        $category->image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
                     }
                 }
             } else {
-                $category->image_url = asset('uploads/defaults/default.png');
+                $category->image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
             }
 
             $activeMachineryCount = Machinery::where('category_id', $category->id)->count();
@@ -199,15 +199,15 @@ class InventoryController extends Controller
                 if ($firstImage && $firstImage->type === 'image') {
                     $machineryImagePath = public_path('uploads/machinery/images/' . $firstImage->image_path);
                     if (file_exists($machineryImagePath)) {
-                        $machinery->first_image_url = asset('public/uploads/machinery/images/' . $firstImage->image_path);
+                        $machinery->first_image_url = asset('public/uploads/machinery/images/' . $firstImage->image_path) . '?time=' . time();
                     } else {
-                        $machinery->first_image_url = asset('uploads/defaults/default.png');
+                        $machinery->first_image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
                     }
                 } else {
-                    $machinery->first_image_url = asset('uploads/defaults/default.png');
+                    $machinery->first_image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
                 }
             } else {
-                $machinery->first_image_url = asset('uploads/defaults/default.png');
+                $machinery->first_image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
             }
 
             return $machinery;
@@ -297,14 +297,14 @@ class InventoryController extends Controller
                 if ($image->type === 'video') {
                     $machineryFilePath = public_path('uploads/machinery/videos/' . $image->image_path);
                     if (file_exists($machineryFilePath)) {
-                        $image->full_url = asset('public/uploads/machinery/videos/' . $image->image_path);
+                        $image->full_url = asset('public/uploads/machinery/videos/' . $image->image_path) . '?time=' . time();
                         $validImages->push($image);
                         $hasValidVideo = true;
                     }
                 } else {
                     $machineryFilePath = public_path('uploads/machinery/images/' . $image->image_path);
                     if (file_exists($machineryFilePath)) {
-                        $image->full_url = asset('public/uploads/machinery/images/' . $image->image_path);
+                        $image->full_url = asset('public/uploads/machinery/images/' . $image->image_path) . '?time=' . time();
                         $validImages->push($image);
                         $hasValidImage = true;
                     }
@@ -315,7 +315,7 @@ class InventoryController extends Controller
                 $defaultImg = new \stdClass();
                 $defaultImg->type = 'image';
                 $defaultImg->image_path = 'default.png';
-                $defaultImg->full_url = asset('uploads/defaults/default.png');
+                $defaultImg->full_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
                 $validImages->push($defaultImg);
             }
 
