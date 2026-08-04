@@ -262,7 +262,7 @@ class BiddingController extends Controller
                 if ($firstImageObj) {
                     $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
                     if (file_exists($path1)) {
-                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/')) . '?time=' . time();
                     }
                 }
 
@@ -370,7 +370,7 @@ class BiddingController extends Controller
             if ($firstImageObj) {
                 $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
                 if (file_exists($path1)) {
-                    $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                    $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/')) . '?time=' . time();
                 }
             }
 
@@ -495,7 +495,7 @@ class BiddingController extends Controller
                 if ($firstImageObj) {
                     $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
                     if (file_exists($path1)) {
-                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/')) . '?time=' . time();
                     }
                 }
 
@@ -898,7 +898,7 @@ class BiddingController extends Controller
                 if ($firstImageObj) {
                     $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
                     if (file_exists($path1)) {
-                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/')) . '?time=' . time();
                     }
                 }
 

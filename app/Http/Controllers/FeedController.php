@@ -54,7 +54,7 @@ class FeedController extends Controller
                 $firstImageUrl = '';
                 $firstImage = $machinery->images->first();
                 if ($firstImage && $firstImage->type === 'image') {
-                    $firstImageUrl = asset('public/uploads/machinery/images/' . $firstImage->image_path);
+                    $firstImageUrl = asset('public/uploads/machinery/images/' . $firstImage->image_path) . '?time=' . time();
                 }
 
                 $year = $machinery->year ?? '';

@@ -77,7 +77,7 @@ class UploadController extends Controller
                 $imageName = time() . '_' . Str::random(10) . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
                 $image->move($destinationPath, $imageName);
                 
-                $imageUrl = asset('public/uploads/' . $type . '/images/' . $imageName);
+                $imageUrl = asset('public/uploads/' . $type . '/images/' . $imageName) . '?time=' . time();
                 
                 $uploadedImages[] = [
                     'filename' => $imageName,
