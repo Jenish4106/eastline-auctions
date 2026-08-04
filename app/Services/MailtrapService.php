@@ -18,12 +18,12 @@ class MailtrapService
 
     public function __construct()
     {
-        $this->host        = 'live.smtp.mailtrap.io';
-        $this->port        = '587';
-        $this->username    = 'api';
-        $this->password    = 'fe5b85891e0ed3f9ec515cf73d39747f';
-        $this->senderEmail = 'info@eastlineauctions.com';
-        $this->senderName  = 'Eastline Equipment Sales & Auctions';
+        $this->host        = \App\Models\Settings::get('mailtrap_host', 'live.smtp.mailtrap.io');
+        $this->port        = \App\Models\Settings::get('mailtrap_port', '587');
+        $this->username    = \App\Models\Settings::get('mailtrap_username', 'api');
+        $this->password    = \App\Models\Settings::get('mailtrap_password', 'fe5b85891e0ed3f9ec515cf73d39747f');
+        $this->senderEmail = \App\Models\Settings::get('email', 'info@eastlineauctions.com');
+        $this->senderName  = \App\Models\Settings::get('company_name', 'Eastline Equipment Sales & Auctions');
     }
 
     /**
@@ -53,7 +53,7 @@ class MailtrapService
             $mailer    = new Mailer($transport);
 
             $email = (new Email())
-                ->from(sprintf('%s <%s>', $this->senderName, $this->senderEmail))
+                ->from(new \Symfony\Component\Mime\Address($this->senderEmail, $this->senderName))
                 ->to(...(is_array($to) ? $to : [$to]))
                 ->subject($subject)
                 ->html($htmlBody);

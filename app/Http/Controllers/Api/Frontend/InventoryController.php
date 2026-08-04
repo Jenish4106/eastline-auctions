@@ -290,8 +290,7 @@ class InventoryController extends Controller
 
         if ($machinery->images) {
             $validImages = collect();
-            $hasValidImage = false;
-            $hasValidVideo = false;
+            $hasDefaultAdded = false;
 
             foreach ($machinery->images as $image) {
                 if ($image->type === 'video') {
@@ -299,19 +298,23 @@ class InventoryController extends Controller
                     if (file_exists($machineryFilePath)) {
                         $image->full_url = asset('public/uploads/machinery/videos/' . $image->image_path) . '?time=' . time();
                         $validImages->push($image);
-                        $hasValidVideo = true;
                     }
                 } else {
                     $machineryFilePath = public_path('uploads/machinery/images/' . $image->image_path);
                     if (file_exists($machineryFilePath)) {
                         $image->full_url = asset('public/uploads/machinery/images/' . $image->image_path) . '?time=' . time();
                         $validImages->push($image);
-                        $hasValidImage = true;
+                    } else {
+                        if (!$hasDefaultAdded) {
+                            $image->full_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                            $validImages->push($image);
+                            $hasDefaultAdded = true;
+                        }
                     }
                 }
             }
 
-            if (!$hasValidImage) {
+            if ($validImages->isEmpty()) {
                 $defaultImg = new \stdClass();
                 $defaultImg->type = 'image';
                 $defaultImg->image_path = 'default.png';
