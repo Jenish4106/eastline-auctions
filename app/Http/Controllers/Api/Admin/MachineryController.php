@@ -105,7 +105,7 @@ class MachineryController extends Controller
                     }
                 }
                 if (empty($imageUrls)) {
-                    $imageUrls = [asset('public/uploads/defaults/default-machine.png')];
+                    $imageUrls = [asset('public/uploads/defaults/default.png')];
                 }
                 $item->image_urls = array_values(array_unique($imageUrls));
 
@@ -185,7 +185,7 @@ class MachineryController extends Controller
                 }
             }
             if (empty($imageUrls)) {
-                $imageUrls = [asset('public/uploads/defaults/default-machine.png')];
+                $imageUrls = [asset('public/uploads/defaults/default.png')];
             }
             $machinery->image_urls = array_values(array_unique($imageUrls));
 

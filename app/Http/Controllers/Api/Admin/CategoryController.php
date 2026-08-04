@@ -64,7 +64,7 @@ class CategoryController extends Controller
                             if (file_exists($categoryImagePath)) {
                                 $imageUrls[] = asset('public/uploads/category/images/' . $filename);
                             } else {
-                                $imageUrls[] = asset('public/uploads/defaults/default-machine.png');
+                                $imageUrls[] = asset('public/uploads/defaults/default.png');
                             }
                         }
 
@@ -74,7 +74,7 @@ class CategoryController extends Controller
                         if (file_exists($categoryImagePath)) {
                             $category->image_urls = [asset('public/uploads/category/images/' . $category->image)];
                         } else {
-                            $category->image_urls = [asset('public/uploads/defaults/default-machine.png')];
+                            $category->image_urls = [asset('public/uploads/defaults/default.png')];
                         }
 
                         $category->image_urls = collect($category->image_urls)->filter()->values()->toArray();
@@ -140,7 +140,7 @@ class CategoryController extends Controller
                         if (file_exists($categoryImagePath)) {
                             $imageUrls[] = asset('public/uploads/category/images/' . $filename);
                         } else {
-                            $imageUrls[] = asset('public/uploads/defaults/default-machine.png');
+                            $imageUrls[] = asset('public/uploads/defaults/default.png');
                         }
                     }
                     $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
@@ -149,11 +149,11 @@ class CategoryController extends Controller
                     if (file_exists($categoryImagePath)) {
                         $category->image_urls = [asset('public/uploads/category/images/' . $category->image)];
                     } else {
-                        $category->image_urls = [asset('public/uploads/defaults/default-machine.png')];
+                        $category->image_urls = [asset('public/uploads/defaults/default.png')];
                     }
                 }
             } else {
-                $category->image_urls = [asset('public/uploads/defaults/default-machine.png')];
+                $category->image_urls = [asset('public/uploads/defaults/default.png')];
             }
             
             unset($category->image);
@@ -220,7 +220,7 @@ class CategoryController extends Controller
                 if (file_exists($path1)) {
                     $imageUrls[] = asset('public/uploads/category/images/' . $filename);
                 } else {
-                    $imageUrls[] = asset('public/uploads/defaults/default-machine.png');
+                    $imageUrls[] = asset('public/uploads/defaults/default.png');
                 }
             }
             $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
@@ -312,7 +312,7 @@ class CategoryController extends Controller
                     if (file_exists($path1)) {
                         $imageUrls[] = asset('public/uploads/category/images/' . $filename);
                     } else {
-                        $imageUrls[] = asset('public/uploads/defaults/default-machine.png');
+                        $imageUrls[] = asset('public/uploads/defaults/default.png');
                     }
                 }
                 $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
