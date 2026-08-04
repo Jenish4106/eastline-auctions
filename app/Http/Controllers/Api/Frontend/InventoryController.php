@@ -289,24 +289,37 @@ class InventoryController extends Controller
         $machinery->offer = $existingOffer;
 
         if ($machinery->images) {
-            $machinery->images = $machinery->images->map(function ($image) {
+            $validImages = collect();
+            $hasValidImage = false;
+
+            foreach ($machinery->images as $image) {
                 if ($image->type === 'video') {
                     $machineryFilePath = public_path('uploads/machinery/videos/' . ltrim($image->image_path, '/'));
                     if (file_exists($machineryFilePath)) {
                         $image->full_url = asset('public/uploads/machinery/videos/' . ltrim($image->image_path, '/')) . '?time=' . time();
-                    } else {
-                        $image->full_url = asset('public/uploads/defaults/default-machine.mp4') . '?time=' . time();
+                        $validImages->push($image);
                     }
                 } else {
                     $machineryFilePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
                     if (file_exists($machineryFilePath)) {
                         $image->full_url = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/')) . '?time=' . time();
-                    } else {
-                        $image->full_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                        $validImages->push($image);
+                        $hasValidImage = true;
                     }
                 }
-                return $image;
-            });
+            }
+
+            if (!$hasValidImage) {
+                $defaultImg = new \stdClass();
+                $defaultImg->id = 0;
+                $defaultImg->machinery_id = $machinery->id;
+                $defaultImg->type = 'image';
+                $defaultImg->image_path = 'default.png';
+                $defaultImg->full_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                $validImages->prepend($defaultImg);
+            }
+
+            $machinery->images = $validImages->values();
         }
 
         return response()->json([
