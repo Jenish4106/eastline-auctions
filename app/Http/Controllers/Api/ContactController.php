@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use App\Mail\ContactMail;
-use App\Services\PostmarkService;
+use App\Services\MailtrapService;
 
 class ContactController extends Controller
 {
@@ -46,9 +46,9 @@ class ContactController extends Controller
                 $request->message
             );
 
-            $postmarkService = new PostmarkService();
+            $mailtrapService = new MailtrapService();
             $htmlContent = $mail->renderHtmlContent();
-            $result = $postmarkService->sendEmail($adminEmail, $mail->getSubject(), $htmlContent);
+            $result = $mailtrapService->sendEmail($adminEmail, $mail->getSubject(), $htmlContent);
 
             if ($result) {
                 return response()->json([

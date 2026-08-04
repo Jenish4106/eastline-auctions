@@ -7,7 +7,7 @@ use App\Mail\ResendInvoiceMail;
 use App\Models\Order;
 use App\Models\Settings;
 use App\Models\MachineryFileManager;
-use App\Services\PostmarkService;
+use App\Services\MailtrapService;
 use App\Services\TwilioSmsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -248,7 +248,7 @@ class OrderController extends Controller
                         $request->status
                     );
 
-                    $postmarkService = new PostmarkService();
+                    $mailtrapService = new MailtrapService();
                     $htmlContent = $mail->renderHtmlContent();
                     $attachments = [];
 
@@ -272,7 +272,7 @@ class OrderController extends Controller
                         }
                     }
 
-                    $postmarkService->sendEmail($order->user->email, $mail->getSubject(), $htmlContent, $attachments);
+                    $mailtrapService->sendEmail($order->user->email, $mail->getSubject(), $htmlContent, $attachments);
                 } catch (\Exception $e) {
                     return response()->json([
                         'success' => false,
@@ -362,11 +362,11 @@ class OrderController extends Controller
                             4
                         );
 
-                        $postmarkService = new PostmarkService();
+                        $mailtrapService = new MailtrapService();
                         $htmlContent = $mail->renderHtmlContent();
                         $attachments = [];
 
-                        $postmarkService->sendEmail($order->user->email, $mail->getSubject(), $htmlContent, $attachments);
+                        $mailtrapService->sendEmail($order->user->email, $mail->getSubject(), $htmlContent, $attachments);
                     } catch (\Exception $e) {
                         return response()->json([
                             'success' => false,
@@ -667,7 +667,7 @@ class OrderController extends Controller
                 $order->machinery
             );
 
-            $postmarkService = new PostmarkService();
+            $mailtrapService = new MailtrapService();
             $htmlContent = $mail->renderHtmlContent();
 
             $attachments = [
@@ -678,7 +678,7 @@ class OrderController extends Controller
                 ]
             ];
 
-            $postmarkService->sendEmail(
+            $mailtrapService->sendEmail(
                 $order->user->email,
                 $mail->getSubject(),
                 $htmlContent,

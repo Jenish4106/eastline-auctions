@@ -54,9 +54,9 @@ class AuctionCompletionService
                 //Email
                 if ($sendWinnerEmail) {
                     $mail = new SendContractMail($winner, $machinery->fresh(), null);
-                    $postmarkService = new \App\Services\PostmarkService();
+                    $mailtrapService = new \App\Services\MailtrapService();
                     $htmlContent = $mail->renderHtmlContent();
-                    $emailSent = $postmarkService->sendEmail($winner->email, $mail->getSubject(), $htmlContent);
+                    $emailSent = $mailtrapService->sendEmail($winner->email, $mail->getSubject(), $htmlContent);
                 }
 
                 //Sms

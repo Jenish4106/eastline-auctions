@@ -12,7 +12,7 @@ use App\Models\Order;
 use App\Models\Settings;
 use App\Models\User;
 use App\Services\GoogleMapsService;
-use App\Services\PostmarkService;
+use App\Services\MailtrapService;
 use App\Services\TwilioSmsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -314,7 +314,7 @@ class CheckoutController extends Controller
 
             try {
                 $mail = new BuyNowOrderMail($winningUser, $order, $machinery);
-                $postmarkService = new PostmarkService();
+                $mailtrapService = new MailtrapService();
                 $htmlContent = $mail->renderHtmlContent();
 
                 $attachments = [];
@@ -326,7 +326,7 @@ class CheckoutController extends Controller
                     ];
                 }
 
-                $emailSent = $postmarkService->sendEmail($winningUser->email, $mail->getSubject(), $htmlContent, $attachments);
+                $emailSent = $mailtrapService->sendEmail($winningUser->email, $mail->getSubject(), $htmlContent, $attachments);
             } catch (\Exception $e) {
                 return response()->json([
                     'success' => false,
@@ -533,7 +533,7 @@ class CheckoutController extends Controller
         }
 
         $bidders = User::whereIn('id', $bidderIds)->get();
-        $postmarkService = new PostmarkService();
+        $mailtrapService = new MailtrapService();
 
         foreach ($bidders as $bidder) {
             if (empty($bidder->email)) {
@@ -542,7 +542,7 @@ class CheckoutController extends Controller
 
             try {
                 $mail = new AuctionCancelledMail($bidder, $machinery, $purchaser);
-                $postmarkService->sendEmail(
+                $mailtrapService->sendEmail(
                     $bidder->email,
                     $mail->getSubject(),
                     $mail->renderHtmlContent()

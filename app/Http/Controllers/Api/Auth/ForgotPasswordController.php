@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
-use App\Services\PostmarkService;
+use App\Services\MailtrapService;
 
 class ForgotPasswordController extends Controller
 {
@@ -45,9 +45,9 @@ class ForgotPasswordController extends Controller
             ]);
 
             $mail = new SendOtpMail($otp, $request->email);
-            $postmarkService = new PostmarkService();
+            $mailtrapService = new MailtrapService();
             $htmlContent = $mail->renderHtmlContent();
-            $result = $postmarkService->sendEmail($request->email, $mail->getSubject(), $htmlContent);
+            $result = $mailtrapService->sendEmail($request->email, $mail->getSubject(), $htmlContent);
 
             if (!$result) {
                 return response()->json([
@@ -168,9 +168,9 @@ class ForgotPasswordController extends Controller
 
             try {
                 $mail = new PasswordResetConfirmationMail($user);
-                $postmarkService = new PostmarkService();
+                $mailtrapService = new MailtrapService();
                 $htmlContent = $mail->renderHtmlContent();
-                $result = $postmarkService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
+                $result = $mailtrapService->sendEmail($user->email, $mail->getSubject(), $htmlContent);
             } catch (\Exception $e) {
                 return response()->json([
                     'status' => true,
