@@ -22,8 +22,6 @@ class InventoryController extends Controller
                         $categoryImagePath = public_path('uploads/category/images/' . $filename);
                         if (file_exists($categoryImagePath)) {
                             $imageUrls[] = asset('public/uploads/category/images/' . $filename);
-                        } else {
-                            $imageUrls[] = asset('public/uploads/defaults/default-machine.png');
                         }
                     }
                     $category->image_url = !empty($imageUrls) ? $imageUrls[0] : asset('public/uploads/defaults/default-machine.png');
@@ -291,24 +289,37 @@ class InventoryController extends Controller
         $machinery->offer = $existingOffer;
 
         if ($machinery->images) {
-            $machinery->images = $machinery->images->map(function ($image) {
+            $validImages = collect();
+            $hasValidImage = false;
+            $hasValidVideo = false;
+
+            foreach ($machinery->images as $image) {
                 if ($image->type === 'video') {
                     $machineryFilePath = public_path('uploads/machinery/videos/' . $image->image_path);
                     if (file_exists($machineryFilePath)) {
                         $image->full_url = asset('public/uploads/machinery/videos/' . $image->image_path);
-                    } else {
-                        $image->full_url = asset('public/uploads/defaults/default-machine.mp4');
+                        $validImages->push($image);
+                        $hasValidVideo = true;
                     }
                 } else {
                     $machineryFilePath = public_path('uploads/machinery/images/' . $image->image_path);
                     if (file_exists($machineryFilePath)) {
                         $image->full_url = asset('public/uploads/machinery/images/' . $image->image_path);
-                    } else {
-                        $image->full_url = asset('public/uploads/defaults/default-machine.png');
+                        $validImages->push($image);
+                        $hasValidImage = true;
                     }
                 }
-                return $image;
-            });
+            }
+
+            if (!$hasValidImage) {
+                $defaultImg = new \stdClass();
+                $defaultImg->type = 'image';
+                $defaultImg->image_path = 'default-machine.png';
+                $defaultImg->full_url = asset('public/uploads/defaults/default-machine.png');
+                $validImages->push($defaultImg);
+            }
+
+            $machinery->images = $validImages->values();
         }
 
         return response()->json([
