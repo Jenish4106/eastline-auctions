@@ -9,6 +9,7 @@ use App\Mail\LicenseApprovedMail;
 use App\Mail\LicenseDeclinedMail;
 use App\Services\MailtrapService;
 use App\Services\TwilioSmsService;
+use App\Services\S3StorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
