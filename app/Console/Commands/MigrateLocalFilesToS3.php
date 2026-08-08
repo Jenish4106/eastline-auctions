@@ -57,7 +57,7 @@ class MigrateLocalFilesToS3 extends Command
                 $cleanFilename = basename(parse_url($filename, PHP_URL_PATH));
                 
                 $localPath = public_path('uploads/category/images/' . $cleanFilename);
-                $s3Path = 'category/images/' . $cleanFilename;
+                $s3Path = 'uploads/category/images/' . $cleanFilename;
 
                 if (!File::exists($localPath)) {
                     $this->warn("Local file missing for category [ID {$category->id}]: {$localPath}");
