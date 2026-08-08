@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Machinery;
+use App\Services\S3StorageService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -19,22 +20,14 @@ class InventoryController extends Controller
                 if (is_array($imageArray)) {
                     $imageUrls = [];
                     foreach ($imageArray as $filename) {
-                        $categoryImagePath = public_path('uploads/category/images/' . $filename);
-                        if (file_exists($categoryImagePath)) {
-                            $imageUrls[] = asset('public/uploads/category/images/' . $filename) . '?time=' . time();
-                        }
+                        $imageUrls[] = S3StorageService::getUrl('category/images/' . $filename);
                     }
-                    $category->image_url = !empty($imageUrls) ? $imageUrls[0] : asset('public/uploads/defaults/default.png') . '?time=' . time();
+                    $category->image_url = !empty($imageUrls) ? $imageUrls[0] : asset('public/uploads/defaults/default.png');
                 } else {
-                    $categoryImagePath = public_path('uploads/category/images/' . $category->image);
-                    if (file_exists($categoryImagePath)) {
-                        $category->image_url = asset('public/uploads/category/images/' . $category->image) . '?time=' . time();
-                    } else {
-                        $category->image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
-                    }
+                    $category->image_url = S3StorageService::getUrl('category/images/' . $category->image);
                 }
             } else {
-                $category->image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                $category->image_url = asset('public/uploads/defaults/default.png');
             }
 
             $activeMachineryCount = Machinery::where('category_id', $category->id)->count();
@@ -197,17 +190,12 @@ class InventoryController extends Controller
             if ($machineryImages && $machineryImages->count() > 0) {
                 $firstImage = $machineryImages->first();
                 if ($firstImage && $firstImage->type === 'image') {
-                    $machineryImagePath = public_path('uploads/machinery/images/' . $firstImage->image_path);
-                    if (file_exists($machineryImagePath)) {
-                        $machinery->first_image_url = asset('public/uploads/machinery/images/' . $firstImage->image_path) . '?time=' . time();
-                    } else {
-                        $machinery->first_image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
-                    }
+                    $machinery->first_image_url = S3StorageService::getUrl('machinery/images/' . ltrim($firstImage->image_path, '/'));
                 } else {
-                    $machinery->first_image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                    $machinery->first_image_url = asset('public/uploads/defaults/default.png');
                 }
             } else {
-                $machinery->first_image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                $machinery->first_image_url = asset('public/uploads/defaults/default.png');
             }
 
             return $machinery;
@@ -289,34 +277,16 @@ class InventoryController extends Controller
         $machinery->offer = $existingOffer;
 
         if ($machinery->images) {
-            $defaultUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
+            $defaultUrl = asset('public/uploads/defaults/default.png');
             $seenDefault = false;
 
             $machinery->images = $machinery->images->map(function ($image) use ($defaultUrl, &$seenDefault) {
                 if ($image->type === 'video') {
-                    $machineryFilePath = public_path('uploads/machinery/videos/' . ltrim($image->image_path, '/'));
-                    if (file_exists($machineryFilePath)) {
-                        $image->full_url = asset('public/uploads/machinery/videos/' . ltrim($image->image_path, '/')) . '?time=' . time();
-                    } else {
-                        $image->full_url = asset('public/uploads/defaults/default-machine.mp4') . '?time=' . time();
-                    }
+                    $image->full_url = S3StorageService::getUrl('machinery/videos/' . ltrim($image->image_path, '/'));
                 } else {
-                    $machineryFilePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                    if (file_exists($machineryFilePath)) {
-                        $image->full_url = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/')) . '?time=' . time();
-                    } else {
-                        $image->full_url = $defaultUrl;
-                    }
+                    $image->full_url = S3StorageService::getUrl('machinery/images/' . ltrim($image->image_path, '/'));
                 }
                 return $image;
-            })->filter(function ($image) use ($defaultUrl, &$seenDefault) {
-                if ($image->full_url === $defaultUrl) {
-                    if ($seenDefault) {
-                        return false;
-                    }
-                    $seenDefault = true;
-                }
-                return true;
             })->values();
         }
 

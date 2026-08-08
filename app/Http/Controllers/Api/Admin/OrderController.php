@@ -13,6 +13,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
@@ -552,19 +553,29 @@ class OrderController extends Controller
             $invoiceFileName = 'invoice_' . $order->order_id . '.pdf';
             $invoicePath = 'uploads/invoices/' . $invoiceFileName;
 
-            $invoicePublicDir = public_path('uploads/invoices');
-            if (!File::exists($invoicePublicDir)) {
-                File::makeDirectory($invoicePublicDir, 0755, true);
-            }
-
+            $disk = config('filesystems.default', 's3');
             if ($oldInvoiceRecord) {
-                $oldPath = public_path($oldInvoiceRecord->image_path);
-                if (File::exists($oldPath)) {
-                    File::delete($oldPath);
+                if ($disk === 's3') {
+                    if (Storage::disk('s3')->exists($oldInvoiceRecord->image_path)) {
+                        Storage::disk('s3')->delete($oldInvoiceRecord->image_path);
+                    }
+                } else {
+                    $oldPath = public_path($oldInvoiceRecord->image_path);
+                    if (File::exists($oldPath)) {
+                        File::delete($oldPath);
+                    }
                 }
             }
 
-            $invoicePdf->save(public_path($invoicePath));
+            if ($disk === 's3') {
+                Storage::disk('s3')->put($invoicePath, $invoicePdf->output());
+            } else {
+                $invoicePublicDir = public_path('uploads/invoices');
+                if (!File::exists($invoicePublicDir)) {
+                    File::makeDirectory($invoicePublicDir, 0755, true);
+                }
+                $invoicePdf->save(public_path($invoicePath));
+            }
 
             if ($oldInvoiceRecord) {
                 $oldInvoiceRecord->image_path = $invoicePath;
