@@ -28,8 +28,8 @@ class SettingsController extends Controller
 
         $settingsArray = [];
         foreach ($settings as $setting) {
-            if (in_array($setting->key, ['white_logo', 'dark_logo']) && !empty($setting->value)) {
-                $settingsArray[$setting->key] = asset($setting->value);
+            if (in_array($setting->key, ['white_logo', 'dark_logo', 'logo', 'favicon']) && !empty($setting->value)) {
+                $settingsArray[$setting->key] = \App\Services\S3StorageService::getUrl($setting->value);
             } else {
                 $settingsArray[$setting->key] = $setting->value;
             }

@@ -461,8 +461,8 @@ class CheckoutController extends Controller
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => null,
-                    'logoUrl' => $companyLogo ? asset('public/' . ltrim($companyLogo, '/')) : null,
+                    'logo' => $companyLogo ? S3StorageService::getImageAsBase64($companyLogo) : null,
+                    'logoUrl' => $companyLogo ? S3StorageService::getUrl($companyLogo) : null,
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];
