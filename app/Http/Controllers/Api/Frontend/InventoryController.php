@@ -22,12 +22,12 @@ class InventoryController extends Controller
                     foreach ($imageArray as $filename) {
                         $imageUrls[] = S3StorageService::getUrl('uploads/category/images/' . $filename);
                     }
-                    $category->image_url = !empty($imageUrls) ? $imageUrls[0] : asset('public/uploads/defaults/default.png');
+                    $category->image_url = !empty($imageUrls) ? $imageUrls[0] : S3StorageService::getUrl('uploads/defaults/default.png');
                 } else {
                     $category->image_url = S3StorageService::getUrl('uploads/category/images/' . $category->image);
                 }
             } else {
-                $category->image_url = asset('public/uploads/defaults/default.png');
+                $category->image_url = S3StorageService::getUrl('uploads/defaults/default.png');
             }
 
             $activeMachineryCount = Machinery::where('category_id', $category->id)->count();
@@ -190,12 +190,12 @@ class InventoryController extends Controller
             if ($machineryImages && $machineryImages->count() > 0) {
                 $firstImage = $machineryImages->first();
                 if ($firstImage && $firstImage->type === 'image') {
-                    $machinery->first_image_url = S3StorageService::getUrl('machinery/images/' . ltrim($firstImage->image_path, '/'));
+                    $machinery->first_image_url = S3StorageService::getUrl('uploads/machinery/images/' . ltrim($firstImage->image_path, '/'));
                 } else {
-                    $machinery->first_image_url = asset('public/uploads/defaults/default.png');
+                    $machinery->first_image_url = S3StorageService::getUrl('uploads/defaults/default.png');
                 }
             } else {
-                $machinery->first_image_url = asset('public/uploads/defaults/default.png');
+                $machinery->first_image_url = S3StorageService::getUrl('uploads/defaults/default.png');
             }
 
             return $machinery;
@@ -277,14 +277,14 @@ class InventoryController extends Controller
         $machinery->offer = $existingOffer;
 
         if ($machinery->images) {
-            $defaultUrl = asset('public/uploads/defaults/default.png');
+            $defaultUrl = S3StorageService::getUrl('uploads/defaults/default.png');
             $seenDefault = false;
 
             $machinery->images = $machinery->images->map(function ($image) use ($defaultUrl, &$seenDefault) {
                 if ($image->type === 'video') {
-                    $image->full_url = S3StorageService::getUrl('machinery/videos/' . ltrim($image->image_path, '/'));
+                    $image->full_url = S3StorageService::getUrl('uploads/machinery/videos/' . ltrim($image->image_path, '/'));
                 } else {
-                    $image->full_url = S3StorageService::getUrl('machinery/images/' . ltrim($image->image_path, '/'));
+                    $image->full_url = S3StorageService::getUrl('uploads/machinery/images/' . ltrim($image->image_path, '/'));
                 }
                 return $image;
             })->values();

@@ -2,11 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Models\MachineryFileManager;
+use App\Services\S3StorageService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
-use App\Services\S3StorageService;
-use App\Models\MachineryFileManager;
 
 class MigrateMachineryFilesToS3 extends Command
 {
@@ -32,20 +32,21 @@ class MigrateMachineryFilesToS3 extends Command
         $isDryRun = $this->option('dry-run');
 
         if ($isDryRun) {
-            $this->warn("--- DRY RUN MODE (No files will be uploaded) ---");
+            $this->warn('--- DRY RUN MODE (No files will be uploaded) ---');
         }
 
-        $this->info("=== Starting Machinery Files (Images & Videos) Migration to S3 ===");
+        $this->info('=== Starting Machinery Files (Images & Videos) Migration to S3 ===');
 
         $uploadedFiles = 0;
         $missingCount = 0;
         $failedFiles = 0;
 
         $machineryFiles = MachineryFileManager::whereIn('type', ['image', 'video'])->get();
-        $this->info("Found " . $machineryFiles->count() . " machinery files (images/videos) in database.");
+        $this->info('Found ' . $machineryFiles->count() . ' machinery files (images/videos) in database.');
 
         foreach ($machineryFiles as $fileRecord) {
-            if (!$fileRecord->image_path) continue;
+            if (!$fileRecord->image_path)
+                continue;
 
             $rawFilename = ltrim($fileRecord->image_path, '/');
             $cleanFilename = basename(parse_url($rawFilename, PHP_URL_PATH));
@@ -65,10 +66,10 @@ class MigrateMachineryFilesToS3 extends Command
                     try {
                         $content = File::get($localPath);
                         Storage::disk(S3StorageService::disk())->put($s3Path, $content);
-                        $this->info("  ✓ Uploaded to S3!");
+                        $this->info('  ✓ Uploaded to S3!');
                         $uploadedFiles++;
                     } catch (\Exception $e) {
-                        $this->error("  ✗ Failed: " . $e->getMessage());
+                        $this->error('  ✗ Failed: ' . $e->getMessage());
                         $failedFiles++;
                     }
                 } else {
@@ -95,7 +96,7 @@ class MigrateMachineryFilesToS3 extends Command
                         }
                         $uploadedFiles++;
                     } catch (\Exception $e) {
-                        $this->error("  ✗ Failed default upload: " . $e->getMessage());
+                        $this->error('  ✗ Failed default upload: ' . $e->getMessage());
                         $failedFiles++;
                     }
                 }
@@ -103,8 +104,8 @@ class MigrateMachineryFilesToS3 extends Command
         }
 
         $this->newLine();
-        $this->info("==========================================");
-        $this->info(" Migration Completed Summary:");
+        $this->info('==========================================');
+        $this->info(' Migration Completed Summary:');
         $this->info(" Successfully Uploaded to S3 : {$uploadedFiles}");
         if ($missingCount > 0) {
             $this->warn(" Missing Local Files Handled : {$missingCount} (Set with Default Fallback)");
@@ -112,7 +113,7 @@ class MigrateMachineryFilesToS3 extends Command
         if ($failedFiles > 0) {
             $this->error(" Failed Uploads              : {$failedFiles}");
         }
-        $this->info("==========================================");
+        $this->info('==========================================');
 
         return Command::SUCCESS;
     }

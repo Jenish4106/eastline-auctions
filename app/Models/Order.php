@@ -108,11 +108,7 @@ class Order extends Model
             ->first();
 
         if ($invoice) {
-            $path = public_path($invoice->image_path);
-            if (file_exists($path)) {
-                return asset('public/' . ltrim($invoice->image_path, '/')) . '?t=' . filemtime($path);
-            }
-            return asset('public/' . ltrim($invoice->image_path, '/'));
+            return \App\Services\S3StorageService::getUrl($invoice->image_path);
         }
 
         return null;
@@ -124,12 +120,12 @@ class Order extends Model
             ->where('type', 'contract')
             ->first();
 
-        return $contract ? asset('public/' . ltrim($contract->image_path, '/')) : null;
+        return $contract ? \App\Services\S3StorageService::getUrl($contract->image_path) : null;
     }
 
     public function getPaymentSlipUrlAttribute()
     {
-        return $this->payment_slip_path ? asset('public/' . ltrim($this->payment_slip_path, '/')) : null;
+        return $this->payment_slip_path ? \App\Services\S3StorageService::getUrl($this->payment_slip_path) : null;
     }
 
     public function getPaymentSlipStatusTextAttribute()

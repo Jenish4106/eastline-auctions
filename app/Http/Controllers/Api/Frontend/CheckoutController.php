@@ -166,14 +166,9 @@ class CheckoutController extends Controller
             $firstImage = $machinery->images ? $machinery->images->firstWhere('type', 'image') : null;
             if ($firstImage) {
                 $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
-                $disk = config('filesystems.default', 's3');
-                if ($disk === 's3') {
-                    if (Storage::disk('s3')->exists($imagePathRel)) {
-                        $machineryImage = 'data:image/jpeg;base64,' . base64_encode(Storage::disk('s3')->get($imagePathRel));
-                    }
-                } else if (File::exists(public_path($imagePathRel))) {
-                    $machineryImage = $this->imageToBase64(public_path($imagePathRel));
-                    $machineryImageUrl = asset('public/' . ltrim($imagePathRel, '/'));
+                if (S3StorageService::exists($imagePathRel)) {
+                    $machineryImage = S3StorageService::getImageAsBase64($imagePathRel);
+                    $machineryImageUrl = S3StorageService::getUrl($imagePathRel);
                 }
             }
 
@@ -192,8 +187,8 @@ class CheckoutController extends Controller
                     'account_number' => $companyAccountNumber,
                     'routing_number' => $companyRoutingNumber,
                     'branch_address' => $companyBranchAddress,
-                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,  // For PDF
-                    'logoUrl' => $companyLogo ? asset('public/' . ltrim($companyLogo, '/')) : null,  // For Frontend
+                    'logo' => $companyLogo ? S3StorageService::getImageAsBase64($companyLogo) : null,  // For PDF
+                    'logoUrl' => $companyLogo ? S3StorageService::getUrl($companyLogo) : null,  // For Frontend
                 ]
             ];
 
@@ -271,9 +266,9 @@ class CheckoutController extends Controller
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,
-                    'logoUrl' => $companyLogo ? asset('public/' . ltrim($companyLogo, '/')) : null,
-                    'signature_path' => File::exists(public_path('uploads/signatures/seller_signature.png')) ? $this->imageToBase64(public_path('uploads/signatures/seller_signature.png')) : null,
+                    'logo' => $companyLogo ? S3StorageService::getImageAsBase64($companyLogo) : null,
+                    'logoUrl' => $companyLogo ? S3StorageService::getUrl($companyLogo) : null,
+                    'signature_path' => S3StorageService::getImageAsBase64('signatures/seller_signature.png') ?? S3StorageService::getImageAsBase64('uploads/signatures/seller_signature.png'),
                 ],
                 'contractDate' => now()->format('Y-m-d'),
                 'is_checkout' => true,
@@ -304,9 +299,9 @@ class CheckoutController extends Controller
                 $htmlContent = $mail->renderHtmlContent();
 
                 $attachments = [];
-                if (file_exists(public_path($finalContractPath))) {
+                if (S3StorageService::exists($finalContractPath)) {
                     $attachments[] = [
-                        'path' => public_path($finalContractPath),
+                        'path' => $finalContractPath,
                         'name' => 'Contract-' . $order->order_id . '.pdf',
                         'type' => 'application/pdf',
                     ];

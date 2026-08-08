@@ -298,21 +298,13 @@ class CategoryController extends Controller
                     foreach ($imageArray as $image) {
                         $filename = is_string($image) ? basename(parse_url($image, PHP_URL_PATH)) : null;
                         if ($filename) {
-                            $categoryImagePath = public_path('uploads/category/images/' . $filename);
-                            
-                            if (file_exists($categoryImagePath)) {
-                                unlink($categoryImagePath);
-                            }
+                            S3StorageService::delete('uploads/category/images/' . $filename);
                         }
                     }
                 } else {
                     $filename = is_string($category->image) ? basename(parse_url($category->image, PHP_URL_PATH)) : null;
                     if ($filename) {
-                        $categoryImagePath = public_path('uploads/category/images/' . $filename);
-                        
-                        if (file_exists($categoryImagePath)) {
-                            unlink($categoryImagePath);
-                        }
+                        S3StorageService::delete('uploads/category/images/' . $filename);
                     }
                 }
             }
@@ -337,7 +329,7 @@ class CategoryController extends Controller
     private function getImageUrl($item, $type = 'category')
     {
         if (empty($item)) {
-            return asset('public/uploads/defaults/default.png');
+            return S3StorageService::getUrl('uploads/defaults/default.png');
         }
 
         return S3StorageService::getUrl('uploads/' . $type . '/images/' . $item);

@@ -4,16 +4,17 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\OrderStatusChangeMail;
 use App\Mail\ResendInvoiceMail;
+use App\Models\MachineryFileManager;
 use App\Models\Order;
 use App\Models\Settings;
-use App\Models\MachineryFileManager;
 use App\Services\MailtrapService;
+use App\Services\S3StorageService;
 use App\Services\TwilioSmsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\View;
 
 class OrderController extends Controller
 {
@@ -45,17 +46,17 @@ class OrderController extends Controller
                 ->where('is_deleted', 0)
                 ->whereHas('user')
                 ->select([
-                'id',
-                'order_id',
-                'machinery_id',
-                'user_id',
-                'type',
-                'price',
-                'delivery_status',
-                'purchase_date',
-                'payment_slip_path',
-                'payment_slip_status',
-            ]);
+                    'id',
+                    'order_id',
+                    'machinery_id',
+                    'user_id',
+                    'type',
+                    'price',
+                    'delivery_status',
+                    'purchase_date',
+                    'payment_slip_path',
+                    'payment_slip_status',
+                ]);
 
             if (!empty($search)) {
                 $query->where(function ($q) use ($search) {
@@ -255,18 +256,18 @@ class OrderController extends Controller
 
                     if ($request->status == 1) {
                         $contract = $order->contract;
-                        if ($contract && file_exists(public_path($contract->image_path))) {
+                        if ($contract && S3StorageService::exists($contract->image_path)) {
                             $attachments[] = [
-                                'path' => public_path($contract->image_path),
+                                'path' => $contract->image_path,
                                 'name' => 'Contract-' . $order->order_id . '.pdf',
                                 'type' => 'application/pdf',
                             ];
                         }
                     } elseif ($request->status == 3) {
                         $invoice = $order->invoice;
-                        if ($invoice && file_exists(public_path($invoice->image_path))) {
+                        if ($invoice && S3StorageService::exists($invoice->image_path)) {
                             $attachments[] = [
-                                'path' => public_path($invoice->image_path),
+                                'path' => $invoice->image_path,
                                 'name' => 'Invoice-' . $order->order_id . '.pdf',
                                 'type' => 'application/pdf',
                             ];
@@ -419,10 +420,7 @@ class OrderController extends Controller
                 ->get();
 
             foreach ($files as $file) {
-                $filePath = public_path($file->image_path);
-                if (File::exists($filePath)) {
-                    File::delete($filePath);
-                }
+                S3StorageService::delete($file->image_path);
                 $file->delete();
             }
 
@@ -465,7 +463,7 @@ class OrderController extends Controller
 
         try {
             $orderIdInput = $request->input('order_id');
-            
+
             $order = Order::with(['user', 'machinery'])
                 ->find($orderIdInput);
 
@@ -499,10 +497,7 @@ class OrderController extends Controller
                 $oldInvoiceRecord = $oldInvoices->first();
                 if ($oldInvoices->count() > 1) {
                     foreach ($oldInvoices->slice(1) as $extraInvoice) {
-                        $extraPath = public_path($extraInvoice->image_path);
-                        if (File::exists($extraPath)) {
-                            File::delete($extraPath);
-                        }
+                        S3StorageService::delete($extraInvoice->image_path);
                         $extraInvoice->delete();
                     }
                 }
@@ -522,9 +517,9 @@ class OrderController extends Controller
 
             if ($firstImage) {
                 $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
-                if (File::exists(public_path($imagePathRel))) {
-                    $machineryImage = $this->imageToBase64(public_path($imagePathRel));
-                    $machineryImageUrl = asset('public/' . ltrim($imagePathRel, '/'));
+                if (S3StorageService::exists($imagePathRel)) {
+                    $machineryImage = S3StorageService::getImageAsBase64($imagePathRel);
+                    $machineryImageUrl = S3StorageService::getUrl($imagePathRel);
                 }
             }
 
@@ -537,8 +532,8 @@ class OrderController extends Controller
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,
-                    'logoUrl' => $companyLogo ? asset('public/' . ltrim($companyLogo, '/')) : null,
+                    'logo' => $companyLogo ? S3StorageService::getImageAsBase64($companyLogo) : null,
+                    'logoUrl' => $companyLogo ? S3StorageService::getUrl($companyLogo) : null,
                     'bank_name' => Settings::get('bank_name'),
                     'beneficiary_name' => Settings::get('beneficiary_name'),
                     'beneficiary_address' => Settings::get('beneficiary_address'),
@@ -549,33 +544,15 @@ class OrderController extends Controller
             ];
 
             $invoicePdf = Pdf::loadView('pdf.invoice', $invoiceData);
-            
+
             $invoiceFileName = 'invoice_' . $order->order_id . '.pdf';
-            $invoicePath = 'uploads/invoices/' . $invoiceFileName;
 
-            $disk = config('filesystems.default', 's3');
-            if ($oldInvoiceRecord) {
-                if ($disk === 's3') {
-                    if (Storage::disk('s3')->exists($oldInvoiceRecord->image_path)) {
-                        Storage::disk('s3')->delete($oldInvoiceRecord->image_path);
-                    }
-                } else {
-                    $oldPath = public_path($oldInvoiceRecord->image_path);
-                    if (File::exists($oldPath)) {
-                        File::delete($oldPath);
-                    }
-                }
+            if ($oldInvoiceRecord && $oldInvoiceRecord->image_path) {
+                S3StorageService::delete($oldInvoiceRecord->image_path);
             }
 
-            if ($disk === 's3') {
-                Storage::disk('s3')->put($invoicePath, $invoicePdf->output());
-            } else {
-                $invoicePublicDir = public_path('uploads/invoices');
-                if (!File::exists($invoicePublicDir)) {
-                    File::makeDirectory($invoicePublicDir, 0755, true);
-                }
-                $invoicePdf->save(public_path($invoicePath));
-            }
+            $invoiceUpload = S3StorageService::upload($invoicePdf->output(), 'invoices', $invoiceFileName);
+            $invoicePath = $invoiceUpload['relative_path'];
 
             if ($oldInvoiceRecord) {
                 $oldInvoiceRecord->image_path = $invoicePath;
@@ -589,23 +566,21 @@ class OrderController extends Controller
                 ]);
             }
 
-            if ((int)$order->delivery_status >= 3 && (int)$order->delivery_status <= 8) {
+            if ((int) $order->delivery_status >= 3 && (int) $order->delivery_status <= 8) {
                 $order->is_regenerated = true;
                 $order->save();
             }
 
-            $cacheBustedUrl = asset('public/' . ltrim($invoicePath, '/')) . '?t=' . time();
-
             return response()->json([
                 'success' => true,
-                'message' => 'Invoice regenerated successfully',
+                'message' => 'Invoice regenerated successfully.',
+                'invoice_url' => $invoiceUpload['url'],
                 'data' => [
                     'order_id' => $order->id,
                     'order_number' => $order->order_id,
-                    'invoice_url' => $cacheBustedUrl,
+                    'invoice_url' => $invoiceUpload['url'],
                 ]
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -643,7 +618,7 @@ class OrderController extends Controller
                 ], 404);
             }
 
-            if (!((int)$order->delivery_status >= 3 && (int)$order->delivery_status <= 8)) {
+            if (!((int) $order->delivery_status >= 3 && (int) $order->delivery_status <= 8)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invoice can only be resent when order status is between Settle Payment and Delivered.',
@@ -665,7 +640,7 @@ class OrderController extends Controller
             }
 
             $invoice = $order->invoice;
-            if (!$invoice || !file_exists(public_path($invoice->image_path))) {
+            if (!$invoice || !S3StorageService::exists($invoice->image_path)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invoice file not found for this order. Please generate or regenerate the invoice first.',
@@ -683,7 +658,7 @@ class OrderController extends Controller
 
             $attachments = [
                 [
-                    'path' => public_path($invoice->image_path),
+                    'path' => $invoice->image_path,
                     'name' => 'Invoice-' . $order->order_id . '.pdf',
                     'type' => 'application/pdf',
                 ]
@@ -700,7 +675,6 @@ class OrderController extends Controller
                 'success' => true,
                 'message' => 'Invoice email sent successfully to ' . $order->user->email,
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

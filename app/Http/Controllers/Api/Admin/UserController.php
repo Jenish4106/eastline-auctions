@@ -341,18 +341,8 @@ class UserController extends Controller
                         $files = \App\Models\MachineryFileManager::where('machinery_id', $machine->id)
                             ->whereIn('type', ['contract_pdf', 'invoice'])
                             ->get();
-                        $disk = config('filesystems.default', 's3');
                         foreach ($files as $file) {
-                            if ($disk === 's3') {
-                                if (Storage::disk('s3')->exists($file->image_path)) {
-                                    Storage::disk('s3')->delete($file->image_path);
-                                }
-                            } else {
-                                $filePath = public_path($file->image_path);
-                                if (file_exists($filePath)) {
-                                    @unlink($filePath);
-                                }
-                            }
+                            S3StorageService::delete($file->image_path);
                             $file->delete();
                         }
                                                      
@@ -375,30 +365,11 @@ class UserController extends Controller
             }
 
             if ($user->license) {
-                $disk = config('filesystems.default', 's3');
                 if ($user->license->front_side) {
-                    if ($disk === 's3') {
-                        if (Storage::disk('s3')->exists($user->license->front_side)) {
-                            Storage::disk('s3')->delete($user->license->front_side);
-                        }
-                    } else {
-                        $licenseFilePath = public_path($user->license->front_side);
-                        if (file_exists($licenseFilePath)) {
-                            unlink($licenseFilePath);
-                        }
-                    }
+                    S3StorageService::delete($user->license->front_side);
                 }
                 if ($user->license->back_side) {
-                    if ($disk === 's3') {
-                        if (Storage::disk('s3')->exists($user->license->back_side)) {
-                            Storage::disk('s3')->delete($user->license->back_side);
-                        }
-                    } else {
-                        $licenseFilePath = public_path($user->license->back_side);
-                        if (file_exists($licenseFilePath)) {
-                            unlink($licenseFilePath);
-                        }
-                    }
+                    S3StorageService::delete($user->license->back_side);
                 }
                 $user->license->delete();
             }

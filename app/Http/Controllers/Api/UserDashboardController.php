@@ -53,7 +53,7 @@ class UserDashboardController extends Controller
                             ->first();
                         
                         if ($invoiceFile) {
-                            $pdfUrl = asset('public/' . ltrim($invoiceFile->image_path, '/'));
+                            $pdfUrl = \App\Services\S3StorageService::getUrl($invoiceFile->image_path);
                         }
                     }
                 }

@@ -45,7 +45,7 @@ class FeedController extends Controller
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
 
-            $frontendUrl = 'https://eastline-auctions.com';
+            $frontendUrl = 'https://eastlineauctions.com';
             $frontendUrl = rtrim($frontendUrl, '/');
 
             foreach ($machineries as $machinery) {
@@ -54,7 +54,7 @@ class FeedController extends Controller
                 $firstImageUrl = '';
                 $firstImage = $machinery->images->first();
                 if ($firstImage && $firstImage->type === 'image') {
-                    $firstImageUrl = asset('public/uploads/machinery/images/' . $firstImage->image_path) . '?time=' . time();
+                    $firstImageUrl = \App\Services\S3StorageService::getUrl('uploads/machinery/images/' . $firstImage->image_path);
                 }
 
                 $year = $machinery->year ?? '';
