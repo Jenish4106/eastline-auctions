@@ -54,7 +54,8 @@ class FeedController extends Controller
                 $firstImageUrl = '';
                 $firstImage = $machinery->images->first();
                 if ($firstImage && $firstImage->type === 'image') {
-                    $firstImageUrl = \App\Services\S3StorageService::getUrl('uploads/machinery/images/' . $firstImage->image_path);
+                    $filename = basename(parse_url($firstImage->image_path, PHP_URL_PATH));
+                    $firstImageUrl = \App\Services\S3StorageService::getUrl('uploads/machinery/images/' . $filename);
                 }
 
                 $year = $machinery->year ?? '';

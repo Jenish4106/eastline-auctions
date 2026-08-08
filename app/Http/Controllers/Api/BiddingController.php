@@ -261,7 +261,7 @@ class BiddingController extends Controller
 
                 $firstImageObj = $machinery->images ? $machinery->images->firstWhere('type', 'image') : null;
                 $firstImageUrl = $firstImageObj
-                    ? S3StorageService::getUrl('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'))
+                    ? S3StorageService::getUrl('uploads/machinery/images/' . basename(parse_url($firstImageObj->image_path, PHP_URL_PATH)))
                     : S3StorageService::getUrl('uploads/defaults/default.png');
 
                 return [
@@ -365,7 +365,7 @@ class BiddingController extends Controller
 
             $firstImageObj = $machinery->images->firstWhere('type', 'image');
             $firstImageUrl = $firstImageObj
-                ? S3StorageService::getUrl('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'))
+                ? S3StorageService::getUrl('uploads/machinery/images/' . basename(parse_url($firstImageObj->image_path, PHP_URL_PATH)))
                 : S3StorageService::getUrl('uploads/defaults/default.png');
 
             $machineryDetails = [
@@ -486,7 +486,7 @@ class BiddingController extends Controller
 
                 $firstImageObj = $machinery->images->firstWhere('type', 'image');
                 $firstImageUrl = $firstImageObj
-                    ? S3StorageService::getUrl('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'))
+                    ? S3StorageService::getUrl('uploads/machinery/images/' . basename(parse_url($firstImageObj->image_path, PHP_URL_PATH)))
                     : S3StorageService::getUrl('uploads/defaults/default.png');
 
                 $contractStatusMap = [
@@ -819,7 +819,8 @@ class BiddingController extends Controller
             $machineryImageUrl = null;
 
             if ($firstImage) {
-                $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
+                $filename = basename(parse_url($firstImage->image_path, PHP_URL_PATH));
+                $imagePathRel = 'uploads/machinery/images/' . $filename;
                 if (S3StorageService::exists($imagePathRel)) {
                     $machineryImage = S3StorageService::getImageAsBase64($imagePathRel);
                     $machineryImageUrl = S3StorageService::getUrl($imagePathRel);
@@ -869,7 +870,7 @@ class BiddingController extends Controller
 
                 $firstImageObj = $order->machinery->images->firstWhere('type', 'image');
                 $firstImageUrl = $firstImageObj
-                    ? S3StorageService::getUrl('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'))
+                    ? S3StorageService::getUrl('uploads/machinery/images/' . basename(parse_url($firstImageObj->image_path, PHP_URL_PATH)))
                     : S3StorageService::getUrl('uploads/defaults/default.png');
 
                 $deliveryStatusMap = [

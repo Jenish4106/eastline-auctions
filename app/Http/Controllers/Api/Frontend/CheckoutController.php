@@ -165,7 +165,8 @@ class CheckoutController extends Controller
             $machineryImageUrl = null;
             $firstImage = $machinery->images ? $machinery->images->firstWhere('type', 'image') : null;
             if ($firstImage) {
-                $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
+                $filename = basename(parse_url($firstImage->image_path, PHP_URL_PATH));
+                $imagePathRel = 'uploads/machinery/images/' . $filename;
                 if (S3StorageService::exists($imagePathRel)) {
                     $machineryImage = S3StorageService::getImageAsBase64($imagePathRel);
                     $machineryImageUrl = S3StorageService::getUrl($imagePathRel);
