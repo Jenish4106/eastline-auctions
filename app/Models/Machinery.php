@@ -93,7 +93,7 @@ class Machinery extends Model
 
     public function contract()
     {
-        return $this->hasOne(MachineryFileManager::class)->where('type', 'contract_pdf')->latest();
+        return $this->hasOne(MachineryFileManager::class)->whereIn('type', ['contract', 'contract_pdf'])->latest();
     }
 
     public function getContractUrlAttribute()
