@@ -5,9 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
@@ -57,20 +55,34 @@ class CategoryController extends Controller
 
             $categoriesWithImages = $categories->getCollection()->map(function ($category) {
                 if ($category->image) {
+                    
                     $imageArray = json_decode($category->image, true);
                     if (is_array($imageArray)) {
                         $imageUrls = [];
                         foreach ($imageArray as $filename) {
-                            $imageUrls[] = $this->getImageUrl($filename, 'category');
+                            $categoryImagePath = public_path('uploads/category/images/' . $filename);
+                            if (file_exists($categoryImagePath)) {
+                                $imageUrls[] = asset('public/uploads/category/images/' . $filename) . '?time=' . time();
+                            } else {
+                                $imageUrls[] = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                            }
                         }
-                        $category->image_urls = array_values(array_filter($imageUrls));
+
+                        $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
                     } else {
-                        $category->image_urls = [$this->getImageUrl($category->image, 'category')];
+                        $categoryImagePath = public_path('uploads/category/images/' . $category->image);
+                        if (file_exists($categoryImagePath)) {
+                            $category->image_urls = [asset('public/uploads/category/images/' . $category->image) . '?time=' . time()];
+                        } else {
+                            $category->image_urls = [asset('public/uploads/defaults/default.png') . '?time=' . time()];
+                        }
+
+                        $category->image_urls = collect($category->image_urls)->filter()->values()->toArray();
                     }
                 } else {
                     $category->image_urls = [];
                 }
-
+                
                 unset($category->image);
                 return $category;
             });
@@ -124,14 +136,24 @@ class CategoryController extends Controller
                 if (is_array($imageArray)) {
                     $imageUrls = [];
                     foreach ($imageArray as $filename) {
-                        $imageUrls[] = $this->getImageUrl($filename, 'category');
+                        $categoryImagePath = public_path('uploads/category/images/' . $filename);
+                        if (file_exists($categoryImagePath)) {
+                            $imageUrls[] = asset('public/uploads/category/images/' . $filename);
+                        } else {
+                            $imageUrls[] = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                        }
                     }
-                    $category->image_urls = array_values(array_filter($imageUrls));
+                    $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
                 } else {
-                    $category->image_urls = [$this->getImageUrl($category->image, 'category')];
+                    $categoryImagePath = public_path('uploads/category/images/' . $category->image);
+                    if (file_exists($categoryImagePath)) {
+                        $category->image_urls = [asset('public/uploads/category/images/' . $category->image)];
+                    } else {
+                        $category->image_urls = [asset('public/uploads/defaults/default.png') . '?time=' . time()];
+                    }
                 }
             } else {
-                $category->image_urls = [$this->getImageUrl(null, 'category')];
+                $category->image_urls = [asset('public/uploads/defaults/default.png') . '?time=' . time()];
             }
             
             unset($category->image);
@@ -183,14 +205,25 @@ class CategoryController extends Controller
             $category->category_name   = $request->category_name;
             $category->total_machinery = $request->total_machinery;
             
-            $category->image = json_encode($request->image_urls);
-            $category->save();
-
-            $imageUrls = [];
+            $filenames = [];
             foreach ($request->image_urls as $imageUrl) {
-                $imageUrls[] = $this->getImageUrl($imageUrl, 'category');
+                $filenames[] = basename(parse_url($imageUrl, PHP_URL_PATH));
             }
-            $category->image_urls = array_values(array_filter($imageUrls));
+
+            $category->image = json_encode($filenames);
+
+            $category->save();
+            
+            $imageUrls = [];
+            foreach ($filenames as $filename) {
+                $path1 = public_path('uploads/category/images/' . $filename);
+                if (file_exists($path1)) {
+                    $imageUrls[] = asset('public/uploads/category/images/' . $filename);
+                } else {
+                    $imageUrls[] = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                }
+            }
+            $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
             unset($category->image);
 
             return response()->json([
@@ -243,17 +276,46 @@ class CategoryController extends Controller
             $category->total_machinery = $request->total_machinery;
 
             if ($request->has('image_urls')) {
-                $category->image = json_encode($request->image_urls);
+                $existingImages = json_decode($category->image, true);
+                if (!is_array($existingImages)) {
+                    $existingImages = $existingImages ? [$existingImages] : [];
+                }
+                
+                $incomingFilenames = [];
+                foreach ($request->image_urls as $imageUrl) {
+                    $incomingFilenames[] = basename(parse_url($imageUrl, PHP_URL_PATH));
+                }
+                
+                foreach ($existingImages as $existingImage) {
+                    $existingFilename = is_string($existingImage) ? basename(parse_url($existingImage, PHP_URL_PATH)) : null;
+                    if ($existingFilename && !in_array($existingFilename, $incomingFilenames)) {
+                        $categoryImagePath = public_path('uploads/category/images/' . $existingFilename);
+                        if (file_exists($categoryImagePath)) {
+                            unlink($categoryImagePath);
+                        }
+                    }
+                }
+                
+                $filenames = [];
+                foreach ($request->image_urls as $imageUrl) {
+                    $filenames[] = basename(parse_url($imageUrl, PHP_URL_PATH));
+                }
+                $category->image = json_encode($filenames);
             }
 
             $category->save();
-
+            
             if ($request->has('image_urls')) {
                 $imageUrls = [];
-                foreach ($request->image_urls as $imageUrl) {
-                    $imageUrls[] = $this->getImageUrl($imageUrl, 'category');
+                foreach ($filenames as $filename) {
+                    $path1 = public_path('uploads/category/images/' . $filename);
+                    if (file_exists($path1)) {
+                        $imageUrls[] = asset('public/uploads/category/images/' . $filename);
+                    } else {
+                        $imageUrls[] = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                    }
                 }
-                $category->image_urls = array_values(array_filter($imageUrls));
+                $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
                 unset($category->image);
             }
 
@@ -328,39 +390,5 @@ class CategoryController extends Controller
                 'message' => 'Something went wrong, please try again.',
             ], 500);
         }
-    }
-
-    /**
-     * Resolve image URL from full URL, local asset, or Cloudflare S3
-     */
-    private function getImageUrl($item, $type = 'category')
-    {
-        if (empty($item)) {
-            return asset('public/uploads/defaults/default.png') . '?time=' . time();
-        }
-
-        if (Str::startsWith($item, ['http://', 'https://'])) {
-            return $item;
-        }
-
-        $localPath = public_path('uploads/' . $type . '/images/' . $item);
-        if (File::exists($localPath)) {
-            return asset('public/uploads/' . $type . '/images/' . $item) . '?time=' . time();
-        }
-
-        $awsUrl = env('AWS_URL');
-        if ($awsUrl) {
-            return rtrim($awsUrl, '/') . '/' . $type . '/images/' . $item;
-        }
-
-        try {
-            if (config('filesystems.default') === 's3' || env('AWS_ENDPOINT')) {
-                return Storage::disk('s3')->url($type . '/images/' . $item);
-            }
-        } catch (\Exception $e) {
-            // fallback
-        }
-
-        return asset('public/uploads/defaults/default.png') . '?time=' . time();
     }
 }

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class UploadController extends Controller
@@ -63,31 +62,23 @@ class UploadController extends Controller
                 ], 422);
             }
 
-            $disk = config('filesystems.default', 's3');
             $uploadedImages = [];
+            $destinationPath = public_path('uploads/' . $type . '/images');
+            
+            if (!File::exists($destinationPath)) {
+                File::makeDirectory($destinationPath, 0755, true);
+            }
 
             foreach ($filesArray as $image) {
+                $originalName = $image->getClientOriginalName();
+                $size = $image->getSize();
+                $mimeType = $image->getMimeType();
+                
                 $imageName = time() . '_' . Str::random(10) . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                $relativePath = $type . '/images/' . $imageName;
-
-                if ($disk === 's3') {
-                    Storage::disk('s3')->putFileAs($type . '/images', $image, $imageName);
-
-                    $awsUrl = env('AWS_URL');
-                    if ($awsUrl) {
-                        $imageUrl = rtrim($awsUrl, '/') . '/' . $relativePath;
-                    } else {
-                        $imageUrl = Storage::disk('s3')->url($relativePath);
-                    }
-                } else {
-                    $destinationPath = public_path('uploads/' . $type . '/images');
-                    if (!File::exists($destinationPath)) {
-                        File::makeDirectory($destinationPath, 0755, true);
-                    }
-                    $image->move($destinationPath, $imageName);
-                    $imageUrl = asset('public/uploads/' . $type . '/images/' . $imageName) . '?time=' . time();
-                }
-
+                $image->move($destinationPath, $imageName);
+                
+                $imageUrl = asset('public/uploads/' . $type . '/images/' . $imageName) . '?time=' . time();
+                
                 $uploadedImages[] = [
                     'filename' => $imageName,
                     'url' => $imageUrl,
@@ -191,34 +182,25 @@ class UploadController extends Controller
                 ], 422);
             }
 
-            $disk = config('filesystems.default', 's3');
             $uploadedVideos = [];
 
+            $destinationPath = public_path('uploads/' . $type . '/videos');
+
+            if (!File::exists($destinationPath)) {
+                File::makeDirectory($destinationPath, 0755, true);
+            }
+
             foreach ($files as $video) {
+
                 $originalName = $video->getClientOriginalName();
                 $size = $video->getSize();
                 $mimeType = $video->getMimeType();
 
                 $videoName = time() . '_' . Str::random(10) . '_' . uniqid() . '.' . $video->getClientOriginalExtension();
-                $relativePath = $type . '/videos/' . $videoName;
 
-                if ($disk === 's3') {
-                    Storage::disk('s3')->putFileAs($type . '/videos', $video, $videoName);
+                $video->move($destinationPath, $videoName);
 
-                    $awsUrl = env('AWS_URL');
-                    if ($awsUrl) {
-                        $videoUrl = rtrim($awsUrl, '/') . '/' . $relativePath;
-                    } else {
-                        $videoUrl = Storage::disk('s3')->url($relativePath);
-                    }
-                } else {
-                    $destinationPath = public_path('uploads/' . $type . '/videos');
-                    if (!File::exists($destinationPath)) {
-                        File::makeDirectory($destinationPath, 0755, true);
-                    }
-                    $video->move($destinationPath, $videoName);
-                    $videoUrl = asset('public/uploads/' . $type . '/videos/' . $videoName);
-                }
+                $videoUrl = asset('public/uploads/' . $type . '/videos/' . $videoName);
 
                 $uploadedVideos[] = [
                     'original_name' => $originalName,
