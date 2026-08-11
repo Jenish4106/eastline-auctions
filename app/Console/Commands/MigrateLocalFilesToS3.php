@@ -73,7 +73,7 @@ class MigrateLocalFilesToS3 extends Command
 
                 try {
                     $content = File::get($localPath);
-                    \Illuminate\Support\Facades\Storage::disk(S3StorageService::disk())->put($s3Path, $content);
+                    S3StorageService::disk()->put($s3Path, $content);
                     $this->info("  ✓ Uploaded to S3!");
                     $uploadedFiles++;
                 } catch (\Exception $e) {
@@ -100,7 +100,7 @@ class MigrateLocalFilesToS3 extends Command
                 if (!$isDryRun) {
                     try {
                         $content = File::get($localPath);
-                        \Illuminate\Support\Facades\Storage::disk(S3StorageService::disk())->put($s3Path, $content);
+                        S3StorageService::disk()->put($s3Path, $content);
                         $this->info("  ✓ Uploaded to S3!");
                         $uploadedFiles++;
                     } catch (\Exception $e) {
