@@ -63,21 +63,13 @@ class MailtrapService
             }
 
             foreach ($attachments as $attachment) {
-                if (isset($attachment['content'], $attachment['name'], $attachment['type'])) {
-                    $email->attach($attachment['content'], $attachment['name'], $attachment['type']);
-                } elseif (isset($attachment['path'], $attachment['name'], $attachment['type'])) {
-                    if (file_exists($attachment['path'])) {
-                        $email->attachFromPath($attachment['path'], $attachment['name'], $attachment['type']);
-                    } else {
-                        $content = \App\Services\S3StorageService::getFileContent($attachment['path']);
-                        if ($content) {
-                            $email->attach($content, $attachment['name'], $attachment['type']);
-                        } else {
-                            Log::warning('Mailtrap attachment missing or not found', $attachment);
-                        }
-                    }
+                if (
+                    isset($attachment['path'], $attachment['name'], $attachment['type']) &&
+                    file_exists($attachment['path'])
+                ) {
+                    $email->attachFromPath($attachment['path'], $attachment['name'], $attachment['type']);
                 } else {
-                    Log::warning('Mailtrap attachment format invalid', $attachment);
+                    Log::warning('Mailtrap attachment missing or not found', $attachment);
                 }
             }
 

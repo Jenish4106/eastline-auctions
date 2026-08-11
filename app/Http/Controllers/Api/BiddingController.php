@@ -260,9 +260,13 @@ class BiddingController extends Controller
                 }
 
                 $firstImageObj = $machinery->images ? $machinery->images->firstWhere('type', 'image') : null;
-                $firstImageUrl = $firstImageObj
-                    ? S3StorageService::getUrl('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'))
-                    : S3StorageService::getUrl('uploads/defaults/default.png');
+                $firstImageUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                if ($firstImageObj) {
+                    $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                    if (file_exists($path1)) {
+                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/')) . '?time=' . time();
+                    }
+                }
 
                 return [
                     'id' => $machinery->id,
@@ -364,9 +368,13 @@ class BiddingController extends Controller
             }
 
             $firstImageObj = $machinery->images->firstWhere('type', 'image');
-            $firstImageUrl = $firstImageObj
-                ? S3StorageService::getUrl('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'))
-                : S3StorageService::getUrl('uploads/defaults/default.png');
+            $firstImageUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
+            if ($firstImageObj) {
+                $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                if (file_exists($path1)) {
+                    $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/')) . '?time=' . time();
+                }
+            }
 
             $machineryDetails = [
                 'auction_id' => $machinery->auction_id,
@@ -485,9 +493,13 @@ class BiddingController extends Controller
                     ->max('amount');
 
                 $firstImageObj = $machinery->images->firstWhere('type', 'image');
-                $firstImageUrl = $firstImageObj
-                    ? S3StorageService::getUrl('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'))
-                    : S3StorageService::getUrl('uploads/defaults/default.png');
+                $firstImageUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                if ($firstImageObj) {
+                    $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                    if (file_exists($path1)) {
+                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/')) . '?time=' . time();
+                    }
+                }
 
                 $contractStatusMap = [
                     0 => 'Pending',
@@ -786,15 +798,15 @@ class BiddingController extends Controller
                 'shippingAddress' => $shippingAddress,
                 'signaturePath' => $signaturePath,
                 'shipping_cost' => $shippingCost,
-                'absoluteSignaturePath' => S3StorageService::getImageAsBase64($signaturePath),
+                'absoluteSignaturePath' => File::exists(public_path($signaturePath)) ? $this->imageToBase64(public_path($signaturePath)) : null,
                 'companyInfo' => [
                     'name' => $companyName,
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => $companyLogo ? S3StorageService::getImageAsBase64($companyLogo) : null,
-                    'logoUrl' => $companyLogo ? S3StorageService::getUrl($companyLogo) : null,
-                    'signature_path' => S3StorageService::getImageAsBase64('signatures/seller_signature.png') ?? S3StorageService::getImageAsBase64('uploads/signatures/seller_signature.png'),
+                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,
+                    'logoUrl' => $companyLogo ? asset('public/' . ltrim($companyLogo, '/')) : null,
+                    'signature_path' => File::exists(public_path('uploads/signatures/seller_signature.png')) ? $this->imageToBase64(public_path('uploads/signatures/seller_signature.png')) : null,  // For PDF
                 ],
                 'contractDate' => now()->format('Y-m-d'),
             ];
@@ -813,6 +825,12 @@ class BiddingController extends Controller
                 'type' => 'contract_pdf',
             ]);
 
+            $companyLogo = Settings::get('dark_logo');
+            $companyLogoPath = null;
+            if ($companyLogo && File::exists(public_path($companyLogo))) {
+                $companyLogoPath = public_path($companyLogo);
+            }
+
             $machinery->load('images');
             $firstImage = $machinery->images->firstWhere('type', 'image');
             $machineryImage = null;
@@ -820,9 +838,9 @@ class BiddingController extends Controller
 
             if ($firstImage) {
                 $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
-                if (S3StorageService::exists($imagePathRel)) {
-                    $machineryImage = S3StorageService::getImageAsBase64($imagePathRel);
-                    $machineryImageUrl = S3StorageService::getUrl($imagePathRel);
+                if (File::exists(public_path($imagePathRel))) {
+                    $machineryImage = $this->imageToBase64(public_path($imagePathRel));
+                    $machineryImageUrl = asset('public/' . ltrim($imagePathRel, '/'));
                 }
             }
 
@@ -842,8 +860,8 @@ class BiddingController extends Controller
                 'message' => 'Contract signed and PDF generated successfully',
                 'data' => [
                     'contract_file_id' => $fileManager->id,
-                    'contract_file_path' => S3StorageService::getUrl($pdfPath),
-                    'signature_path' => S3StorageService::getUrl($signaturePath),
+                    'contract_file_path' => asset('public/' . ltrim($pdfPath, '/')),
+                    'signature_path' => asset('public/' . ltrim($signaturePath, '/')),
                     'machinery_id' => $machineryId,
                 ]
             ], 200);
@@ -868,9 +886,13 @@ class BiddingController extends Controller
                 }
 
                 $firstImageObj = $order->machinery->images->firstWhere('type', 'image');
-                $firstImageUrl = $firstImageObj
-                    ? S3StorageService::getUrl('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'))
-                    : S3StorageService::getUrl('uploads/defaults/default.png');
+                $firstImageUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                if ($firstImageObj) {
+                    $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
+                    if (file_exists($path1)) {
+                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/')) . '?time=' . time();
+                    }
+                }
 
                 $deliveryStatusMap = [
                     0 => 'Order Submitted',

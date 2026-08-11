@@ -99,13 +99,13 @@ class Machinery extends Model
     public function getContractUrlAttribute()
     {
         $contract = $this->contract;
-        return $contract ? \App\Services\S3StorageService::getUrl($contract->image_path) : null;
+        return $contract ? asset('public/' . ltrim($contract->image_path, '/')) : null;
     }
 
     public function getInvoiceUrlAttribute()
     {
         $invoice = $this->invoice;
-        return $invoice ? \App\Services\S3StorageService::getUrl($invoice->image_path) : null;
+        return $invoice ? asset('public/' . ltrim($invoice->image_path, '/')) : null;
     }
 
     public function bids()

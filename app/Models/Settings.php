@@ -71,6 +71,6 @@ class Settings extends Model
             return $default;
         }
         
-        return \App\Services\S3StorageService::getUrl($logoPath) ?? $default;
+        return asset('public/' . ltrim($logoPath, '/'));
     }
 }

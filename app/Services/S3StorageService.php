@@ -93,10 +93,6 @@ class S3StorageService
             return Storage::disk('s3')->url($relativePath);
         }
 
-        if (strpos($relativePath, 'uploads/') === 0 || strpos($relativePath, 'public/') === 0) {
-            return asset(ltrim($relativePath, '/'));
-        }
-
         return asset('public/uploads/' . $relativePath);
     }
 
@@ -115,9 +111,6 @@ class S3StorageService
         if ($disk === 's3') {
             if (Storage::disk('s3')->exists($relativePath)) {
                 return Storage::disk('s3')->delete($relativePath);
-            }
-            if (strpos($relativePath, 'uploads/') !== 0 && Storage::disk('s3')->exists('uploads/' . $relativePath)) {
-                return Storage::disk('s3')->delete('uploads/' . $relativePath);
             }
         } else {
             $fullPath = public_path('uploads/' . $relativePath);
@@ -146,74 +139,9 @@ class S3StorageService
         $relativePath = ltrim($relativePath, '/');
 
         if ($disk === 's3') {
-            if (Storage::disk('s3')->exists($relativePath)) {
-                return true;
-            }
-            if (strpos($relativePath, 'uploads/') !== 0 && Storage::disk('s3')->exists('uploads/' . $relativePath)) {
-                return true;
-            }
-            return false;
+            return Storage::disk('s3')->exists($relativePath);
         }
 
         return File::exists(public_path('uploads/' . $relativePath)) || File::exists(public_path($relativePath));
-    }
-
-    /**
-     * Get raw binary content of a file from S3 or local storage
-     */
-    public static function getFileContent(?string $relativePath): ?string
-    {
-        if (empty($relativePath)) {
-            return null;
-        }
-
-        $disk = self::disk();
-        $relativePath = ltrim($relativePath, '/');
-
-        if ($disk === 's3') {
-            if (Storage::disk('s3')->exists($relativePath)) {
-                return Storage::disk('s3')->get($relativePath);
-            }
-            if (strpos($relativePath, 'uploads/') !== 0 && Storage::disk('s3')->exists('uploads/' . $relativePath)) {
-                return Storage::disk('s3')->get('uploads/' . $relativePath);
-            }
-        }
-
-        $fullPath = public_path('uploads/' . $relativePath);
-        if (File::exists($fullPath)) {
-            return File::get($fullPath);
-        }
-
-        $directPath = public_path($relativePath);
-        if (File::exists($directPath)) {
-            return File::get($directPath);
-        }
-
-        return null;
-    }
-
-    /**
-     * Get base64 encoded data URI string for images stored on S3 or local storage
-     */
-    public static function getImageAsBase64(?string $relativePath): ?string
-    {
-        $content = self::getFileContent($relativePath);
-        if (!$content) {
-            return null;
-        }
-
-        $ext = strtolower(pathinfo($relativePath, PATHINFO_EXTENSION));
-        $mime = 'image/jpeg';
-        if ($ext === 'png') {
-            $mime = 'image/png';
-        } elseif ($ext === 'webp') {
-            $mime = 'image/webp';
-        } elseif ($ext === 'gif') {
-            $mime = 'image/gif';
-        } elseif ($ext === 'svg') {
-            $mime = 'image/svg+xml';
-        }
-
-        return 'data:' . $mime . ';base64,' . base64_encode($content);
     }
 }

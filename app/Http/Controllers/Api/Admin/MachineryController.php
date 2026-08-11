@@ -100,10 +100,10 @@ class MachineryController extends Controller
 
                 $imageUrls = [];
                 foreach ($images as $image) {
-                    $imageUrls[] = S3StorageService::getUrl('uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                    $imageUrls[] = S3StorageService::getUrl('machinery/images/' . ltrim($image->image_path, '/'));
                 }
                 if (empty($imageUrls)) {
-                    $imageUrls = [S3StorageService::getUrl('uploads/defaults/default.png')];
+                    $imageUrls = [asset('public/uploads/defaults/default.png')];
                 }
                 $item->image_urls = array_values(array_unique($imageUrls));
 
@@ -113,10 +113,10 @@ class MachineryController extends Controller
 
                 $videoUrls = [];
                 foreach ($videos as $video) {
-                    $videoUrls[] = S3StorageService::getUrl('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                    $videoUrls[] = S3StorageService::getUrl('machinery/videos/' . ltrim($video->image_path, '/'));
                 }
                 if (empty($videoUrls)) {
-                    $videoUrls = [S3StorageService::getUrl('uploads/defaults/default-machine.mp4')];
+                    $videoUrls = [asset('public/uploads/defaults/default-machine.mp4')];
                 }
                 $item->video_urls = array_values(array_unique($videoUrls));
 
@@ -174,10 +174,13 @@ class MachineryController extends Controller
 
             $imageUrls = [];
             foreach ($images as $image) {
-                $imageUrls[] = S3StorageService::getUrl('uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                if (file_exists($machineryImagePath)) {
+                    $imageUrls[] = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                }
             }
             if (empty($imageUrls)) {
-                $imageUrls = [S3StorageService::getUrl('uploads/defaults/default.png')];
+                $imageUrls = [asset('public/uploads/defaults/default.png') . '?time=' . time()];
             }
             $machinery->image_urls = array_values(array_unique($imageUrls));
 
@@ -187,10 +190,13 @@ class MachineryController extends Controller
 
             $videoUrls = [];
             foreach ($videos as $video) {
-                $videoUrls[] = S3StorageService::getUrl('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                if (file_exists($machineryVideoPath)) {
+                    $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                }
             }
             if (empty($videoUrls)) {
-                $videoUrls = [S3StorageService::getUrl('uploads/defaults/default-machine.mp4')];
+                $videoUrls = [asset('uploads/defaults/default-machine.mp4')];
             }
             $machinery->video_urls = array_values(array_unique($videoUrls));
 
@@ -319,7 +325,7 @@ class MachineryController extends Controller
             });
 
             $machinery->image_urls = $images->map(function ($image) {
-                return S3StorageService::getUrl('uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                return asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
             })->filter()->values()->toArray();
 
             $videos = $machinery->images->filter(function ($file) {
@@ -327,7 +333,7 @@ class MachineryController extends Controller
             });
 
             $machinery->video_urls = $videos->map(function ($video) {
-                return S3StorageService::getUrl('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                return asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
             })->filter()->values()->toArray();
 
             unset($machinery->images);
@@ -440,7 +446,11 @@ class MachineryController extends Controller
                 foreach ($existingVideos as $existingVideo) {
                     $existingFilename = $existingVideo->image_path;
                     if (! in_array($existingFilename, $incomingVideoFilenames)) {
-                        S3StorageService::delete('uploads/machinery/videos/' . ltrim($existingFilename, '/'));
+                        $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($existingFilename, '/'));
+
+                        if (file_exists($machineryVideoPath)) {
+                            unlink($machineryVideoPath);
+                        }
                     }
                 }
 
@@ -473,7 +483,12 @@ class MachineryController extends Controller
                 foreach ($existingImages as $existingImage) {
                     $existingFilename = $existingImage->image_path;
                     if (! in_array($existingFilename, $incomingFilenames)) {
-                        S3StorageService::delete('uploads/machinery/images/' . ltrim($existingFilename, '/'));
+
+                        $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($existingFilename, '/'));
+
+                        if (file_exists($machineryImagePath)) {
+                            unlink($machineryImagePath);
+                        }
                     }
                 }
 
@@ -501,7 +516,7 @@ class MachineryController extends Controller
             });
 
             $machinery->image_urls = $images->map(function ($image) {
-                return S3StorageService::getUrl('uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                return asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
             })->filter()->values()->toArray();
 
             $videos = $machinery->images->filter(function ($file) {
@@ -509,7 +524,7 @@ class MachineryController extends Controller
             });
 
             $machinery->video_urls = $videos->map(function ($video) {
-                return S3StorageService::getUrl('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                return asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
             })->filter()->values()->toArray();
 
             unset($machinery->images);
@@ -551,9 +566,9 @@ class MachineryController extends Controller
             $files = $machinery->images;
             foreach ($files as $file) {
                 if ($file->type === 'video') {
-                    S3StorageService::delete('uploads/machinery/videos/' . ltrim($file->image_path, '/'));
+                    S3StorageService::delete('machinery/videos/' . ltrim($file->image_path, '/'));
                 } else {
-                    S3StorageService::delete('uploads/machinery/images/' . ltrim($file->image_path, '/'));
+                    S3StorageService::delete('machinery/images/' . ltrim($file->image_path, '/'));
                 }
             }
 

@@ -731,9 +731,9 @@ class BiddingController extends Controller
 
                     if ($firstImage) {
                         $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
-                        if (S3StorageService::exists($imagePathRel)) {
-                            $machineryImage = S3StorageService::getImageAsBase64($imagePathRel);
-                            $machineryImageUrl = S3StorageService::getUrl($imagePathRel);
+                        if (File::exists(public_path($imagePathRel))) {
+                            $machineryImage = $this->imageToBase64(public_path($imagePathRel));  // For PDF generation
+                            $machineryImageUrl = asset($imagePathRel);  // For Frontend display
                         }
                     }
 
@@ -746,8 +746,8 @@ class BiddingController extends Controller
                             'address' => $companyAddress,
                             'phone' => $companyPhone,
                             'email' => $companyEmail,
-                            'logo' => $companyLogo ? S3StorageService::getImageAsBase64($companyLogo) : null,
-                            'logoUrl' => $companyLogo ? S3StorageService::getUrl($companyLogo) : null,
+                            'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,
+                            'logoUrl' => $companyLogo ? asset($companyLogo) : null,
                             'bank_name' => $request->input('bank_name', null),
                             'beneficiary_name' => $request->input('beneficiary_name', null),
                             'beneficiary_address' => $request->input('beneficiary_address', null),
@@ -759,8 +759,14 @@ class BiddingController extends Controller
 
                     $invoicePdf = Pdf::loadView('pdf.invoice', $invoiceData);
                     $invoiceFileName = 'invoice_' . $existingOrder->order_id . '.pdf';
-                    $invoiceUpload = S3StorageService::upload($invoicePdf->output(), 'invoices', $invoiceFileName);
-                    $invoicePath = $invoiceUpload['relative_path'];
+                    $invoicePath = 'uploads/invoices/' . $invoiceFileName;
+
+                    $invoicePublicDir = public_path('uploads/invoices');
+                    if (!File::exists($invoicePublicDir)) {
+                        File::makeDirectory($invoicePublicDir, 0755, true);
+                    }
+
+                    $invoicePdf->save(public_path($invoicePath));
 
                     MachineryFileManager::create([
                         'machinery_id' => $machinery->id,
@@ -784,10 +790,11 @@ class BiddingController extends Controller
                             ->latest()
                             ->first();
                             
-                        if ($contractFile && S3StorageService::exists($contractFile->image_path)) {
+                        if ($contractFile && File::exists(public_path($contractFile->image_path))) {
+                            $contractFilePath = public_path($contractFile->image_path);
                             $attachments[] = [
-                                'path' => $contractFile->image_path,
-                                'name' => 'contract_' . basename($contractFile->image_path),
+                                'path' => $contractFilePath,
+                                'name' => 'contract_' . basename($contractFilePath),
                                 'type' => 'application/pdf',
                             ];
                         }

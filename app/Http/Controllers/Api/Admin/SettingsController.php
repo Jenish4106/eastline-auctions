@@ -30,10 +30,10 @@ class SettingsController extends Controller
             }
 
             if (isset($settings['white_logo'])) {
-                $settings['white_logo'] = S3StorageService::getUrl($settings['white_logo']);
+                $settings['white_logo'] = asset('public/' . ltrim($settings['white_logo'], '/'));
             }
             if (isset($settings['dark_logo'])) {
-                $settings['dark_logo'] = S3StorageService::getUrl($settings['dark_logo']);
+                $settings['dark_logo'] = asset('public/' . ltrim($settings['dark_logo'], '/'));
             }
 
             return response()->json([
