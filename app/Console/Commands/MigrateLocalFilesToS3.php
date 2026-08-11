@@ -33,82 +33,56 @@ class MigrateLocalFilesToS3 extends Command
             $this->warn("--- DRY RUN MODE (No files will be uploaded) ---");
         }
 
-        $this->info("=== Starting Category & Settings Migration to S3 ===");
+        $directoriesToMigrate = [
+            public_path('uploads/category') => 'category',
+            public_path('settings') => 'settings',
+        ];
 
+        $totalFiles = 0;
         $uploadedFiles = 0;
+        $skippedFiles = 0;
         $failedFiles = 0;
 
-        // 1. Process Category Images from Database
-        $categories = \App\Models\Category::all();
-        $this->info("Found " . $categories->count() . " categories in database.");
-
-        foreach ($categories as $category) {
-            if (!$category->image) {
+        foreach ($directoriesToMigrate as $localBasePath => $s3Prefix) {
+            if (!File::exists($localBasePath)) {
+                $this->info("Directory not found, skipping: {$localBasePath}");
                 continue;
             }
 
-            $imageArray = json_decode($category->image, true);
-            $filenames = is_array($imageArray) ? $imageArray : [$category->image];
+            $files = File::allFiles($localBasePath);
 
-            foreach ($filenames as $filename) {
-                if (empty($filename)) continue;
-
-                // Cleanup filename if full URL stored
-                $cleanFilename = basename(parse_url($filename, PHP_URL_PATH));
+            foreach ($files as $file) {
+                $totalFiles++;
+                $relativePath = $file->getRelativePathname();
                 
-                $localPath = public_path('uploads/category/images/' . $cleanFilename);
-                $s3Path = 'category/images/' . $cleanFilename;
+                // Construct S3 relative path
+                $s3Path = $s3Prefix ? trim($s3Prefix, '/') . '/' . str_replace('\\', '/', $relativePath) : str_replace('\\', '/', $relativePath);
 
-                if (!File::exists($localPath)) {
-                    $this->warn("Local file missing for category [ID {$category->id}]: {$localPath}");
+                $this->line("Processing [{$totalFiles}]: {$s3Path}");
+
+                if (S3StorageService::exists($s3Path)) {
+                    $this->info("  ➜ Already exists on S3. Skipping.");
+                    $skippedFiles++;
                     continue;
                 }
 
-                $this->line("Uploading Category Image: {$cleanFilename} -> S3 ({$s3Path})");
-
                 if ($isDryRun) {
+                    $this->question("  ➜ [DRY RUN] Would upload to S3: {$s3Path}");
                     $uploadedFiles++;
                     continue;
                 }
 
                 try {
-                    $content = File::get($localPath);
-                    S3StorageService::disk()->put($s3Path, $content);
-                    $this->info("  ✓ Uploaded to S3!");
+                    $fileContent = File::get($file->getRealPath());
+                    
+                    // Direct S3 Upload via S3StorageService
+                    S3StorageService::disk()->put($s3Path, $fileContent);
+
+                    $this->info("  ✓ Successfully uploaded to S3!");
                     $uploadedFiles++;
                 } catch (\Exception $e) {
-                    $this->error("  ✗ Failed: " . $e->getMessage());
+                    $this->error("  ✗ Failed to upload: " . $e->getMessage());
                     $failedFiles++;
-                }
-            }
-        }
-
-        // 2. Process Settings Logos from Database
-        $whiteLogo = \App\Models\Settings::get('white_logo');
-        $darkLogo = \App\Models\Settings::get('dark_logo');
-
-        $logos = array_filter([$whiteLogo, $darkLogo]);
-
-        foreach ($logos as $logoPath) {
-            $cleanPath = ltrim(str_replace('settings/', '', $logoPath), '/');
-            $localPath = public_path('settings/' . $cleanPath);
-            $s3Path = 'settings/' . $cleanPath;
-
-            if (File::exists($localPath)) {
-                $this->line("Uploading Setting Logo: {$cleanPath} -> S3 ({$s3Path})");
-
-                if (!$isDryRun) {
-                    try {
-                        $content = File::get($localPath);
-                        S3StorageService::disk()->put($s3Path, $content);
-                        $this->info("  ✓ Uploaded to S3!");
-                        $uploadedFiles++;
-                    } catch (\Exception $e) {
-                        $this->error("  ✗ Failed: " . $e->getMessage());
-                        $failedFiles++;
-                    }
-                } else {
-                    $uploadedFiles++;
                 }
             }
         }
@@ -116,9 +90,11 @@ class MigrateLocalFilesToS3 extends Command
         $this->newLine();
         $this->info("==========================================");
         $this->info(" Migration Completed Summary:");
-        $this->info(" Successfully Uploaded to S3 : {$uploadedFiles}");
+        $this->info(" Total Files Processed : {$totalFiles}");
+        $this->info(" Successfully Uploaded : {$uploadedFiles}");
+        $this->info(" Skipped (Already S3)  : {$skippedFiles}");
         if ($failedFiles > 0) {
-            $this->error(" Failed Uploads              : {$failedFiles}");
+            $this->error(" Failed Uploads        : {$failedFiles}");
         }
         $this->info("==========================================");
 
