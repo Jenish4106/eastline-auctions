@@ -117,14 +117,8 @@ class Order extends Model
     public function getContractUrlAttribute()
     {
         $contract = MachineryFileManager::where('order_id', $this->id)
-            ->whereIn('type', ['contract', 'contract_pdf'])
+            ->where('type', 'contract')
             ->first();
-
-        if (!$contract && $this->machinery_id) {
-            $contract = MachineryFileManager::where('machinery_id', $this->machinery_id)
-                ->whereIn('type', ['contract', 'contract_pdf'])
-                ->first();
-        }
 
         return $contract ? \App\Services\S3StorageService::getUrl($contract->image_path) : null;
     }

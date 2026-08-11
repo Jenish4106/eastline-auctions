@@ -70,32 +70,6 @@ class S3StorageService
     }
 
     /**
-     * Resolve and normalize relative storage path with proper subfolder if missing
-     */
-    public static function resolveRelativePath(?string $relativePath): ?string
-    {
-        if (empty($relativePath)) {
-            return null;
-        }
-
-        $relativePath = ltrim($relativePath, '/');
-
-        if (strpos($relativePath, '/') === false) {
-            if (strpos($relativePath, 'contract_') === 0) {
-                return 'machinery_files/' . $relativePath;
-            } elseif (strpos($relativePath, 'payment_slip_') === 0) {
-                return 'payment_slips/' . $relativePath;
-            } elseif (strpos($relativePath, 'invoice_') === 0) {
-                return 'invoices/' . $relativePath;
-            } elseif (strpos($relativePath, 'signature_') === 0) {
-                return 'signatures/' . $relativePath;
-            }
-        }
-
-        return $relativePath;
-    }
-
-    /**
      * Get full public URL for a given relative storage path
      */
     public static function getUrl(?string $relativePath): ?string
@@ -109,7 +83,7 @@ class S3StorageService
         }
 
         $disk = self::disk();
-        $relativePath = self::resolveRelativePath($relativePath);
+        $relativePath = ltrim($relativePath, '/');
 
         if ($disk === 's3') {
             $awsUrl = env('AWS_URL');
@@ -136,7 +110,7 @@ class S3StorageService
         }
 
         $disk = self::disk();
-        $relativePath = self::resolveRelativePath($relativePath);
+        $relativePath = ltrim($relativePath, '/');
 
         if ($disk === 's3') {
             if (Storage::disk('s3')->exists($relativePath)) {
@@ -169,7 +143,7 @@ class S3StorageService
         }
 
         $disk = self::disk();
-        $relativePath = self::resolveRelativePath($relativePath);
+        $relativePath = ltrim($relativePath, '/');
 
         if ($disk === 's3') {
             if (Storage::disk('s3')->exists($relativePath)) {
@@ -194,7 +168,7 @@ class S3StorageService
         }
 
         $disk = self::disk();
-        $relativePath = self::resolveRelativePath($relativePath);
+        $relativePath = ltrim($relativePath, '/');
 
         if ($disk === 's3') {
             if (Storage::disk('s3')->exists($relativePath)) {
