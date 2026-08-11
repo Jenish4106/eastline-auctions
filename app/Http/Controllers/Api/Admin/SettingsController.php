@@ -3,12 +3,10 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Settings;
-use App\Services\S3StorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
@@ -89,27 +87,39 @@ class SettingsController extends Controller
             $darkLogoPath = null;
             
             if ($request->hasFile('white_logo')) {
-                $oldWhiteLogo = Settings::get('white_logo');
-                if ($oldWhiteLogo) {
-                    S3StorageService::delete($oldWhiteLogo);
+                $file     = $request->file('white_logo');
+                $fileName = time() . '_white_logo.' . $file->getClientOriginalExtension();
+
+                $destinationPath = public_path('settings');
+                if (! file_exists($destinationPath)) {
+                    mkdir($destinationPath, 0755, true);
                 }
 
-                $file = $request->file('white_logo');
-                $fileName = time() . '_white_logo.' . $file->getClientOriginalExtension();
-                $uploadResult = S3StorageService::upload($file, 'settings', $fileName);
-                $whiteLogoPath = $uploadResult['relative_path'];
+                $file->move($destinationPath, $fileName);
+                $whiteLogoPath = 'settings/' . $fileName;
+
+                $oldWhiteLogo = Settings::get('white_logo');
+                if ($oldWhiteLogo && file_exists(public_path($oldWhiteLogo))) {
+                    unlink(public_path($oldWhiteLogo));
+                }
             }
             
             if ($request->hasFile('dark_logo')) {
-                $oldDarkLogo = Settings::get('dark_logo');
-                if ($oldDarkLogo) {
-                    S3StorageService::delete($oldDarkLogo);
+                $file     = $request->file('dark_logo');
+                $fileName = time() . '_dark_logo.' . $file->getClientOriginalExtension();
+
+                $destinationPath = public_path('settings');
+                if (! file_exists($destinationPath)) {
+                    mkdir($destinationPath, 0755, true);
                 }
 
-                $file = $request->file('dark_logo');
-                $fileName = time() . '_dark_logo.' . $file->getClientOriginalExtension();
-                $uploadResult = S3StorageService::upload($file, 'settings', $fileName);
-                $darkLogoPath = $uploadResult['relative_path'];
+                $file->move($destinationPath, $fileName);
+                $darkLogoPath = 'settings/' . $fileName;
+
+                $oldDarkLogo = Settings::get('dark_logo');
+                if ($oldDarkLogo && file_exists(public_path($oldDarkLogo))) {
+                    unlink(public_path($oldDarkLogo));
+                }
             }
 
             $existingSettings = Settings::first();

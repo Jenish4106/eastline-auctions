@@ -3,7 +3,6 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Services\S3StorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -337,9 +336,31 @@ class CategoryController extends Controller
     private function getImageUrl($item, $type = 'category')
     {
         if (empty($item)) {
-            return asset('public/uploads/defaults/default.png');
+            return asset('public/uploads/defaults/default.png') . '?time=' . time();
         }
 
-        return S3StorageService::getUrl($type . '/images/' . $item);
+        if (Str::startsWith($item, ['http://', 'https://'])) {
+            return $item;
+        }
+
+        $localPath = public_path('uploads/' . $type . '/images/' . $item);
+        if (File::exists($localPath)) {
+            return asset('public/uploads/' . $type . '/images/' . $item) . '?time=' . time();
+        }
+
+        $awsUrl = env('AWS_URL');
+        if ($awsUrl) {
+            return rtrim($awsUrl, '/') . '/' . $type . '/images/' . $item;
+        }
+
+        try {
+            if (config('filesystems.default') === 's3' || env('AWS_ENDPOINT')) {
+                return Storage::disk('s3')->url($type . '/images/' . $item);
+            }
+        } catch (\Exception $e) {
+            // fallback
+        }
+
+        return asset('public/uploads/defaults/default.png') . '?time=' . time();
     }
 }

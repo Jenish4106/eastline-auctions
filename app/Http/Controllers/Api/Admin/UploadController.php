@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\S3StorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
@@ -64,14 +63,34 @@ class UploadController extends Controller
                 ], 422);
             }
 
+            $disk = config('filesystems.default', 's3');
             $uploadedImages = [];
 
             foreach ($filesArray as $image) {
-                $uploadResult = S3StorageService::upload($image, $type . '/images');
+                $imageName = time() . '_' . Str::random(10) . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                $relativePath = $type . '/images/' . $imageName;
+
+                if ($disk === 's3') {
+                    Storage::disk('s3')->putFileAs($type . '/images', $image, $imageName);
+
+                    $awsUrl = env('AWS_URL');
+                    if ($awsUrl) {
+                        $imageUrl = rtrim($awsUrl, '/') . '/' . $relativePath;
+                    } else {
+                        $imageUrl = Storage::disk('s3')->url($relativePath);
+                    }
+                } else {
+                    $destinationPath = public_path('uploads/' . $type . '/images');
+                    if (!File::exists($destinationPath)) {
+                        File::makeDirectory($destinationPath, 0755, true);
+                    }
+                    $image->move($destinationPath, $imageName);
+                    $imageUrl = asset('public/uploads/' . $type . '/images/' . $imageName) . '?time=' . time();
+                }
 
                 $uploadedImages[] = [
-                    'filename' => $uploadResult['filename'],
-                    'url' => $uploadResult['url'],
+                    'filename' => $imageName,
+                    'url' => $imageUrl,
                 ];
             }
 
@@ -172,6 +191,7 @@ class UploadController extends Controller
                 ], 422);
             }
 
+            $disk = config('filesystems.default', 's3');
             $uploadedVideos = [];
 
             foreach ($files as $video) {
@@ -179,12 +199,31 @@ class UploadController extends Controller
                 $size = $video->getSize();
                 $mimeType = $video->getMimeType();
 
-                $uploadResult = S3StorageService::upload($video, $type . '/videos');
+                $videoName = time() . '_' . Str::random(10) . '_' . uniqid() . '.' . $video->getClientOriginalExtension();
+                $relativePath = $type . '/videos/' . $videoName;
+
+                if ($disk === 's3') {
+                    Storage::disk('s3')->putFileAs($type . '/videos', $video, $videoName);
+
+                    $awsUrl = env('AWS_URL');
+                    if ($awsUrl) {
+                        $videoUrl = rtrim($awsUrl, '/') . '/' . $relativePath;
+                    } else {
+                        $videoUrl = Storage::disk('s3')->url($relativePath);
+                    }
+                } else {
+                    $destinationPath = public_path('uploads/' . $type . '/videos');
+                    if (!File::exists($destinationPath)) {
+                        File::makeDirectory($destinationPath, 0755, true);
+                    }
+                    $video->move($destinationPath, $videoName);
+                    $videoUrl = asset('public/uploads/' . $type . '/videos/' . $videoName);
+                }
 
                 $uploadedVideos[] = [
                     'original_name' => $originalName,
-                    'filename' => $uploadResult['filename'],
-                    'url' => $uploadResult['url'],
+                    'filename' => $videoName,
+                    'url' => $videoUrl,
                     'size' => $size,
                     'mime_type' => $mimeType,
                 ];

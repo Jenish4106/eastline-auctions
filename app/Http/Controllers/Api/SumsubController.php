@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\License;
 use App\Models\User;
-use App\Services\S3StorageService;
 use App\Services\TwilioSmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -188,21 +187,28 @@ class SumsubController extends Controller
             $backFile = $request->file('back');
 
             $existingLicense = License::where('user_id', $user->id)->first();
-
-            if ($existingLicense && $existingLicense->front_side) {
-                S3StorageService::delete($existingLicense->front_side);
-            }
-            if ($existingLicense && $existingLicense->back_side) {
-                S3StorageService::delete($existingLicense->back_side);
+            $destinationPath = public_path('licenses');
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
             }
 
             $frontName = time() . '_' . $user->id . '_front.' . $frontFile->getClientOriginalExtension();
-            $frontResult = S3StorageService::upload($frontFile, 'licenses', $frontName);
-            $frontPath = $frontResult['relative_path'];
+            if ($existingLicense && $existingLicense->front_side) {
+                $oldPath = public_path($existingLicense->front_side);
+                if (file_exists($oldPath))
+                    @unlink($oldPath);
+            }
+            $frontFile->move($destinationPath, $frontName);
+            $frontPath = 'licenses/' . $frontName;
 
             $backName = time() . '_' . $user->id . '_back.' . $backFile->getClientOriginalExtension();
-            $backResult = S3StorageService::upload($backFile, 'licenses', $backName);
-            $backPath = $backResult['relative_path'];
+            if ($existingLicense && $existingLicense->back_side) {
+                $oldPath = public_path($existingLicense->back_side);
+                if (file_exists($oldPath))
+                    @unlink($oldPath);
+            }
+            $backFile->move($destinationPath, $backName);
+            $backPath = 'licenses/' . $backName;
 
             $applicantId = null;
             $frontRes = null;
@@ -213,8 +219,8 @@ class SumsubController extends Controller
             try {
                 $applicantId = $this->getApplicant($externalUserId);
 
-                $frontRes = $this->uploadSide($applicantId, $frontFile, 'front', $docType, $country);
-                $backRes = $this->uploadSide($applicantId, $backFile, 'back', $docType, $country);
+                $frontRes = $this->uploadSide($applicantId, new \Illuminate\Http\File($destinationPath . '/' . $frontName), 'front', $docType, $country);
+                $backRes = $this->uploadSide($applicantId, new \Illuminate\Http\File($destinationPath . '/' . $backName), 'back', $docType, $country);
 
                 $verify = $this->startVerify($applicantId);
             } catch (\Exception $e) {
@@ -355,6 +361,7 @@ class SumsubController extends Controller
         }
 
         if (isset($data['review']['reviewResult']['reviewAnswer'])) {
+
             $answer = $data['review']['reviewResult']['reviewAnswer'];
             $license = License::where('applicant_id', $applicantId)->first();
 
@@ -386,6 +393,7 @@ class SumsubController extends Controller
                                 $license->user->phone_no,
                                 'Welcome to Mcfarland Equipment Sales & Auctions! Your registration is complete. Start browsing, bidding, or use Buy It Now.'
                             );
+
                         }
                     }
                 }

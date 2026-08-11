@@ -14,8 +14,6 @@ use App\Models\Settings;
 use App\Models\User;
 use App\Services\GoogleMapsService;
 use App\Services\MailtrapService;
-use App\Services\S3StorageService;
-use App\Services\TwilioSmsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -686,7 +684,10 @@ class BiddingController extends Controller
             }
 
             $signatureData = $request->input('sign_photo');
-            $signaturePath = null;
+            $signatureDirectory = public_path('uploads/signatures');
+            if (!File::exists($signatureDirectory)) {
+                File::makeDirectory($signatureDirectory, 0755, true);
+            }
 
             if (preg_match('/^data:image\/(\w+);base64,/', $signatureData, $type)) {
                 $signatureData = substr($signatureData, strpos($signatureData, ',') + 1);
@@ -703,8 +704,8 @@ class BiddingController extends Controller
                 }
 
                 $signatureFileName = time() . '_signature.' . $type;
-                $signatureUpload = S3StorageService::upload($signatureData, 'signatures', $signatureFileName);
-                $signaturePath = $signatureUpload['relative_path'];
+                $signaturePath = 'uploads/signatures/' . $signatureFileName;
+                File::put(public_path($signaturePath), $signatureData);
             } else {
                 throw new \Exception('Invalid signature format');
             }
@@ -815,8 +816,15 @@ class BiddingController extends Controller
             $pdfContent = $pdf->output();
 
             $pdfFileName = 'contract_' . $machineryId . '_' . time() . '.pdf';
-            $contractUpload = S3StorageService::upload($pdfContent, 'machinery_files', $pdfFileName);
-            $pdfPath = $contractUpload['relative_path'];
+            $pdfPath = 'uploads/machinery_files/' . $pdfFileName;
+
+            $publicDirectory = public_path('uploads/machinery_files');
+            if (!File::exists($publicDirectory)) {
+                File::makeDirectory($publicDirectory, 0755, true);
+            }
+
+            $fullPath = public_path($pdfPath);
+            file_put_contents($fullPath, $pdfContent);
 
             $fileManager = MachineryFileManager::create([
                 'machinery_id' => $machineryId,
@@ -1236,9 +1244,16 @@ class BiddingController extends Controller
             }
 
             $fileName = 'payment_slip_' . $order->order_id . '_' . time() . '.' . $extension;
-            $uploadResult = S3StorageService::upload($decodedData, 'payment_slips', $fileName);
+            $directoryPath = 'uploads/payment_slips';
+            $directory = public_path($directoryPath);
 
-            $order->payment_slip_path = $uploadResult['relative_path'];
+            if (!File::exists($directory)) {
+                File::makeDirectory($directory, 0755, true);
+            }
+
+            File::put($directory . '/' . $fileName, $decodedData);
+
+            $order->payment_slip_path = $directoryPath . '/' . $fileName;
             $order->payment_slip_status = 0;
             $order->delivery_status = 3;
             $order->settle_payment_date = now();
@@ -1248,7 +1263,7 @@ class BiddingController extends Controller
                 'success' => true,
                 'message' => 'Payment slip uploaded successfully.',
                 'data' => [
-                    'payment_slip_url' => $uploadResult['url'],
+                    'payment_slip_url' => asset('public/' . ltrim($order->payment_slip_path, '/')),
                     'status' => 'Pending',
                     'status_code' => 0
                 ]

@@ -13,7 +13,6 @@ use App\Models\Settings;
 use App\Models\User;
 use App\Services\GoogleMapsService;
 use App\Services\MailtrapService;
-use App\Services\S3StorageService;
 use App\Services\TwilioSmsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -161,17 +160,13 @@ class CheckoutController extends Controller
 
             $companyLogo = Settings::get('dark_logo');
 
+            $machinery->load('images');
+            $firstImage = $machinery->images->firstWhere('type', 'image');
             $machineryImage = null;
             $machineryImageUrl = null;
-            $firstImage = $machinery->images ? $machinery->images->firstWhere('type', 'image') : null;
             if ($firstImage) {
                 $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
-                $disk = config('filesystems.default', 's3');
-                if ($disk === 's3') {
-                    if (Storage::disk('s3')->exists($imagePathRel)) {
-                        $machineryImage = 'data:image/jpeg;base64,' . base64_encode(Storage::disk('s3')->get($imagePathRel));
-                    }
-                } else if (File::exists(public_path($imagePathRel))) {
+                if (File::exists(public_path($imagePathRel))) {
                     $machineryImage = $this->imageToBase64(public_path($imagePathRel));
                     $machineryImageUrl = asset('public/' . ltrim($imagePathRel, '/'));
                 }
@@ -199,17 +194,30 @@ class CheckoutController extends Controller
 
             $pdf = Pdf::loadView('pdf.invoice', $data);
             $fileName = 'invoice_' . $order->order_id . '.pdf';
-            $invoiceUpload = S3StorageService::upload($pdf->output(), 'invoices', $fileName);
+            $path = 'uploads/invoices/' . $fileName;
+
+            $publicDir = public_path('uploads/invoices');
+            if (!File::exists($publicDir)) {
+                File::makeDirectory($publicDir, 0755, true);
+            }
+
+            $pdf->save(public_path($path));
 
             MachineryFileManager::create([
                 'machinery_id' => $machinery->id,
                 'order_id' => $order->id,
-                'image_path' => $invoiceUpload['relative_path'],
+                'image_path' => $path,
                 'type' => 'invoice',
             ]);
 
             $signatureData = $request->input('sign_photo');
-            $signaturePath = null;
+            $signatureDirectory = public_path('uploads/signatures');
+            if (!File::exists($signatureDirectory)) {
+                File::makeDirectory($signatureDirectory, 0755, true);
+            }
+
+            $signatureFileName = time() . '_signature.png';
+            $signaturePath = 'uploads/signatures/' . $signatureFileName;
 
             if (preg_match('/^data:image\/(\w+);base64,/', $signatureData, $type)) {
                 $signatureData = substr($signatureData, strpos($signatureData, ',') + 1);
@@ -226,8 +234,8 @@ class CheckoutController extends Controller
                 }
 
                 $signatureFileName = time() . '_signature.' . $type;
-                $signatureUpload = S3StorageService::upload($signatureData, 'signatures', $signatureFileName);
-                $signaturePath = $signatureUpload['relative_path'];
+                $signaturePath = 'uploads/signatures/' . $signatureFileName;
+                File::put(public_path($signaturePath), $signatureData);
             } else {
                 throw new \Exception('Invalid signature format');
             }
@@ -243,7 +251,7 @@ class CheckoutController extends Controller
                 . ($order->billing_state ?? '') . ' '
                 . ($order->billing_zip ?? '') . ', '
                 . ($order->billing_country ?? ''));
-            $buyerAddress = trim(str_replace(', ,', ',', $buyerAddress), ', ');
+            $buyerAddress = trim(str_replace(',  ', ', ', $buyerAddress), ', ');
 
             $shippingAddress = $buyerAddress;
             if (!$order->shipping_same_as_billing) {
@@ -252,7 +260,7 @@ class CheckoutController extends Controller
                     . ($order->shipping_state ?? '') . ' '
                     . ($order->shipping_zip ?? '') . ', '
                     . ($order->shipping_country ?? ''));
-                $shippingAddress = trim(str_replace(', ,', ',', $shippingAddress), ', ');
+                $shippingAddress = trim(str_replace(',  ', ', ', $shippingAddress), ', ');
             }
 
             $contractDataView = [
@@ -265,27 +273,33 @@ class CheckoutController extends Controller
                 'shippingAddress' => $shippingAddress,
                 'signaturePath' => $signaturePath,
                 'shipping_cost' => $shippingCost,
-                'absoluteSignaturePath' => 'data:image/png;base64,' . base64_encode($signatureData),
+                'absoluteSignaturePath' => File::exists(public_path($signaturePath)) ? $this->imageToBase64(public_path($signaturePath)) : null,
                 'companyInfo' => [
                     'name' => $companyName,
                     'address' => $companyAddress,
                     'phone' => $companyPhone,
                     'email' => $companyEmail,
-                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,
+                    'logo' => $companyLogo && File::exists(public_path($companyLogo)) ? $this->imageToBase64(public_path($companyLogo)) : null,  // For PDF
                     'logoUrl' => $companyLogo ? asset('public/' . ltrim($companyLogo, '/')) : null,
-                    'signature_path' => File::exists(public_path('uploads/signatures/seller_signature.png')) ? $this->imageToBase64(public_path('uploads/signatures/seller_signature.png')) : null,
+                    'signature_path' => File::exists(public_path('uploads/signatures/seller_signature.png')) ? $this->imageToBase64(public_path('uploads/signatures/seller_signature.png')) : null,  // For PDF
                 ],
                 'contractDate' => now()->format('Y-m-d'),
                 'is_checkout' => true,
-                'buy_now_price' => $machinery->buy_now_price > 0 ? $machinery->buy_now_price : ($machinery->bid_start_price ?? 0),
+                'buy_now_price' => $machinery->buy_now_price,
             ];
 
             $contractPdf = Pdf::loadView('pdf.contract', $contractDataView);
             $contractPdfContent = $contractPdf->output();
 
             $contractFileName = 'contract_' . $order->order_id . '_' . time() . '.pdf';
-            $contractUpload = S3StorageService::upload($contractPdfContent, 'machinery_files', $contractFileName);
-            $finalContractPath = $contractUpload['relative_path'];
+            $contractPublicDir = public_path('uploads/machinery_files');
+            if (!File::exists($contractPublicDir)) {
+                File::makeDirectory($contractPublicDir, 0755, true);
+            }
+
+            $contractFullPath = $contractPublicDir . '/' . $contractFileName;
+            file_put_contents($contractFullPath, $contractPdfContent);
+            $finalContractPath = 'uploads/machinery_files/' . $contractFileName;
 
             MachineryFileManager::create([
                 'machinery_id' => $machinery->id,
@@ -330,8 +344,8 @@ class CheckoutController extends Controller
                 'message' => 'Checkout successful',
                 'data' => [
                     'order_id' => $order->order_id,
-                    'invoice_url' => S3StorageService::getUrl($invoiceUpload['relative_path']),
-                    'contract_url' => S3StorageService::getUrl($finalContractPath),
+                    'invoice_url' => asset('public/' . ltrim($path, '/')),
+                    'contract_url' => asset('public/' . ltrim($finalContractPath, '/')),
                     'user_email' => $user->email,
                     'shipping_address' => [
                         'street' => $order->shipping_same_as_billing ? $order->billing_street : $order->shipping_street,
