@@ -100,8 +100,7 @@ class MachineryController extends Controller
 
                 $imageUrls = [];
                 foreach ($images as $image) {
-                    $filename = basename(parse_url($image->image_path, PHP_URL_PATH));
-                    $imageUrls[] = S3StorageService::getUrl('uploads/machinery/images/' . $filename);
+                    $imageUrls[] = S3StorageService::getUrl('uploads/machinery/images/' . ltrim($image->image_path, '/'));
                 }
                 if (empty($imageUrls)) {
                     $imageUrls = [S3StorageService::getUrl('uploads/defaults/default.png')];
@@ -114,8 +113,7 @@ class MachineryController extends Controller
 
                 $videoUrls = [];
                 foreach ($videos as $video) {
-                    $filename = basename(parse_url($video->image_path, PHP_URL_PATH));
-                    $videoUrls[] = S3StorageService::getUrl('uploads/machinery/videos/' . $filename);
+                    $videoUrls[] = S3StorageService::getUrl('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                 }
                 if (empty($videoUrls)) {
                     $videoUrls = [S3StorageService::getUrl('uploads/defaults/default-machine.mp4')];
@@ -176,8 +174,7 @@ class MachineryController extends Controller
 
             $imageUrls = [];
             foreach ($images as $image) {
-                $filename = basename(parse_url($image->image_path, PHP_URL_PATH));
-                $imageUrls[] = S3StorageService::getUrl('uploads/machinery/images/' . $filename);
+                $imageUrls[] = S3StorageService::getUrl('uploads/machinery/images/' . ltrim($image->image_path, '/'));
             }
             if (empty($imageUrls)) {
                 $imageUrls = [S3StorageService::getUrl('uploads/defaults/default.png')];
@@ -190,8 +187,7 @@ class MachineryController extends Controller
 
             $videoUrls = [];
             foreach ($videos as $video) {
-                $filename = basename(parse_url($video->image_path, PHP_URL_PATH));
-                $videoUrls[] = S3StorageService::getUrl('uploads/machinery/videos/' . $filename);
+                $videoUrls[] = S3StorageService::getUrl('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
             }
             if (empty($videoUrls)) {
                 $videoUrls = [S3StorageService::getUrl('uploads/defaults/default-machine.mp4')];
@@ -235,9 +231,9 @@ class MachineryController extends Controller
                 'description'     => 'nullable|string',
                 'offer'           => 'nullable|max:255',
                 'image_urls'      => 'required|array',
-                'image_urls.*'    => 'required|string',
+                'image_urls.*'    => 'required|url',
                 'video_urls'      => 'nullable|array',
-                'video_urls.*'    => 'nullable|string',
+                'video_urls.*'    => 'nullable|url',
                 'status'          => 'nullable|in:0,1,2',
             ], [
                 'category_id.required'     => 'The category field is required.',
@@ -255,7 +251,9 @@ class MachineryController extends Controller
                 'bid_end_days.min'         => 'The bid end days must be at least 1.',
                 'image_urls.required'      => 'At least one image URL is required.',
                 'image_urls.array'         => 'Image URLs must be an array.',
+                'image_urls.*.url'         => 'Each image URL must be a valid URL.',
                 'video_urls.array'         => 'Video URLs must be an array.',
+                'video_urls.*.url'         => 'Each video URL must be a valid URL.',
                 'status.in'                => 'The status must be 0 (Draft), 1 (Publish), or 2 (Sold).',
             ]);
 
@@ -292,8 +290,8 @@ class MachineryController extends Controller
                 $videoUrls = is_array($request->video_urls) ? $request->video_urls : [$request->video_urls];
 
                 foreach ($videoUrls as $videoUrl) {
-                    $filename = basename(parse_url($videoUrl, PHP_URL_PATH));
-                    if ($filename) {
+                    if (filter_var($videoUrl, FILTER_VALIDATE_URL)) {
+                        $filename = basename(parse_url($videoUrl, PHP_URL_PATH));
                         MachineryFileManager::create([
                             'machinery_id' => $machinery->id,
                             'image_path'   => $filename,
@@ -306,13 +304,11 @@ class MachineryController extends Controller
             if ($request->has('image_urls') && is_array($request->image_urls)) {
                 foreach ($request->image_urls as $index => $imageUrl) {
                     $filename = basename(parse_url($imageUrl, PHP_URL_PATH));
-                    if ($filename) {
-                        MachineryFileManager::create([
-                            'machinery_id' => $machinery->id,
-                            'image_path'   => $filename,
-                            'type'         => 'image',
-                        ]);
-                    }
+                    MachineryFileManager::create([
+                        'machinery_id' => $machinery->id,
+                        'image_path'   => $filename,
+                        'type'         => 'image',
+                    ]);
                 }
             }
 
@@ -323,8 +319,7 @@ class MachineryController extends Controller
             });
 
             $machinery->image_urls = $images->map(function ($image) {
-                $filename = basename(parse_url($image->image_path, PHP_URL_PATH));
-                return S3StorageService::getUrl('uploads/machinery/images/' . $filename);
+                return S3StorageService::getUrl('uploads/machinery/images/' . ltrim($image->image_path, '/'));
             })->filter()->values()->toArray();
 
             $videos = $machinery->images->filter(function ($file) {
@@ -332,8 +327,7 @@ class MachineryController extends Controller
             });
 
             $machinery->video_urls = $videos->map(function ($video) {
-                $filename = basename(parse_url($video->image_path, PHP_URL_PATH));
-                return S3StorageService::getUrl('uploads/machinery/videos/' . $filename);
+                return S3StorageService::getUrl('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
             })->filter()->values()->toArray();
 
             unset($machinery->images);
@@ -377,9 +371,9 @@ class MachineryController extends Controller
                 'description'     => 'nullable|string',
                 'offer'           => 'nullable|max:255',
                 'image_urls'      => 'sometimes|array',
-                'image_urls.*'    => 'required|string',
+                'image_urls.*'    => 'required|url',
                 'video_urls'      => 'nullable|array',
-                'video_urls.*'    => 'nullable|string',
+                'video_urls.*'    => 'nullable|url',
                 'status'          => 'nullable|in:0,1,2',
             ], [
                 'id.required'              => 'The machinery id field is required.',
@@ -398,7 +392,9 @@ class MachineryController extends Controller
                 'bid_end_days.integer'     => 'The bid end days must be an integer.',
                 'bid_end_days.min'         => 'The bid end days must be at least 1.',
                 'image_urls.array'         => 'Image URLs must be an array.',
+                'image_urls.*.url'         => 'Each image URL must be a valid URL.',
                 'video_urls.array'         => 'Video URLs must be an array.',
+                'video_urls.*.url'         => 'Each video URL must be a valid URL.',
                 'status.in'                => 'The status must be 0 (Draft), 1 (Publish), or 2 (Sold).',
             ]);
 
@@ -436,14 +432,13 @@ class MachineryController extends Controller
                 $videoUrls              = is_array($request->video_urls) ? $request->video_urls : [$request->video_urls];
 
                 foreach ($videoUrls as $videoUrl) {
-                    $filename = basename(parse_url($videoUrl, PHP_URL_PATH));
-                    if ($filename) {
-                        $incomingVideoFilenames[] = $filename;
+                    if (filter_var($videoUrl, FILTER_VALIDATE_URL)) {
+                        $incomingVideoFilenames[] = basename(parse_url($videoUrl, PHP_URL_PATH));
                     }
                 }
 
                 foreach ($existingVideos as $existingVideo) {
-                    $existingFilename = basename(parse_url($existingVideo->image_path, PHP_URL_PATH));
+                    $existingFilename = $existingVideo->image_path;
                     if (! in_array($existingFilename, $incomingVideoFilenames)) {
                         S3StorageService::delete('uploads/machinery/videos/' . ltrim($existingFilename, '/'));
                     }
@@ -472,14 +467,11 @@ class MachineryController extends Controller
 
                 $incomingFilenames = [];
                 foreach ($request->image_urls as $imageUrl) {
-                    $filename = basename(parse_url($imageUrl, PHP_URL_PATH));
-                    if ($filename) {
-                        $incomingFilenames[] = $filename;
-                    }
+                    $incomingFilenames[] = basename(parse_url($imageUrl, PHP_URL_PATH));
                 }
 
                 foreach ($existingImages as $existingImage) {
-                    $existingFilename = basename(parse_url($existingImage->image_path, PHP_URL_PATH));
+                    $existingFilename = $existingImage->image_path;
                     if (! in_array($existingFilename, $incomingFilenames)) {
                         S3StorageService::delete('uploads/machinery/images/' . ltrim($existingFilename, '/'));
                     }
@@ -487,7 +479,8 @@ class MachineryController extends Controller
 
                 $machinery->images()->where('type', 'image')->whereNotIn('image_path', $incomingFilenames)->delete();
 
-                foreach ($incomingFilenames as $filename) {
+                foreach ($request->image_urls as $imageUrl) {
+                    $filename      = basename(parse_url($imageUrl, PHP_URL_PATH));
                     $existingImage = $machinery->images()->where('type', 'image')->where('image_path', $filename)->first();
 
                     if (! $existingImage) {
@@ -508,8 +501,7 @@ class MachineryController extends Controller
             });
 
             $machinery->image_urls = $images->map(function ($image) {
-                $filename = basename(parse_url($image->image_path, PHP_URL_PATH));
-                return S3StorageService::getUrl('uploads/machinery/images/' . $filename);
+                return S3StorageService::getUrl('uploads/machinery/images/' . ltrim($image->image_path, '/'));
             })->filter()->values()->toArray();
 
             $videos = $machinery->images->filter(function ($file) {
@@ -517,8 +509,7 @@ class MachineryController extends Controller
             });
 
             $machinery->video_urls = $videos->map(function ($video) {
-                $filename = basename(parse_url($video->image_path, PHP_URL_PATH));
-                return S3StorageService::getUrl('uploads/machinery/videos/' . $filename);
+                return S3StorageService::getUrl('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
             })->filter()->values()->toArray();
 
             unset($machinery->images);

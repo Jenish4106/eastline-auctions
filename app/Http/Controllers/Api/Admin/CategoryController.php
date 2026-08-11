@@ -159,13 +159,14 @@ class CategoryController extends Controller
             $validator = Validator::make($request->all(), [
                 'category_name'   => 'required|string|max:255',
                 'image_urls'      => 'required|array',
-                'image_urls.*'    => 'required|string',
+                'image_urls.*'    => 'required|url',
                 'total_machinery' => 'required|integer|min:0',
             ], [
                 'category_name.required'   => 'The category name field is required.',
                 'image_urls.required'      => 'The category image URLs field is required.',
                 'image_urls.array'         => 'The image URLs must be an array.',
                 'image_urls.*.required'    => 'Each image URL is required.',
+                'image_urls.*.url'         => 'Each image URL must be a valid URL.',
                 'total_machinery.required' => 'The total machinery field is required.',
                 'total_machinery.integer'  => 'The total machinery must be an integer.',
                 'total_machinery.min'      => 'The total machinery must be at least 0.',
@@ -183,20 +184,12 @@ class CategoryController extends Controller
             $category->category_name   = $request->category_name;
             $category->total_machinery = $request->total_machinery;
             
-            $imageFilenames = [];
-            foreach ($request->image_urls as $imageUrl) {
-                $filename = basename(parse_url($imageUrl, PHP_URL_PATH));
-                if ($filename) {
-                    $imageFilenames[] = $filename;
-                }
-            }
-
-            $category->image = json_encode($imageFilenames);
+            $category->image = json_encode($request->image_urls);
             $category->save();
 
             $imageUrls = [];
-            foreach ($imageFilenames as $filename) {
-                $imageUrls[] = $this->getImageUrl($filename, 'category');
+            foreach ($request->image_urls as $imageUrl) {
+                $imageUrls[] = $this->getImageUrl($imageUrl, 'category');
             }
             $category->image_urls = array_values(array_filter($imageUrls));
             unset($category->image);
@@ -227,12 +220,13 @@ class CategoryController extends Controller
             $validator = Validator::make($request->all(), [
                 'category_name'   => 'required|string|max:255',
                 'image_urls'      => 'sometimes|array',
-                'image_urls.*'    => 'required|string',
+                'image_urls.*'    => 'required|url',
                 'total_machinery' => 'required|integer|min:0',
             ], [
                 'category_name.required'   => 'The category name field is required.',
                 'image_urls.array'         => 'The image URLs must be an array.',
                 'image_urls.*.required'    => 'Each image URL is required.',
+                'image_urls.*.url'         => 'Each image URL must be a valid URL.',
                 'total_machinery.required' => 'The total machinery field is required.',
                 'total_machinery.integer'  => 'The total machinery must be an integer.',
                 'total_machinery.min'      => 'The total machinery must be at least 0.',
@@ -250,22 +244,15 @@ class CategoryController extends Controller
             $category->total_machinery = $request->total_machinery;
 
             if ($request->has('image_urls')) {
-                $imageFilenames = [];
-                foreach ($request->image_urls as $imageUrl) {
-                    $filename = basename(parse_url($imageUrl, PHP_URL_PATH));
-                    if ($filename) {
-                        $imageFilenames[] = $filename;
-                    }
-                }
-                $category->image = json_encode($imageFilenames);
+                $category->image = json_encode($request->image_urls);
             }
 
             $category->save();
 
             if ($request->has('image_urls')) {
                 $imageUrls = [];
-                foreach ($imageFilenames as $filename) {
-                    $imageUrls[] = $this->getImageUrl($filename, 'category');
+                foreach ($request->image_urls as $imageUrl) {
+                    $imageUrls[] = $this->getImageUrl($imageUrl, 'category');
                 }
                 $category->image_urls = array_values(array_filter($imageUrls));
                 unset($category->image);
@@ -345,8 +332,6 @@ class CategoryController extends Controller
             return S3StorageService::getUrl('uploads/defaults/default.png');
         }
 
-        $filename = basename(parse_url($item, PHP_URL_PATH));
-
-        return S3StorageService::getUrl('uploads/' . $type . '/images/' . $filename);
+        return S3StorageService::getUrl('uploads/' . $type . '/images/' . $item);
     }
 }
