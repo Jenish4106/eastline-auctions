@@ -340,6 +340,6 @@ class CategoryController extends Controller
             return asset('public/uploads/defaults/default.png');
         }
 
-        return S3StorageService::getUrl('uploads/' . $type . '/images/' . $item);
+        return S3StorageService::getUrl($type . '/images/' . $item);
     }
 }

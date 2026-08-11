@@ -20,11 +20,11 @@ class InventoryController extends Controller
                 if (is_array($imageArray)) {
                     $imageUrls = [];
                     foreach ($imageArray as $filename) {
-                        $imageUrls[] = S3StorageService::getUrl('uploads/category/images/' . $filename);
+                        $imageUrls[] = S3StorageService::getUrl('category/images/' . $filename);
                     }
                     $category->image_url = !empty($imageUrls) ? $imageUrls[0] : asset('public/uploads/defaults/default.png');
                 } else {
-                    $category->image_url = S3StorageService::getUrl('uploads/category/images/' . $category->image);
+                    $category->image_url = S3StorageService::getUrl('category/images/' . $category->image);
                 }
             } else {
                 $category->image_url = asset('public/uploads/defaults/default.png');
