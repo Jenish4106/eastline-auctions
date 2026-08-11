@@ -67,7 +67,7 @@ class UploadController extends Controller
             $uploadedImages = [];
 
             foreach ($filesArray as $image) {
-                $uploadResult = S3StorageService::upload($image, 'uploads/' . $type . '/images');
+                $uploadResult = S3StorageService::upload($image, $type . '/images');
 
                 $uploadedImages[] = [
                     'filename' => $uploadResult['filename'],
@@ -179,7 +179,7 @@ class UploadController extends Controller
                 $size = $video->getSize();
                 $mimeType = $video->getMimeType();
 
-                $uploadResult = S3StorageService::upload($video, 'uploads/' . $type . '/videos');
+                $uploadResult = S3StorageService::upload($video, $type . '/videos');
 
                 $uploadedVideos[] = [
                     'original_name' => $originalName,
