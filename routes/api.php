@@ -132,7 +132,7 @@ Route::middleware(['auth.user'])->group(function () {
     Route::post('/user/license/status', [SumsubController::class, 'checkStatus']);
 });
 
-Route::get('/get-categories', [InventoryController::class, 'getCategoryList']);
+Route::get('/get-categories', [UsersController::class, 'getCategories']);
 
 Route::get('/inventory/categories', [InventoryController::class, 'getCategoryList']);
 Route::post('/inventory/machinery/category', [InventoryController::class, 'getMachineryByCategory']);
