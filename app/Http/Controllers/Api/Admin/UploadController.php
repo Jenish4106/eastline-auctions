@@ -18,6 +18,9 @@ class UploadController extends Controller
     public function uploadImage(Request $request)
     {
         try {
+            ini_set('memory_limit', '512M');
+            set_time_limit(300);
+
             if (!$request->hasFile('images')) {
                 return response()->json([
                     'status' => false,
