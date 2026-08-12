@@ -42,13 +42,14 @@ class UploadController extends Controller
             $validator = Validator::make(
                 $request->all(),
                 [
-                    'images' => $isMultiple ? 'required|array' : 'required',
+                    'images' => $isMultiple ? 'required|array|max:100' : 'required',
                     'images.*' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:20480',
                     'type' => 'sometimes|in:category,machinery',
                 ],
                 [
                     'images.required' => 'Please provide at least one image.',
                     'images.array' => 'Images must be an array.',
+                    'images.max' => 'You cannot upload more than 100 images at once.',
                     'images.*.required' => 'Each image is required.',
                     'images.*.image' => 'Each file must be an image.',
                     'images.*.mimes' => 'Images must be of type: jpeg, png, jpg, gif, svg, webp.',
