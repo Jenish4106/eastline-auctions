@@ -290,21 +290,19 @@ class InventoryController extends Controller
 
         if ($machinery->images) {
             $defaultUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
-            $defaultVideoUrl = asset('public/uploads/defaults/default-machine.mp4') . '?time=' . time();
             $seenDefault = false;
-            $seenDefaultVideo = false;
 
-            $machinery->images = $machinery->images->map(function ($image) use ($defaultUrl, $defaultVideoUrl) {
+            $machinery->images = $machinery->images->map(function ($image) use ($defaultUrl) {
                 if ($image->type === 'video') {
                     if ($image->image_path !== 'default-machine.mp4') {
                         $machineryFilePath = public_path('uploads/machinery/videos/' . ltrim($image->image_path, '/'));
                         if (file_exists($machineryFilePath)) {
                             $image->full_url = asset('public/uploads/machinery/videos/' . ltrim($image->image_path, '/')) . '?time=' . time();
                         } else {
-                            $image->full_url = $defaultVideoUrl;
+                            $image->full_url = null;
                         }
                     } else {
-                        $image->full_url = $defaultVideoUrl;
+                        $image->full_url = null;
                     }
                 } else {
                     if ($image->image_path !== 'default.png') {
@@ -319,18 +317,15 @@ class InventoryController extends Controller
                     }
                 }
                 return $image;
-            })->filter(function ($image) use ($defaultUrl, $defaultVideoUrl, &$seenDefault, &$seenDefaultVideo) {
+            })->filter(function ($image) use ($defaultUrl, &$seenDefault) {
+                if (!$image->full_url) {
+                    return false;
+                }
                 if ($image->full_url === $defaultUrl) {
                     if ($seenDefault) {
                         return false;
                     }
                     $seenDefault = true;
-                }
-                if ($image->full_url === $defaultVideoUrl) {
-                    if ($seenDefaultVideo) {
-                        return false;
-                    }
-                    $seenDefaultVideo = true;
                 }
                 return true;
             })->values();

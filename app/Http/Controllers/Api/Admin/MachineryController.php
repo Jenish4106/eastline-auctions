@@ -120,9 +120,6 @@ class MachineryController extends Controller
                         $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/')) . '?time=' . time();
                     }
                 }
-                if (empty($videoUrls)) {
-                    $videoUrls = [asset('public/uploads/defaults/default-machine.mp4') . '?time=' . time()];
-                }
                 $item->video_urls = array_values(array_unique($videoUrls));
 
                 unset($item->images);
@@ -199,9 +196,6 @@ class MachineryController extends Controller
                 if (file_exists($machineryVideoPath)) {
                     $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                 }
-            }
-            if (empty($videoUrls)) {
-                $videoUrls = [asset('public/uploads/defaults/default-machine.mp4') . '?time=' . time()];
             }
             $machinery->video_urls = array_values(array_unique($videoUrls));
 
@@ -355,9 +349,6 @@ class MachineryController extends Controller
                 if (file_exists($machineryVideoPath)) {
                     $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                 }
-            }
-            if (empty($videoUrls)) {
-                $videoUrls = [asset('public/uploads/defaults/default-machine.mp4') . '?time=' . time()];
             }
             $machinery->video_urls = array_values(array_unique($videoUrls));
 
@@ -580,9 +571,6 @@ class MachineryController extends Controller
                 if (file_exists($machineryVideoPath)) {
                     $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
                 }
-            }
-            if (empty($videoUrls)) {
-                $videoUrls = [asset('public/uploads/defaults/default-machine.mp4') . '?time=' . time()];
             }
             $machinery->video_urls = array_values(array_unique($videoUrls));
 
