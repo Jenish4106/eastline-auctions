@@ -31,6 +31,17 @@ Route::post('/forgot-password', [ForgotPasswordController::class, 'forgotPasswor
 Route::post('/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
 
+Route::get('/test-php-info', function () {
+    return response()->json([
+        'max_file_uploads' => ini_get('max_file_uploads'),
+        'upload_max_filesize' => ini_get('upload_max_filesize'),
+        'post_max_size' => ini_get('post_max_size'),
+        'memory_limit' => ini_get('memory_limit'),
+        'max_input_vars' => ini_get('max_input_vars'),
+        'loaded_ini_file' => php_ini_loaded_file(),
+    ]);
+});
+
 Route::post('/admin/login', [AdminLoginController::class, 'login']);
 
 Route::middleware(['auth.admin-api'])->prefix('admin')->group(function () {
