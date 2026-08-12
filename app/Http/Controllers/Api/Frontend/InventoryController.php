@@ -290,31 +290,47 @@ class InventoryController extends Controller
 
         if ($machinery->images) {
             $defaultUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
+            $defaultVideoUrl = asset('public/uploads/defaults/default-machine.mp4') . '?time=' . time();
             $seenDefault = false;
+            $seenDefaultVideo = false;
 
-            $machinery->images = $machinery->images->map(function ($image) use ($defaultUrl, &$seenDefault) {
+            $machinery->images = $machinery->images->map(function ($image) use ($defaultUrl, $defaultVideoUrl) {
                 if ($image->type === 'video') {
-                    $machineryFilePath = public_path('uploads/machinery/videos/' . ltrim($image->image_path, '/'));
-                    if (file_exists($machineryFilePath)) {
-                        $image->full_url = asset('public/uploads/machinery/videos/' . ltrim($image->image_path, '/')) . '?time=' . time();
+                    if ($image->image_path !== 'default-machine.mp4') {
+                        $machineryFilePath = public_path('uploads/machinery/videos/' . ltrim($image->image_path, '/'));
+                        if (file_exists($machineryFilePath)) {
+                            $image->full_url = asset('public/uploads/machinery/videos/' . ltrim($image->image_path, '/')) . '?time=' . time();
+                        } else {
+                            $image->full_url = $defaultVideoUrl;
+                        }
                     } else {
-                        $image->full_url = asset('public/uploads/defaults/default-machine.mp4') . '?time=' . time();
+                        $image->full_url = $defaultVideoUrl;
                     }
                 } else {
-                    $machineryFilePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                    if (file_exists($machineryFilePath)) {
-                        $image->full_url = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/')) . '?time=' . time();
+                    if ($image->image_path !== 'default.png') {
+                        $machineryFilePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                        if (file_exists($machineryFilePath)) {
+                            $image->full_url = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/')) . '?time=' . time();
+                        } else {
+                            $image->full_url = $defaultUrl;
+                        }
                     } else {
                         $image->full_url = $defaultUrl;
                     }
                 }
                 return $image;
-            })->filter(function ($image) use ($defaultUrl, &$seenDefault) {
+            })->filter(function ($image) use ($defaultUrl, $defaultVideoUrl, &$seenDefault, &$seenDefaultVideo) {
                 if ($image->full_url === $defaultUrl) {
                     if ($seenDefault) {
                         return false;
                     }
                     $seenDefault = true;
+                }
+                if ($image->full_url === $defaultVideoUrl) {
+                    if ($seenDefaultVideo) {
+                        return false;
+                    }
+                    $seenDefaultVideo = true;
                 }
                 return true;
             })->values();
