@@ -3,13 +3,19 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\UploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 
 class UploadController extends Controller
 {
+    protected $uploadService;
+
+    public function __construct(UploadService $uploadService)
+    {
+        $this->uploadService = $uploadService;
+    }
+
     /**
      * Upload single or multiple images
      * Accepts 'images' parameter which can be single file or array of files
@@ -66,28 +72,7 @@ class UploadController extends Controller
                 ], 422);
             }
 
-            $uploadedImages = [];
-            $destinationPath = public_path('uploads/' . $type . '/images');
-            
-            if (!File::exists($destinationPath)) {
-                File::makeDirectory($destinationPath, 0755, true);
-            }
-
-            foreach ($filesArray as $image) {
-                $originalName = $image->getClientOriginalName();
-                $size = $image->getSize();
-                $mimeType = $image->getMimeType();
-                
-                $imageName = time() . '_' . Str::random(10) . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                $image->move($destinationPath, $imageName);
-                
-                $imageUrl = asset('public/uploads/' . $type . '/images/' . $imageName) . '?time=' . time();
-                
-                $uploadedImages[] = [
-                    'filename' => $imageName,
-                    'url' => $imageUrl,
-                ];
-            }
+            $uploadedImages = $this->uploadService->uploadImages($filesArray, $type);
 
             return response()->json([
                 'status' => true,
@@ -186,34 +171,7 @@ class UploadController extends Controller
                 ], 422);
             }
 
-            $uploadedVideos = [];
-
-            $destinationPath = public_path('uploads/' . $type . '/videos');
-
-            if (!File::exists($destinationPath)) {
-                File::makeDirectory($destinationPath, 0755, true);
-            }
-
-            foreach ($files as $video) {
-
-                $originalName = $video->getClientOriginalName();
-                $size = $video->getSize();
-                $mimeType = $video->getMimeType();
-
-                $videoName = time() . '_' . Str::random(10) . '_' . uniqid() . '.' . $video->getClientOriginalExtension();
-
-                $video->move($destinationPath, $videoName);
-
-                $videoUrl = asset('public/uploads/' . $type . '/videos/' . $videoName);
-
-                $uploadedVideos[] = [
-                    'original_name' => $originalName,
-                    'filename' => $videoName,
-                    'url' => $videoUrl,
-                    'size' => $size,
-                    'mime_type' => $mimeType,
-                ];
-            }
+            $uploadedVideos = $this->uploadService->uploadVideos($files, $type);
 
             return response()->json([
                 'status' => true,
