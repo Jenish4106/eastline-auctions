@@ -743,13 +743,18 @@ class MachineryController extends Controller
 
         $cleanFilename = ltrim($filename, '/');
 
-        if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
-            return Storage::disk('s3')->url('uploads/machinery/images/' . $cleanFilename);
-        }
-
         $machineryImagePath = public_path('uploads/machinery/images/' . $cleanFilename);
         if (file_exists($machineryImagePath)) {
             return asset('public/uploads/machinery/images/' . $cleanFilename) . '?time=' . time();
+        }
+
+        $s3Path = 'uploads/machinery/images/' . $cleanFilename;
+        try {
+            if (config('filesystems.disks.s3.key') && Storage::disk('s3')->exists($s3Path)) {
+                return Storage::disk('s3')->url($s3Path);
+            }
+        } catch (\Throwable $e) {
+            // fallback
         }
 
         return asset('public/uploads/defaults/default.png') . '?time=' . time();
@@ -770,13 +775,18 @@ class MachineryController extends Controller
 
         $cleanFilename = ltrim($filename, '/');
 
-        if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
-            return Storage::disk('s3')->url('uploads/machinery/videos/' . $cleanFilename);
-        }
-
         $machineryVideoPath = public_path('uploads/machinery/videos/' . $cleanFilename);
         if (file_exists($machineryVideoPath)) {
             return asset('public/uploads/machinery/videos/' . $cleanFilename) . '?time=' . time();
+        }
+
+        $s3Path = 'uploads/machinery/videos/' . $cleanFilename;
+        try {
+            if (config('filesystems.disks.s3.key') && Storage::disk('s3')->exists($s3Path)) {
+                return Storage::disk('s3')->url($s3Path);
+            }
+        } catch (\Throwable $e) {
+            // fallback
         }
 
         return null;
