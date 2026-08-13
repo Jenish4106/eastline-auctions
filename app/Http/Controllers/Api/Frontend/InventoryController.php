@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Machinery;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class InventoryController extends Controller
@@ -19,19 +20,11 @@ class InventoryController extends Controller
                 if (is_array($imageArray)) {
                     $imageUrls = [];
                     foreach ($imageArray as $filename) {
-                        $categoryImagePath = public_path('uploads/category/images/' . $filename);
-                        if (file_exists($categoryImagePath)) {
-                            $imageUrls[] = asset('public/uploads/category/images/' . $filename) . '?time=' . time();
-                        }
+                        $imageUrls[] = $this->resolveCategoryImageUrl($filename);
                     }
                     $category->image_url = !empty($imageUrls) ? $imageUrls[0] : asset('public/uploads/defaults/default.png') . '?time=' . time();
                 } else {
-                    $categoryImagePath = public_path('uploads/category/images/' . $category->image);
-                    if (file_exists($categoryImagePath)) {
-                        $category->image_url = asset('public/uploads/category/images/' . $category->image) . '?time=' . time();
-                    } else {
-                        $category->image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
-                    }
+                    $category->image_url = $this->resolveCategoryImageUrl($category->image);
                 }
             } else {
                 $category->image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
@@ -197,17 +190,7 @@ class InventoryController extends Controller
             if ($machineryImages && $machineryImages->count() > 0) {
                 $firstImage = $machineryImages->first();
                 if ($firstImage && $firstImage->type === 'image') {
-                    $path = $firstImage->image_path;
-                    if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-                        $machinery->first_image_url = $path;
-                    } else {
-                        $machineryImagePath = public_path('uploads/machinery/images/' . $path);
-                        if (file_exists($machineryImagePath)) {
-                            $machinery->first_image_url = asset('public/uploads/machinery/images/' . $path) . '?time=' . time();
-                        } else {
-                            $machinery->first_image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
-                        }
-                    }
+                    $machinery->first_image_url = $this->resolveMachineryImageUrl($firstImage->image_path);
                 } else {
                     $machinery->first_image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
                 }
@@ -373,5 +356,53 @@ class InventoryController extends Controller
             'success' => true,
             'data'    => $results,
         ], 200);
+    }
+
+    private function resolveCategoryImageUrl($filename)
+    {
+        if (empty($filename)) {
+            return asset('public/uploads/defaults/default.png') . '?time=' . time();
+        }
+
+        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
+            return $filename;
+        }
+
+        $cleanFilename = ltrim($filename, '/');
+
+        if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
+            return Storage::disk('s3')->url('uploads/category/images/' . $cleanFilename);
+        }
+
+        $categoryImagePath = public_path('uploads/category/images/' . $cleanFilename);
+        if (file_exists($categoryImagePath)) {
+            return asset('public/uploads/category/images/' . $cleanFilename) . '?time=' . time();
+        }
+
+        return asset('public/uploads/defaults/default.png') . '?time=' . time();
+    }
+
+    private function resolveMachineryImageUrl($filename)
+    {
+        if (empty($filename)) {
+            return asset('public/uploads/defaults/default.png') . '?time=' . time();
+        }
+
+        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
+            return $filename;
+        }
+
+        $cleanFilename = ltrim($filename, '/');
+
+        if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
+            return Storage::disk('s3')->url('uploads/machinery/images/' . $cleanFilename);
+        }
+
+        $machineryImagePath = public_path('uploads/machinery/images/' . $cleanFilename);
+        if (file_exists($machineryImagePath)) {
+            return asset('public/uploads/machinery/images/' . $cleanFilename) . '?time=' . time();
+        }
+
+        return asset('public/uploads/defaults/default.png') . '?time=' . time();
     }
 }

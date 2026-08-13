@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class CategoryController extends Controller
@@ -59,29 +60,11 @@ class CategoryController extends Controller
                     if (is_array($imageArray)) {
                         $imageUrls = [];
                         foreach ($imageArray as $filename) {
-                            if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
-                                $imageUrls[] = $filename;
-                            } else {
-                                $categoryImagePath = public_path('uploads/category/images/' . $filename);
-                                if (file_exists($categoryImagePath)) {
-                                    $imageUrls[] = asset('public/uploads/category/images/' . $filename) . '?time=' . time();
-                                } else {
-                                    $imageUrls[] = asset('public/uploads/defaults/default.png') . '?time=' . time();
-                                }
-                            }
+                            $imageUrls[] = $this->resolveCategoryImageUrl($filename);
                         }
                         $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
                     } else {
-                        if (str_starts_with($category->image, 'http://') || str_starts_with($category->image, 'https://')) {
-                            $category->image_urls = [$category->image];
-                        } else {
-                            $categoryImagePath = public_path('uploads/category/images/' . $category->image);
-                            if (file_exists($categoryImagePath)) {
-                                $category->image_urls = [asset('public/uploads/category/images/' . $category->image) . '?time=' . time()];
-                            } else {
-                                $category->image_urls = [asset('public/uploads/defaults/default.png') . '?time=' . time()];
-                            }
-                        }
+                        $category->image_urls = [$this->resolveCategoryImageUrl($category->image)];
                     }
                 } else {
                     $category->image_urls = [];
@@ -140,29 +123,11 @@ class CategoryController extends Controller
                 if (is_array($imageArray)) {
                     $imageUrls = [];
                     foreach ($imageArray as $filename) {
-                        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
-                            $imageUrls[] = $filename;
-                        } else {
-                            $categoryImagePath = public_path('uploads/category/images/' . $filename);
-                            if (file_exists($categoryImagePath)) {
-                                $imageUrls[] = asset('public/uploads/category/images/' . $filename);
-                            } else {
-                                $imageUrls[] = asset('public/uploads/defaults/default.png') . '?time=' . time();
-                            }
-                        }
+                        $imageUrls[] = $this->resolveCategoryImageUrl($filename);
                     }
                     $category->image_urls = collect($imageUrls)->filter()->values()->toArray();
                 } else {
-                    if (str_starts_with($category->image, 'http://') || str_starts_with($category->image, 'https://')) {
-                        $category->image_urls = [$category->image];
-                    } else {
-                        $categoryImagePath = public_path('uploads/category/images/' . $category->image);
-                        if (file_exists($categoryImagePath)) {
-                            $category->image_urls = [asset('public/uploads/category/images/' . $category->image)];
-                        } else {
-                            $category->image_urls = [asset('public/uploads/defaults/default.png') . '?time=' . time()];
-                        }
-                    }
+                    $category->image_urls = [$this->resolveCategoryImageUrl($category->image)];
                 }
             } else {
                 $category->image_urls = [asset('public/uploads/defaults/default.png') . '?time=' . time()];
@@ -355,5 +320,32 @@ class CategoryController extends Controller
                 'message' => 'Something went wrong, please try again.',
             ], 500);
         }
+    }
+
+    /**
+     * Resolve category image URL dynamically
+     */
+    private function resolveCategoryImageUrl($filename)
+    {
+        if (empty($filename)) {
+            return asset('public/uploads/defaults/default.png') . '?time=' . time();
+        }
+
+        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
+            return $filename;
+        }
+
+        $cleanFilename = ltrim($filename, '/');
+
+        if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
+            return Storage::disk('s3')->url('uploads/category/images/' . $cleanFilename);
+        }
+
+        $categoryImagePath = public_path('uploads/category/images/' . $cleanFilename);
+        if (file_exists($categoryImagePath)) {
+            return asset('public/uploads/category/images/' . $cleanFilename) . '?time=' . time();
+        }
+
+        return asset('public/uploads/defaults/default.png') . '?time=' . time();
     }
 }
