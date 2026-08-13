@@ -337,18 +337,13 @@ class CategoryController extends Controller
 
         $cleanFilename = ltrim($filename, '/');
 
+        if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
+            return Storage::disk('s3')->url('uploads/category/images/' . $cleanFilename);
+        }
+
         $categoryImagePath = public_path('uploads/category/images/' . $cleanFilename);
         if (file_exists($categoryImagePath)) {
             return asset('public/uploads/category/images/' . $cleanFilename) . '?time=' . time();
-        }
-
-        $s3Path = 'uploads/category/images/' . $cleanFilename;
-        try {
-            if (config('filesystems.disks.s3.key') && Storage::disk('s3')->exists($s3Path)) {
-                return Storage::disk('s3')->url($s3Path);
-            }
-        } catch (\Throwable $e) {
-            // fallback
         }
 
         return asset('public/uploads/defaults/default.png') . '?time=' . time();
