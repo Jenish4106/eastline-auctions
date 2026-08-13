@@ -14,7 +14,7 @@ class UploadMachineryFilesToS3 extends Command
      *
      * @var string
      */
-    protected $signature = 'machinery:upload-to-s3 {--id= : Upload a specific file ID}';
+    protected $signature = 'machinery:upload-to-s3 {--id= : Upload a specific file ID} {--machinery_id= : Upload all files for a specific machinery ID}';
 
     /**
      * The console command description.
@@ -34,6 +34,10 @@ class UploadMachineryFilesToS3 extends Command
 
         if ($this->option('id')) {
             $query->where('id', $this->option('id'));
+        }
+
+        if ($this->option('machinery_id')) {
+            $query->where('machinery_id', $this->option('machinery_id'));
         }
 
         $pendingFiles = $query->get();
