@@ -21,7 +21,7 @@ class UploadMachineryFilesToS3 extends Command
      *
      * @var string
      */
-    protected $description = 'Upload local machinery images and videos to S3/Cloudflare R2, store full URLs in DB, and update status to 1.';
+    protected $description = 'Upload machinery images and videos from server storage to S3/Cloudflare R2, store full URLs in DB, and update status to 1.';
 
     /**
      * Execute the console command.
@@ -61,21 +61,11 @@ class UploadMachineryFilesToS3 extends Command
             }
 
             $filename = basename(ltrim($path, '/'));
-
-            if ($fileRecord->type === 'video') {
-                $customPath = 'E:\Wamp64\www\machinery\videos\\' . $filename;
-                $defaultPath = public_path('uploads/machinery/videos/' . $filename);
-                $localFilePath = File::exists($customPath) ? $customPath : $defaultPath;
-                $folder = 'videos';
-            } else {
-                $customPath = 'E:\Wamp64\www\machinery\images\\' . $filename;
-                $defaultPath = public_path('uploads/machinery/images/' . $filename);
-                $localFilePath = File::exists($customPath) ? $customPath : $defaultPath;
-                $folder = 'images';
-            }
+            $folder = ($fileRecord->type === 'video') ? 'videos' : 'images';
+            $localFilePath = public_path("uploads/machinery/{$folder}/" . $filename);
 
             if (!File::exists($localFilePath)) {
-                $this->warn("[ID {$fileRecord->id}] Local file not found at: {$localFilePath}");
+                $this->warn("[ID {$fileRecord->id}] Server file not found at: {$localFilePath}");
                 $failCount++;
                 continue;
             }
@@ -93,18 +83,6 @@ class UploadMachineryFilesToS3 extends Command
                 $fileRecord->image_path = $fullUrl;
                 $fileRecord->status = 1;
                 $fileRecord->save();
-
-                // Move uploaded local file to E:\Wamp64\www\machinery\s3_uploaded\{folder}\
-                $s3UploadedDir = "E:\\Wamp64\\www\\machinery\\s3_uploaded\\{$folder}";
-                if (!File::exists($s3UploadedDir)) {
-                    File::makeDirectory($s3UploadedDir, 0755, true);
-                }
-
-                $destinationPath = $s3UploadedDir . DIRECTORY_SEPARATOR . $filename;
-                if (File::exists($localFilePath)) {
-                    File::move($localFilePath, $destinationPath);
-                    $this->info("[ID {$fileRecord->id}] Moved local file to -> {$destinationPath}");
-                }
 
                 $this->info("[ID {$fileRecord->id}] Successfully uploaded -> {$fullUrl}");
                 $successCount++;
