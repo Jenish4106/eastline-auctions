@@ -743,16 +743,15 @@ class MachineryController extends Controller
 
         $cleanFilename = ltrim($filename, '/');
 
-        // Check local file first
         $machineryImagePath = public_path('uploads/machinery/images/' . $cleanFilename);
         if (file_exists($machineryImagePath)) {
             return asset('public/uploads/machinery/images/' . $cleanFilename) . '?time=' . time();
         }
 
         // If not found locally, use S3 URL if S3 is configured
-        if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
-            return Storage::disk('s3')->url('uploads/machinery/images/' . $cleanFilename);
-        }
+        // if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
+        //     return Storage::disk('s3')->url('uploads/machinery/images/' . $cleanFilename);
+        // }
 
         return asset('public/uploads/defaults/default.png') . '?time=' . time();
     }
@@ -772,16 +771,15 @@ class MachineryController extends Controller
 
         $cleanFilename = ltrim($filename, '/');
 
-        // Check local video first
         $machineryVideoPath = public_path('uploads/machinery/videos/' . $cleanFilename);
         if (file_exists($machineryVideoPath)) {
             return asset('public/uploads/machinery/videos/' . $cleanFilename) . '?time=' . time();
         }
 
         // If not found locally, use S3 URL if S3 is configured
-        if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
-            return Storage::disk('s3')->url('uploads/machinery/videos/' . $cleanFilename);
-        }
+        // if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
+        //     return Storage::disk('s3')->url('uploads/machinery/videos/' . $cleanFilename);
+        // }
 
         return null;
     }
