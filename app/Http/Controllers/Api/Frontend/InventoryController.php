@@ -197,11 +197,16 @@ class InventoryController extends Controller
             if ($machineryImages && $machineryImages->count() > 0) {
                 $firstImage = $machineryImages->first();
                 if ($firstImage && $firstImage->type === 'image') {
-                    $machineryImagePath = public_path('uploads/machinery/images/' . $firstImage->image_path);
-                    if (file_exists($machineryImagePath)) {
-                        $machinery->first_image_url = asset('public/uploads/machinery/images/' . $firstImage->image_path) . '?time=' . time();
+                    $path = $firstImage->image_path;
+                    if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                        $machinery->first_image_url = $path;
                     } else {
-                        $machinery->first_image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                        $machineryImagePath = public_path('uploads/machinery/images/' . $path);
+                        if (file_exists($machineryImagePath)) {
+                            $machinery->first_image_url = asset('public/uploads/machinery/images/' . $path) . '?time=' . time();
+                        } else {
+                            $machinery->first_image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();
+                        }
                     }
                 } else {
                     $machinery->first_image_url = asset('public/uploads/defaults/default.png') . '?time=' . time();

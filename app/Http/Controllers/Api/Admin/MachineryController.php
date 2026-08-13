@@ -99,9 +99,14 @@ class MachineryController extends Controller
 
                 $imageUrls = [];
                 foreach ($images as $image) {
-                    $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                    if (file_exists($machineryImagePath)) {
-                        $imageUrls[] = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/')) . '?time=' . time();
+                    $path = $image->image_path;
+                    if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                        $imageUrls[] = $path;
+                    } else {
+                        $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($path, '/'));
+                        if (file_exists($machineryImagePath)) {
+                            $imageUrls[] = asset('public/uploads/machinery/images/' . ltrim($path, '/')) . '?time=' . time();
+                        }
                     }
                 }
                 if (empty($imageUrls)) {
@@ -115,9 +120,14 @@ class MachineryController extends Controller
 
                 $videoUrls = [];
                 foreach ($videos as $video) {
-                    $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                    if (file_exists($machineryVideoPath)) {
-                        $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/')) . '?time=' . time();
+                    $path = $video->image_path;
+                    if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                        $videoUrls[] = $path;
+                    } else {
+                        $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($path, '/'));
+                        if (file_exists($machineryVideoPath)) {
+                            $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($path, '/')) . '?time=' . time();
+                        }
                     }
                 }
                 $item->video_urls = array_values(array_unique($videoUrls));
@@ -176,9 +186,14 @@ class MachineryController extends Controller
 
             $imageUrls = [];
             foreach ($images as $image) {
-                $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                if (file_exists($machineryImagePath)) {
-                    $imageUrls[] = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                $path = $image->image_path;
+                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    $imageUrls[] = $path;
+                } else {
+                    $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($path, '/'));
+                    if (file_exists($machineryImagePath)) {
+                        $imageUrls[] = asset('public/uploads/machinery/images/' . ltrim($path, '/'));
+                    }
                 }
             }
             if (empty($imageUrls)) {
@@ -192,9 +207,14 @@ class MachineryController extends Controller
 
             $videoUrls = [];
             foreach ($videos as $video) {
-                $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                if (file_exists($machineryVideoPath)) {
-                    $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                $path = $video->image_path;
+                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    $videoUrls[] = $path;
+                } else {
+                    $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($path, '/'));
+                    if (file_exists($machineryVideoPath)) {
+                        $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($path, '/'));
+                    }
                 }
             }
             $machinery->video_urls = array_values(array_unique($videoUrls));
@@ -296,25 +316,21 @@ class MachineryController extends Controller
 
                 foreach ($videoUrls as $videoUrl) {
                     if (filter_var($videoUrl, FILTER_VALIDATE_URL)) {
-                        $filename = basename(parse_url($videoUrl, PHP_URL_PATH));
-                        if ($filename !== 'default-machine.mp4') {
-                            MachineryFileManager::create([
-                                'machinery_id' => $machinery->id,
-                                'image_path'   => $filename,
-                                'type'         => 'video',
-                            ]);
-                        }
+                        MachineryFileManager::create([
+                            'machinery_id' => $machinery->id,
+                            'image_path'   => $videoUrl,
+                            'type'         => 'video',
+                        ]);
                     }
                 }
             }
 
             if ($request->has('image_urls') && is_array($request->image_urls)) {
-                foreach ($request->image_urls as $index => $imageUrl) {
-                    $filename = basename(parse_url($imageUrl, PHP_URL_PATH));
-                    if ($filename !== 'default.png') {
+                foreach ($request->image_urls as $imageUrl) {
+                    if (filter_var($imageUrl, FILTER_VALIDATE_URL)) {
                         MachineryFileManager::create([
                             'machinery_id' => $machinery->id,
-                            'image_path'   => $filename,
+                            'image_path'   => $imageUrl,
                             'type'         => 'image',
                         ]);
                     }
@@ -329,9 +345,14 @@ class MachineryController extends Controller
 
             $imageUrls = [];
             foreach ($images as $image) {
-                $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                if (file_exists($machineryImagePath)) {
-                    $imageUrls[] = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                $path = $image->image_path;
+                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    $imageUrls[] = $path;
+                } else {
+                    $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($path, '/'));
+                    if (file_exists($machineryImagePath)) {
+                        $imageUrls[] = asset('public/uploads/machinery/images/' . ltrim($path, '/'));
+                    }
                 }
             }
             if (empty($imageUrls)) {
@@ -345,9 +366,14 @@ class MachineryController extends Controller
 
             $videoUrls = [];
             foreach ($videos as $video) {
-                $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                if (file_exists($machineryVideoPath)) {
-                    $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                $path = $video->image_path;
+                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    $videoUrls[] = $path;
+                } else {
+                    $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($path, '/'));
+                    if (file_exists($machineryVideoPath)) {
+                        $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($path, '/'));
+                    }
                 }
             }
             $machinery->video_urls = array_values(array_unique($videoUrls));
@@ -448,48 +474,25 @@ class MachineryController extends Controller
             }
 
             if ($request->has('video_urls') && $request->video_urls !== null) {
-                // Delete legacy default-machine.mp4 entries from DB
                 $machinery->images()->where('type', 'video')->where('image_path', 'default-machine.mp4')->delete();
 
-                $existingVideos = $machinery->images()->where('type', 'video')->get();
-
-                $incomingVideoFilenames = [];
-                $videoUrls              = is_array($request->video_urls) ? $request->video_urls : [$request->video_urls];
+                $videoUrls = is_array($request->video_urls) ? $request->video_urls : [$request->video_urls];
+                $incomingVideoUrls = [];
 
                 foreach ($videoUrls as $videoUrl) {
                     if (filter_var($videoUrl, FILTER_VALIDATE_URL)) {
-                        $filename = basename(parse_url($videoUrl, PHP_URL_PATH));
-                        if ($filename !== 'default-machine.mp4') {
-                            $incomingVideoFilenames[] = $filename;
-                        }
+                        $incomingVideoUrls[] = $videoUrl;
                     }
                 }
 
-                foreach ($existingVideos as $existingVideo) {
-                    $existingFilename = $existingVideo->image_path;
-                    if (! in_array($existingFilename, $incomingVideoFilenames)) {
-                        if ($existingFilename !== 'default-machine.mp4') {
-                            $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($existingFilename, '/'));
+                $machinery->images()->where('type', 'video')->whereNotIn('image_path', $incomingVideoUrls)->delete();
 
-                            if (file_exists($machineryVideoPath)) {
-                                @unlink($machineryVideoPath);
-                            }
-                        }
-                    }
-                }
-
-                $machinery->images()->where('type', 'video')->whereNotIn('image_path', $incomingVideoFilenames)->delete();
-
-                foreach ($incomingVideoFilenames as $filename) {
-                    if ($filename === 'default-machine.mp4') {
-                        continue;
-                    }
-                    $existingVideo = $machinery->images()->where('type', 'video')->where('image_path', $filename)->first();
-
-                    if (! $existingVideo) {
+                foreach ($incomingVideoUrls as $videoUrl) {
+                    $existingVideo = $machinery->images()->where('type', 'video')->where('image_path', $videoUrl)->first();
+                    if (!$existingVideo) {
                         MachineryFileManager::create([
                             'machinery_id' => $machinery->id,
-                            'image_path'   => $filename,
+                            'image_path'   => $videoUrl,
                             'type'         => 'video',
                         ]);
                     }
@@ -499,44 +502,24 @@ class MachineryController extends Controller
             $machinery->save();
 
             if ($request->has('image_urls') && is_array($request->image_urls)) {
-                // Delete legacy default.png entries from DB
                 $machinery->images()->where('type', 'image')->where('image_path', 'default.png')->delete();
 
-                $existingImages = $machinery->images()->where('type', 'image')->get();
-
-                $incomingFilenames = [];
+                $incomingImageUrls = [];
                 foreach ($request->image_urls as $imageUrl) {
-                    $filename = basename(parse_url($imageUrl, PHP_URL_PATH));
-                    if ($filename !== 'default.png') {
-                        $incomingFilenames[] = $filename;
+                    if (filter_var($imageUrl, FILTER_VALIDATE_URL)) {
+                        $incomingImageUrls[] = $imageUrl;
                     }
                 }
 
-                foreach ($existingImages as $existingImage) {
-                    $existingFilename = $existingImage->image_path;
-                    if (! in_array($existingFilename, $incomingFilenames)) {
-                        if ($existingFilename !== 'default.png') {
-                            $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($existingFilename, '/'));
+                $machinery->images()->where('type', 'image')->whereNotIn('image_path', $incomingImageUrls)->delete();
 
-                            if (file_exists($machineryImagePath)) {
-                                @unlink($machineryImagePath);
-                            }
-                        }
-                    }
-                }
+                foreach ($incomingImageUrls as $imageUrl) {
+                    $existingImage = $machinery->images()->where('type', 'image')->where('image_path', $imageUrl)->first();
 
-                $machinery->images()->where('type', 'image')->whereNotIn('image_path', $incomingFilenames)->delete();
-
-                foreach ($incomingFilenames as $filename) {
-                    if ($filename === 'default.png') {
-                        continue;
-                    }
-                    $existingImage = $machinery->images()->where('type', 'image')->where('image_path', $filename)->first();
-
-                    if (! $existingImage) {
+                    if (!$existingImage) {
                         MachineryFileManager::create([
                             'machinery_id' => $machinery->id,
-                            'image_path'   => $filename,
+                            'image_path'   => $imageUrl,
                             'type'         => 'image',
                         ]);
                     }
@@ -551,9 +534,14 @@ class MachineryController extends Controller
 
             $imageUrls = [];
             foreach ($images as $image) {
-                $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                if (file_exists($machineryImagePath)) {
-                    $imageUrls[] = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/'));
+                $path = $image->image_path;
+                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    $imageUrls[] = $path;
+                } else {
+                    $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($path, '/'));
+                    if (file_exists($machineryImagePath)) {
+                        $imageUrls[] = asset('public/uploads/machinery/images/' . ltrim($path, '/'));
+                    }
                 }
             }
             if (empty($imageUrls)) {
@@ -567,11 +555,17 @@ class MachineryController extends Controller
 
             $videoUrls = [];
             foreach ($videos as $video) {
-                $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($video->image_path, '/'));
-                if (file_exists($machineryVideoPath)) {
-                    $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($video->image_path, '/'));
+                $path = $video->image_path;
+                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    $videoUrls[] = $path;
+                } else {
+                    $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($path, '/'));
+                    if (file_exists($machineryVideoPath)) {
+                        $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($path, '/'));
+                    }
                 }
             }
+            $machinery->video_urls = array_values(array_unique($videoUrls));
             $machinery->video_urls = array_values(array_unique($videoUrls));
 
             unset($machinery->images);
