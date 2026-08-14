@@ -2,14 +2,12 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Cache;
-
 class FileResolverService
 {
     private static array $inMemoryCache = [];
 
     /**
-     * Fast S3 checker fallback
+     * Fast non-blocking S3 checker
      */
     private static function checkS3Url(string $s3Url, string $cleanFilename): bool
     {
@@ -17,11 +15,11 @@ class FileResolverService
     }
 
     /**
-     * Pre-check multiple S3 URLs simultaneously (kept for backward compatibility)
+     * Pre-check multiple S3 URLs (non-blocking no-op)
      */
     public static function preloadS3Urls(array $filenames, string $type = 'machinery'): void
     {
-        // No-op for fast memory-first operation
+        // No-op for maximum speed
     }
 
     /**
@@ -41,24 +39,23 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        // Direct HTTP/S3 URL check
+        // 1. AWS S3 Check (Priority 1)
         if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
             return $filename;
         }
 
-        // Local Server Check (Instant local disk check)
-        $localPath = public_path('uploads/category/images/' . $cleanFilename);
-        if (file_exists($localPath)) {
-            return asset('public/uploads/category/images/' . $cleanFilename);
-        }
-
-        // AWS S3 Check (Priority 1)
         $awsUrl = config('filesystems.disks.s3.url');
         if (!empty($awsUrl)) {
             return rtrim($awsUrl, '/') . '/uploads/category/images/' . $cleanFilename;
         }
 
-        // Fallback Default Image
+        // 2. Local Server Check (Priority 2)
+        $localPath = public_path('uploads/category/images/' . $cleanFilename);
+        if (file_exists($localPath)) {
+            return asset('public/uploads/category/images/' . $cleanFilename);
+        }
+
+        // 3. Fallback Default Image (Priority 3)
         return $defaultUrl;
     }
 
@@ -79,24 +76,23 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        // Direct HTTP/S3 URL check
+        // 1. AWS S3 Check (Priority 1)
         if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
             return $filename;
         }
 
-        // Local Server Check (Instant local disk check)
-        $localPath = public_path('uploads/machinery/images/' . $cleanFilename);
-        if (file_exists($localPath)) {
-            return asset('public/uploads/machinery/images/' . $cleanFilename);
-        }
-
-        // AWS S3 Check (Priority 1)
         $awsUrl = config('filesystems.disks.s3.url');
         if (!empty($awsUrl)) {
             return rtrim($awsUrl, '/') . '/uploads/machinery/images/' . $cleanFilename;
         }
 
-        // Fallback Default Image
+        // 2. Local Server Check (Priority 2)
+        $localPath = public_path('uploads/machinery/images/' . $cleanFilename);
+        if (file_exists($localPath)) {
+            return asset('public/uploads/machinery/images/' . $cleanFilename);
+        }
+
+        // 3. Fallback Default Image (Priority 3)
         return $defaultUrl;
     }
 
@@ -117,14 +113,7 @@ class FileResolverService
 
         $cleanFilename = basename(parse_url($filename, PHP_URL_PATH) ?? $filename);
 
-        // 1. Local Server Check (Fast local disk check)
-        $localPath = public_path('uploads/machinery/images/' . $cleanFilename);
-        if (file_exists($localPath)) {
-            $mime = mime_content_type($localPath) ?: 'image/jpeg';
-            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($localPath));
-        }
-
-        // 2. AWS S3 Fetch for PDF (Priority 1)
+        // 1. AWS S3 Fetch for PDF (Priority 1)
         $imageUrl = self::resolveMachineryImageUrl($filename);
         if (!empty($imageUrl) && !str_contains($imageUrl, 'defaults/default.png')) {
             $cleanUrl = strtok($imageUrl, '?');
@@ -145,7 +134,14 @@ class FileResolverService
             }
         }
 
-        // 3. Fallback Default Image
+        // 2. Local Server Check (Priority 2)
+        $localPath = public_path('uploads/machinery/images/' . $cleanFilename);
+        if (file_exists($localPath)) {
+            $mime = mime_content_type($localPath) ?: 'image/jpeg';
+            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($localPath));
+        }
+
+        // 3. Fallback Default Image (Priority 3)
         return $defaultBase64;
     }
 
@@ -166,24 +162,23 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        // Direct HTTP/S3 URL check
+        // 1. AWS S3 Check (Priority 1)
         if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
             return $filename;
         }
 
-        // Local Server Check (Instant local disk check)
-        $localPath = public_path('uploads/machinery/videos/' . $cleanFilename);
-        if (file_exists($localPath)) {
-            return asset('public/uploads/machinery/videos/' . $cleanFilename);
-        }
-
-        // AWS S3 Check (Priority 1)
         $awsUrl = config('filesystems.disks.s3.url');
         if (!empty($awsUrl)) {
             return rtrim($awsUrl, '/') . '/uploads/machinery/videos/' . $cleanFilename;
         }
 
-        // Fallback Default Video
+        // 2. Local Server Check (Priority 2)
+        $localPath = public_path('uploads/machinery/videos/' . $cleanFilename);
+        if (file_exists($localPath)) {
+            return asset('public/uploads/machinery/videos/' . $cleanFilename);
+        }
+
+        // 3. Fallback Default Video (Priority 3)
         return $defaultUrl;
     }
 }
