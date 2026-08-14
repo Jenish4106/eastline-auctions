@@ -2,10 +2,40 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
+
 class FileResolverService
 {
     /**
-     * Resolve category image URL dynamically (Instant ~ 0ms)
+     * Fast check with 24-hour cache key per filename.
+     * New uploads create new filenames, so they resolve instantly.
+     * Missing S3 files (404) cache false and fallback to default.png.
+     */
+    private static function isS3FileValid(string $s3Url, string $cleanFilename): bool
+    {
+        $cacheKey = 's3_exists_' . md5($cleanFilename);
+
+        return Cache::remember($cacheKey, 86400, function () use ($s3Url) {
+            try {
+                $ch = curl_init($s3Url);
+                curl_setopt($ch, CURLOPT_NOBODY, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT_MS, 300);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 200);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+                curl_exec($ch);
+                $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+
+                return $statusCode !== 404;
+            } catch (\Throwable $e) {
+                return true;
+            }
+        });
+    }
+
+    /**
+     * Resolve category image URL dynamically
      * Priority: 1. AWS S3  2. Local Server  3. Default Image
      */
     public static function resolveCategoryImageUrl(?string $filename): string
@@ -16,23 +46,21 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
-            return $filename;
-        }
-
-        $cleanFilename = basename(ltrim($filename, '/'));
+        $cleanFilename = basename(parse_url($filename, PHP_URL_PATH) ?? $filename);
         if (empty($cleanFilename) || $cleanFilename === 'default.png') {
             return $defaultUrl;
         }
 
-        // 1. AWS S3 Direct URL (Priority 1)
+        // 1. AWS S3 Check (Priority 1)
         $awsUrl = config('filesystems.disks.s3.url');
-        if (!empty($awsUrl)) {
-            return rtrim($awsUrl, '/') . '/uploads/category/images/' . $cleanFilename;
-        }
+        $s3Url = str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')
+            ? $filename
+            : (!empty($awsUrl) ? rtrim($awsUrl, '/') . '/uploads/category/images/' . $cleanFilename : null);
 
-        if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.bucket'))) {
-            return 'https://' . config('filesystems.disks.s3.bucket') . '.s3.amazonaws.com/uploads/category/images/' . $cleanFilename;
+        if (!empty($s3Url)) {
+            if (self::isS3FileValid($s3Url, $cleanFilename)) {
+                return $s3Url;
+            }
         }
 
         // 2. Local Server Check (Priority 2)
@@ -46,7 +74,7 @@ class FileResolverService
     }
 
     /**
-     * Resolve machinery image URL dynamically (Instant ~ 0ms)
+     * Resolve machinery image URL dynamically
      * Priority: 1. AWS S3  2. Local Server  3. Default Image
      */
     public static function resolveMachineryImageUrl(?string $filename): string
@@ -57,23 +85,21 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
-            return $filename;
-        }
-
-        $cleanFilename = basename(ltrim($filename, '/'));
+        $cleanFilename = basename(parse_url($filename, PHP_URL_PATH) ?? $filename);
         if (empty($cleanFilename) || $cleanFilename === 'default.png') {
             return $defaultUrl;
         }
 
-        // 1. AWS S3 Direct URL (Priority 1)
+        // 1. AWS S3 Check (Priority 1)
         $awsUrl = config('filesystems.disks.s3.url');
-        if (!empty($awsUrl)) {
-            return rtrim($awsUrl, '/') . '/uploads/machinery/images/' . $cleanFilename;
-        }
+        $s3Url = str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')
+            ? $filename
+            : (!empty($awsUrl) ? rtrim($awsUrl, '/') . '/uploads/machinery/images/' . $cleanFilename : null);
 
-        if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.bucket'))) {
-            return 'https://' . config('filesystems.disks.s3.bucket') . '.s3.amazonaws.com/uploads/machinery/images/' . $cleanFilename;
+        if (!empty($s3Url)) {
+            if (self::isS3FileValid($s3Url, $cleanFilename)) {
+                return $s3Url;
+            }
         }
 
         // 2. Local Server Check (Priority 2)
@@ -136,7 +162,7 @@ class FileResolverService
     }
 
     /**
-     * Resolve machinery video URL dynamically (Instant ~ 0ms)
+     * Resolve machinery video URL dynamically
      * Priority: 1. AWS S3  2. Local Server  3. Default Video
      */
     public static function resolveMachineryVideoUrl(?string $filename): string
@@ -147,23 +173,21 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
-            return $filename;
-        }
-
-        $cleanFilename = basename(ltrim($filename, '/'));
+        $cleanFilename = basename(parse_url($filename, PHP_URL_PATH) ?? $filename);
         if (empty($cleanFilename) || $cleanFilename === 'default-machine.mp4') {
             return $defaultUrl;
         }
 
-        // 1. AWS S3 Direct URL (Priority 1)
+        // 1. AWS S3 Check (Priority 1)
         $awsUrl = config('filesystems.disks.s3.url');
-        if (!empty($awsUrl)) {
-            return rtrim($awsUrl, '/') . '/uploads/machinery/videos/' . $cleanFilename;
-        }
+        $s3Url = str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')
+            ? $filename
+            : (!empty($awsUrl) ? rtrim($awsUrl, '/') . '/uploads/machinery/videos/' . $cleanFilename : null);
 
-        if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.bucket'))) {
-            return 'https://' . config('filesystems.disks.s3.bucket') . '.s3.amazonaws.com/uploads/machinery/videos/' . $cleanFilename;
+        if (!empty($s3Url)) {
+            if (self::isS3FileValid($s3Url, $cleanFilename)) {
+                return $s3Url;
+            }
         }
 
         // 2. Local Server Check (Priority 2)
