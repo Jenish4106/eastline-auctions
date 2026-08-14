@@ -9,8 +9,8 @@ class FileResolverService
     private static array $inMemoryCache = [];
 
     /**
-     * Ultra-fast S3 check (50ms socket timeout + double-layer cache)
-     * Handles deleted S3 images (404) gracefully without frontend changes.
+     * Reliable S3 file existence check with 24-hour cache.
+     * Accurately detects 404 (deleted/removed S3 images) and caches false so default.png displays.
      */
     private static function isS3ImageValid(string $s3Url, string $cleanFilename): bool
     {
@@ -18,28 +18,34 @@ class FileResolverService
             return self::$inMemoryCache[$cleanFilename];
         }
 
-        $cacheKey = 's3_valid_v3_' . md5($cleanFilename);
+        $cacheKey = 's3_v5_' . md5($cleanFilename);
 
-        $isValid = Cache::remember($cacheKey, 86400, function () use ($s3Url) {
-            try {
-                $ch = curl_init($s3Url);
-                curl_setopt($ch, CURLOPT_NOBODY, true);
-                curl_setopt($ch, CURLOPT_TIMEOUT_MS, 50);
-                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 30);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-                curl_exec($ch);
-                $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                curl_close($ch);
+        if (Cache::has($cacheKey)) {
+            $isValid = (bool) Cache::get($cacheKey);
+            self::$inMemoryCache[$cleanFilename] = $isValid;
+            return $isValid;
+        }
 
-                return $statusCode !== 404;
-            } catch (\Throwable $e) {
-                return true;
-            }
-        });
+        try {
+            $ch = curl_init($s3Url);
+            curl_setopt($ch, CURLOPT_NOBODY, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_exec($ch);
+            $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
 
-        self::$inMemoryCache[$cleanFilename] = $isValid;
-        return $isValid;
+            $isValid = ($statusCode >= 200 && $statusCode < 400);
+            Cache::put($cacheKey, $isValid, 86400);
+
+            self::$inMemoryCache[$cleanFilename] = $isValid;
+            return $isValid;
+        } catch (\Throwable $e) {
+            self::$inMemoryCache[$cleanFilename] = false;
+            return false;
+        }
     }
 
     /**
@@ -69,7 +75,6 @@ class FileResolverService
             if (self::isS3ImageValid($s3Url, $cleanFilename)) {
                 return $s3Url;
             }
-            return $defaultUrl;
         }
 
         // 2. Local Server Check (Priority 2)
@@ -109,7 +114,6 @@ class FileResolverService
             if (self::isS3ImageValid($s3Url, $cleanFilename)) {
                 return $s3Url;
             }
-            return $defaultUrl;
         }
 
         // 2. Local Server Check (Priority 2)
@@ -198,7 +202,6 @@ class FileResolverService
             if (self::isS3ImageValid($s3Url, $cleanFilename)) {
                 return $s3Url;
             }
-            return $defaultUrl;
         }
 
         // 2. Local Server Check (Priority 2)
