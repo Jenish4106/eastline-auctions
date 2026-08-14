@@ -281,12 +281,12 @@ class OrderController extends Controller
                     ], 200);
                 }
 
-                if ((int) $request->status === 3) {
-                    (new PingramSmsService())->sendMessage(
-                        $order->user->phone_no,
-                        'Thank you for your purchase with Eastline Equipment Sales & Auctions! Your invoice is now available. Please sign in to your account to review the invoice and complete payment.'
-                    );
-                }
+                // if ((int) $request->status === 3) {
+                //     (new PingramSmsService())->sendMessage(
+                //         $order->user->phone_no,
+                //         'Thank you for your purchase with Eastline Equipment Sales & Auctions! Your invoice is now available. Please sign in to your account to review the invoice and complete payment.'
+                //     );
+                // }
             }
 
             $statusMessages = [

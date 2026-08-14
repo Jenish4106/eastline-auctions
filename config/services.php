@@ -32,9 +32,9 @@ return [
     ],
     'pingram' => [
         'api_key' => env('PINGRAM_API_KEY'),
+        'base_url' => env('PINGRAM_BASE_URL', 'https://api.eu.pingram.io'),
         'client_id' => env('PINGRAM_CLIENT_ID', '5x2ffotys9hpqblshh1ei6nue7'),
-        'from' => env('PINGRAM_FROM_NUMBER', '+16393834342'),
-        'notification_type' => env('PINGRAM_NOTIFICATION_TYPE', 'welcome_sms'),
+        'notification_type' => env('PINGRAM_NOTIFICATION_TYPE', 'sms_compose_preview'),
         'default_country_code' => env('PINGRAM_DEFAULT_COUNTRY_CODE', '+1'),
     ],
     'twilio' => [

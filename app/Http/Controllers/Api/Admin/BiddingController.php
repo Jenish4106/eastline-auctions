@@ -807,8 +807,8 @@ class BiddingController extends Controller
 
                         //Sms
                         $smsMessage = "Hi {$user->first_name}, your contract for {$machineryName} has been approved. Please check your email for details.";
-                        $twilio = new \App\Services\PingramSmsService();
-                        $smsSent = $twilio->sendMessage(
+                        $smsService = new \App\Services\PingramSmsService();
+                        $smsSent = $smsService->sendMessage(
                             $user->phone_no,
                             $smsMessage
                         );

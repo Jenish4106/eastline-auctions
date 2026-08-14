@@ -68,25 +68,23 @@ class MailtrapService
                     file_exists($attachment['path'])
                 ) {
                     $email->attachFromPath($attachment['path'], $attachment['name'], $attachment['type']);
-                } else {
-                    Log::warning('Mailtrap attachment missing or not found', $attachment);
                 }
             }
 
             $mailer->send($email);
 
-            Log::info('Mailtrap Email Sent Successfully', [
-                'to' => $to,
-                'subject' => $subject,
-            ]);
+            // Log::info('Mailtrap Email Sent Successfully', [
+            //     'to' => $to,
+            //     'subject' => $subject,
+            // ]);
 
             return true;
         } catch (\Throwable $e) {
-            Log::error('Mailtrap Email Sending Failed: ' . $e->getMessage(), [
-                'to' => $to,
-                'subject' => $subject,
-                'trace' => $e->getTraceAsString(),
-            ]);
+            // Log::error('Mailtrap Email Sending Failed: ' . $e->getMessage(), [
+            //     'to' => $to,
+            //     'subject' => $subject,
+            //     'trace' => $e->getTraceAsString(),
+            // ]);
             return false;
         }
     }
