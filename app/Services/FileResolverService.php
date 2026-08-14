@@ -9,110 +9,19 @@ class FileResolverService
     private static array $inMemoryCache = [];
 
     /**
-     * Fast parallel S3 checker using curl_multi (Executes 50 S3 requests simultaneously in ~0.05s)
+     * Fast S3 checker fallback
      */
     private static function checkS3Url(string $s3Url, string $cleanFilename): bool
     {
-        if (isset(self::$inMemoryCache[$cleanFilename])) {
-            return self::$inMemoryCache[$cleanFilename];
-        }
-
-        $cacheKey = 's3_valid_v6_' . md5($cleanFilename);
-        if (Cache::has($cacheKey)) {
-            $isValid = (bool) Cache::get($cacheKey);
-            self::$inMemoryCache[$cleanFilename] = $isValid;
-            return $isValid;
-        }
-
-        // Fast parallel single cURL fallback with 200ms timeout
-        try {
-            $ch = curl_init($s3Url);
-            curl_setopt($ch, CURLOPT_NOBODY, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT_MS, 200);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 100);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-            curl_exec($ch);
-            $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            $isValid = ($statusCode >= 200 && $statusCode < 400);
-            Cache::put($cacheKey, $isValid, 86400);
-
-            self::$inMemoryCache[$cleanFilename] = $isValid;
-            return $isValid;
-        } catch (\Throwable $e) {
-            self::$inMemoryCache[$cleanFilename] = false;
-            return false;
-        }
+        return true;
     }
 
     /**
-     * Pre-check multiple S3 URLs simultaneously in parallel (0.05s total for all items)
+     * Pre-check multiple S3 URLs simultaneously (kept for backward compatibility)
      */
     public static function preloadS3Urls(array $filenames, string $type = 'machinery'): void
     {
-        $awsUrl = config('filesystems.disks.s3.url');
-        if (empty($awsUrl)) {
-            return;
-        }
-
-        $mh = curl_multi_init();
-        $curlHandles = [];
-
-        foreach ($filenames as $filename) {
-            if (empty($filename)) continue;
-            $cleanFilename = basename(parse_url($filename, PHP_URL_PATH) ?? $filename);
-            if (empty($cleanFilename) || $cleanFilename === 'default.png') continue;
-
-            if (isset(self::$inMemoryCache[$cleanFilename])) continue;
-
-            $cacheKey = 's3_valid_v6_' . md5($cleanFilename);
-            if (Cache::has($cacheKey)) {
-                self::$inMemoryCache[$cleanFilename] = (bool) Cache::get($cacheKey);
-                continue;
-            }
-
-            $s3Url = str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')
-                ? $filename
-                : rtrim($awsUrl, '/') . '/uploads/' . $type . '/images/' . $cleanFilename;
-
-            $ch = curl_init($s3Url);
-            curl_setopt($ch, CURLOPT_NOBODY, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT_MS, 200);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 100);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-            curl_multi_add_handle($mh, $ch);
-
-            $curlHandles[$cleanFilename] = ['ch' => $ch, 'key' => $cacheKey];
-        }
-
-        if (empty($curlHandles)) {
-            curl_multi_close($mh);
-            return;
-        }
-
-        // Run all requests IN PARALLEL simultaneously
-        $running = null;
-        do {
-            curl_multi_exec($mh, $running);
-            curl_multi_select($mh, 0.05);
-        } while ($running > 0);
-
-        foreach ($curlHandles as $cleanFilename => $info) {
-            $ch = $info['ch'];
-            $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $isValid = ($statusCode >= 200 && $statusCode < 400);
-
-            Cache::put($info['key'], $isValid, 86400);
-            self::$inMemoryCache[$cleanFilename] = $isValid;
-
-            curl_multi_remove_handle($mh, $ch);
-            curl_close($ch);
-        }
-
-        curl_multi_close($mh);
+        // No-op for fast memory-first operation
     }
 
     /**
@@ -121,7 +30,7 @@ class FileResolverService
      */
     public static function resolveCategoryImageUrl(?string $filename): string
     {
-        $defaultUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
+        $defaultUrl = asset('public/uploads/defaults/default.png');
 
         if (empty($filename)) {
             return $defaultUrl;
@@ -132,26 +41,24 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        // 1. AWS S3 Check (Priority 1)
-        $awsUrl = config('filesystems.disks.s3.url');
-        $s3Url = str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')
-            ? $filename
-            : (!empty($awsUrl) ? rtrim($awsUrl, '/') . '/uploads/category/images/' . $cleanFilename : null);
-
-        if (!empty($s3Url)) {
-            if (self::checkS3Url($s3Url, $cleanFilename)) {
-                return $s3Url;
-            }
-            return $defaultUrl;
+        // Direct HTTP/S3 URL check
+        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
+            return $filename;
         }
 
-        // 2. Local Server Check (Priority 2)
+        // Local Server Check (Instant local disk check)
         $localPath = public_path('uploads/category/images/' . $cleanFilename);
         if (file_exists($localPath)) {
-            return asset('public/uploads/category/images/' . $cleanFilename) . '?time=' . time();
+            return asset('public/uploads/category/images/' . $cleanFilename);
         }
 
-        // 3. Fallback Default Image (Priority 3)
+        // AWS S3 Check (Priority 1)
+        $awsUrl = config('filesystems.disks.s3.url');
+        if (!empty($awsUrl)) {
+            return rtrim($awsUrl, '/') . '/uploads/category/images/' . $cleanFilename;
+        }
+
+        // Fallback Default Image
         return $defaultUrl;
     }
 
@@ -161,7 +68,7 @@ class FileResolverService
      */
     public static function resolveMachineryImageUrl(?string $filename): string
     {
-        $defaultUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
+        $defaultUrl = asset('public/uploads/defaults/default.png');
 
         if (empty($filename)) {
             return $defaultUrl;
@@ -172,26 +79,24 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        // 1. AWS S3 Check (Priority 1)
-        $awsUrl = config('filesystems.disks.s3.url');
-        $s3Url = str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')
-            ? $filename
-            : (!empty($awsUrl) ? rtrim($awsUrl, '/') . '/uploads/machinery/images/' . $cleanFilename : null);
-
-        if (!empty($s3Url)) {
-            if (self::checkS3Url($s3Url, $cleanFilename)) {
-                return $s3Url;
-            }
-            return $defaultUrl;
+        // Direct HTTP/S3 URL check
+        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
+            return $filename;
         }
 
-        // 2. Local Server Check (Priority 2)
+        // Local Server Check (Instant local disk check)
         $localPath = public_path('uploads/machinery/images/' . $cleanFilename);
         if (file_exists($localPath)) {
-            return asset('public/uploads/machinery/images/' . $cleanFilename) . '?time=' . time();
+            return asset('public/uploads/machinery/images/' . $cleanFilename);
         }
 
-        // 3. Fallback Default Image (Priority 3)
+        // AWS S3 Check (Priority 1)
+        $awsUrl = config('filesystems.disks.s3.url');
+        if (!empty($awsUrl)) {
+            return rtrim($awsUrl, '/') . '/uploads/machinery/images/' . $cleanFilename;
+        }
+
+        // Fallback Default Image
         return $defaultUrl;
     }
 
@@ -212,7 +117,14 @@ class FileResolverService
 
         $cleanFilename = basename(parse_url($filename, PHP_URL_PATH) ?? $filename);
 
-        // 1. AWS S3 Fetch for PDF (Priority 1)
+        // 1. Local Server Check (Fast local disk check)
+        $localPath = public_path('uploads/machinery/images/' . $cleanFilename);
+        if (file_exists($localPath)) {
+            $mime = mime_content_type($localPath) ?: 'image/jpeg';
+            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($localPath));
+        }
+
+        // 2. AWS S3 Fetch for PDF (Priority 1)
         $imageUrl = self::resolveMachineryImageUrl($filename);
         if (!empty($imageUrl) && !str_contains($imageUrl, 'defaults/default.png')) {
             $cleanUrl = strtok($imageUrl, '?');
@@ -233,14 +145,7 @@ class FileResolverService
             }
         }
 
-        // 2. Local Server Check (Priority 2)
-        $localPath = public_path('uploads/machinery/images/' . $cleanFilename);
-        if (file_exists($localPath)) {
-            $mime = mime_content_type($localPath) ?: 'image/jpeg';
-            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($localPath));
-        }
-
-        // 3. Fallback Default Image (Priority 3)
+        // 3. Fallback Default Image
         return $defaultBase64;
     }
 
@@ -250,7 +155,7 @@ class FileResolverService
      */
     public static function resolveMachineryVideoUrl(?string $filename): string
     {
-        $defaultUrl = asset('public/uploads/defaults/default-machine.mp4') . '?time=' . time();
+        $defaultUrl = asset('public/uploads/defaults/default-machine.mp4');
 
         if (empty($filename)) {
             return $defaultUrl;
@@ -261,26 +166,25 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        // 1. AWS S3 Check (Priority 1)
-        $awsUrl = config('filesystems.disks.s3.url');
-        $s3Url = str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')
-            ? $filename
-            : (!empty($awsUrl) ? rtrim($awsUrl, '/') . '/uploads/machinery/videos/' . $cleanFilename : null);
-
-        if (!empty($s3Url)) {
-            if (self::checkS3Url($s3Url, $cleanFilename)) {
-                return $s3Url;
-            }
-            return $defaultUrl;
+        // Direct HTTP/S3 URL check
+        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
+            return $filename;
         }
 
-        // 2. Local Server Check (Priority 2)
+        // Local Server Check (Instant local disk check)
         $localPath = public_path('uploads/machinery/videos/' . $cleanFilename);
         if (file_exists($localPath)) {
-            return asset('public/uploads/machinery/videos/' . $cleanFilename) . '?time=' . time();
+            return asset('public/uploads/machinery/videos/' . $cleanFilename);
         }
 
-        // 3. Fallback Default Video (Priority 3)
+        // AWS S3 Check (Priority 1)
+        $awsUrl = config('filesystems.disks.s3.url');
+        if (!empty($awsUrl)) {
+            return rtrim($awsUrl, '/') . '/uploads/machinery/videos/' . $cleanFilename;
+        }
+
+        // Fallback Default Video
         return $defaultUrl;
     }
 }
+
