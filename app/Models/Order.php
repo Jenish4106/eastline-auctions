@@ -103,16 +103,23 @@ class Order extends Model
 
     public function getInvoiceUrlAttribute()
     {
-        $invoice = MachineryFileManager::where('order_id', $this->id)
+        $invoice = MachineryFileManager::where(function ($q) {
+                $q->where('order_id', $this->id);
+                if ($this->machinery_id) {
+                    $q->orWhere('machinery_id', $this->machinery_id);
+                }
+            })
             ->where('type', 'invoice')
+            ->latest()
             ->first();
 
         if ($invoice) {
             $path = public_path($invoice->image_path);
+            $url = asset('public/' . ltrim($invoice->image_path, '/'));
             if (file_exists($path)) {
-                return asset('public/' . ltrim($invoice->image_path, '/')) . '?t=' . filemtime($path);
+                $url .= '?t=' . filemtime($path);
             }
-            return asset('public/' . ltrim($invoice->image_path, '/'));
+            return $url;
         }
 
         return null;
@@ -120,11 +127,30 @@ class Order extends Model
 
     public function getContractUrlAttribute()
     {
-        $contract = MachineryFileManager::where('order_id', $this->id)
-            ->where('type', 'contract')
+        $contract = MachineryFileManager::where(function ($q) {
+                $q->where('order_id', $this->id);
+                if ($this->machinery_id) {
+                    $q->orWhere('machinery_id', $this->machinery_id);
+                }
+            })
+            ->where('type', 'contract_pdf')
+            ->latest()
             ->first();
 
-        return $contract ? asset('public/' . ltrim($contract->image_path, '/')) : null;
+        if ($contract) {
+            $path = public_path($contract->image_path);
+            $url = asset('public/' . ltrim($contract->image_path, '/'));
+            if (file_exists($path)) {
+                $url .= '?t=' . filemtime($path);
+            }
+            return $url;
+        }
+
+        if ($this->machinery && $this->machinery->contract_url) {
+            return $this->machinery->contract_url;
+        }
+
+        return null;
     }
 
     public function getPaymentSlipUrlAttribute()
