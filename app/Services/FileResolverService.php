@@ -2,12 +2,11 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Storage;
-
 class FileResolverService
 {
     /**
-     * Resolve category image URL dynamically (Optimized for high performance)
+     * Resolve category image URL dynamically (No cache, direct resolution)
+     * Priority: 1. AWS S3  2. Local Public Server  3. Default Image
      */
     public static function resolveCategoryImageUrl(?string $filename): string
     {
@@ -26,13 +25,7 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        // 1. Local Server Check (Instant ~ 0.01ms)
-        $localPath = public_path('uploads/category/images/' . $cleanFilename);
-        if (file_exists($localPath)) {
-            return asset('public/uploads/category/images/' . $cleanFilename);
-        }
-
-        // 2. Direct S3 / Cloudflare R2 CDN URL
+        // 1. Try S3 / Cloudflare R2 first
         $awsUrl = config('filesystems.disks.s3.url');
         if (!empty($awsUrl)) {
             return rtrim($awsUrl, '/') . '/uploads/category/images/' . $cleanFilename;
@@ -42,12 +35,19 @@ class FileResolverService
             return 'https://' . config('filesystems.disks.s3.bucket') . '.s3.amazonaws.com/uploads/category/images/' . $cleanFilename;
         }
 
+        // 2. Try Local Public Server
+        $localPath = public_path('uploads/category/images/' . $cleanFilename);
+        if (file_exists($localPath)) {
+            return asset('public/uploads/category/images/' . $cleanFilename);
+        }
+
         // 3. Fallback Default Image
         return $defaultUrl;
     }
 
     /**
-     * Resolve machinery image URL dynamically (Optimized for high performance)
+     * Resolve machinery image URL dynamically (No cache, direct resolution)
+     * Priority: 1. AWS S3  2. Local Public Server  3. Default Image
      */
     public static function resolveMachineryImageUrl(?string $filename): string
     {
@@ -66,13 +66,7 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        // 1. Local Server Check (Instant ~ 0.01ms)
-        $localPath = public_path('uploads/machinery/images/' . $cleanFilename);
-        if (file_exists($localPath)) {
-            return asset('public/uploads/machinery/images/' . $cleanFilename);
-        }
-
-        // 2. Direct S3 / Cloudflare R2 CDN URL
+        // 1. Try S3 / Cloudflare R2 first
         $awsUrl = config('filesystems.disks.s3.url');
         if (!empty($awsUrl)) {
             return rtrim($awsUrl, '/') . '/uploads/machinery/images/' . $cleanFilename;
@@ -80,6 +74,12 @@ class FileResolverService
 
         if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.bucket'))) {
             return 'https://' . config('filesystems.disks.s3.bucket') . '.s3.amazonaws.com/uploads/machinery/images/' . $cleanFilename;
+        }
+
+        // 2. Try Local Public Server
+        $localPath = public_path('uploads/machinery/images/' . $cleanFilename);
+        if (file_exists($localPath)) {
+            return asset('public/uploads/machinery/images/' . $cleanFilename);
         }
 
         // 3. Fallback Default Image
@@ -111,7 +111,7 @@ class FileResolverService
 
         // 2. Try S3 / Remote URL fetch for PDF
         $imageUrl = self::resolveMachineryImageUrl($filename);
-        if (!empty($imageUrl)) {
+        if (!empty($imageUrl) && $imageUrl !== asset('public/uploads/defaults/default.png')) {
             $cleanUrl = strtok($imageUrl, '?');
             try {
                 $context = stream_context_create([
@@ -135,7 +135,8 @@ class FileResolverService
     }
 
     /**
-     * Resolve machinery video URL dynamically (Optimized for high performance)
+     * Resolve machinery video URL dynamically (No cache, direct resolution)
+     * Priority: 1. AWS S3  2. Local Public Server  3. Default Video
      */
     public static function resolveMachineryVideoUrl(?string $filename): string
     {
@@ -154,13 +155,7 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        // 1. Local Server Check (Instant ~ 0.01ms)
-        $localPath = public_path('uploads/machinery/videos/' . $cleanFilename);
-        if (file_exists($localPath)) {
-            return asset('public/uploads/machinery/videos/' . $cleanFilename);
-        }
-
-        // 2. Direct S3 / Cloudflare R2 CDN URL
+        // 1. Try S3 / Cloudflare R2 first
         $awsUrl = config('filesystems.disks.s3.url');
         if (!empty($awsUrl)) {
             return rtrim($awsUrl, '/') . '/uploads/machinery/videos/' . $cleanFilename;
@@ -168,6 +163,12 @@ class FileResolverService
 
         if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.bucket'))) {
             return 'https://' . config('filesystems.disks.s3.bucket') . '.s3.amazonaws.com/uploads/machinery/videos/' . $cleanFilename;
+        }
+
+        // 2. Try Local Public Server
+        $localPath = public_path('uploads/machinery/videos/' . $cleanFilename);
+        if (file_exists($localPath)) {
+            return asset('public/uploads/machinery/videos/' . $cleanFilename);
         }
 
         // 3. Fallback Default Video
