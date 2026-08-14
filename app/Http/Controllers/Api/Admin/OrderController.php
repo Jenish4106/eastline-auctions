@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\OrderStatusChangeMail;
 use App\Mail\ResendInvoiceMail;
+use App\Models\MachineryFileManager;
 use App\Models\Order;
 use App\Models\Settings;
-use App\Models\MachineryFileManager;
 use App\Services\FileResolverService;
 use App\Services\MailtrapService;
 use App\Services\PingramSmsService;
@@ -45,17 +45,17 @@ class OrderController extends Controller
                 ->where('is_deleted', 0)
                 ->whereHas('user')
                 ->select([
-                'id',
-                'order_id',
-                'machinery_id',
-                'user_id',
-                'type',
-                'price',
-                'delivery_status',
-                'purchase_date',
-                'payment_slip_path',
-                'payment_slip_status',
-            ]);
+                    'id',
+                    'order_id',
+                    'machinery_id',
+                    'user_id',
+                    'type',
+                    'price',
+                    'delivery_status',
+                    'purchase_date',
+                    'payment_slip_path',
+                    'payment_slip_status',
+                ]);
 
             if (!empty($search)) {
                 $query->where(function ($q) use ($search) {
@@ -284,7 +284,7 @@ class OrderController extends Controller
                 // if ((int) $request->status === 3) {
                 //     (new PingramSmsService())->sendMessage(
                 //         $order->user->phone_no,
-                //         'Thank you for your purchase with Eastline Equipment Sales & Auctions! Your invoice is now available. Please sign in to your account to review the invoice and complete payment.'
+                //         'Thank you for your purchase with Eastline Equipment Auctions! Your invoice is now available. Please sign in to your account to review the invoice and complete payment.'
                 //     );
                 // }
             }
@@ -465,7 +465,7 @@ class OrderController extends Controller
 
         try {
             $orderIdInput = $request->input('order_id');
-            
+
             $order = Order::with(['user', 'machinery'])
                 ->find($orderIdInput);
 
@@ -508,7 +508,7 @@ class OrderController extends Controller
                 }
             }
 
-            $companyName = Settings::get('company_name', 'Eastline Equipment Sales & Auctions');
+            $companyName = Settings::get('company_name', 'Eastline Equipment Auctions');
             $companyAddress = Settings::get('address') ?? '';
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';
@@ -546,7 +546,7 @@ class OrderController extends Controller
             ];
 
             $invoicePdf = Pdf::loadView('pdf.invoice', $invoiceData);
-            
+
             $invoiceFileName = 'invoice_' . $order->order_id . '.pdf';
             $invoicePath = 'uploads/invoices/' . $invoiceFileName;
 
@@ -576,7 +576,7 @@ class OrderController extends Controller
                 ]);
             }
 
-            if ((int)$order->delivery_status >= 3 && (int)$order->delivery_status <= 8) {
+            if ((int) $order->delivery_status >= 3 && (int) $order->delivery_status <= 8) {
                 $order->is_regenerated = true;
                 $order->save();
             }
@@ -592,7 +592,6 @@ class OrderController extends Controller
                     'invoice_url' => $cacheBustedUrl,
                 ]
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -630,7 +629,7 @@ class OrderController extends Controller
                 ], 404);
             }
 
-            if (!((int)$order->delivery_status >= 3 && (int)$order->delivery_status <= 8)) {
+            if (!((int) $order->delivery_status >= 3 && (int) $order->delivery_status <= 8)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invoice can only be resent when order status is between Settle Payment and Delivered.',
@@ -687,7 +686,6 @@ class OrderController extends Controller
                 'success' => true,
                 'message' => 'Invoice email sent successfully to ' . $order->user->email,
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

@@ -2,11 +2,11 @@
 
 namespace App\Mail;
 
+use App\Models\Settings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\View;
-use App\Models\Settings;
 
 class ContactMail extends Mailable
 {
@@ -28,10 +28,11 @@ class ContactMail extends Mailable
     public function build()
     {
         $fullName = $this->contactData['firstName'] . ' ' . $this->contactData['lastName'];
-        
-        return $this->subject('New Contact Form Submission - ' . Settings::get('company_name', 'Eastline Equipment Sales & Auctions'))
-                    ->view('emails.contact')
-                    ->with(array_merge($this->contactData, ['fullName' => $fullName]));
+
+        return $this
+            ->subject('New Contact Form Submission - ' . Settings::get('company_name', 'Eastline Equipment Auctions'))
+            ->view('emails.contact')
+            ->with(array_merge($this->contactData, ['fullName' => $fullName]));
     }
 
     /**
@@ -49,6 +50,6 @@ class ContactMail extends Mailable
      */
     public function getSubject()
     {
-        return 'New Contact Form Submission - ' . Settings::get('company_name', 'Eastline Equipment Sales & Auctions');
+        return 'New Contact Form Submission - ' . Settings::get('company_name', 'Eastline Equipment Auctions');
     }
 }

@@ -361,7 +361,6 @@ class SumsubController extends Controller
         }
 
         if (isset($data['review']['reviewResult']['reviewAnswer'])) {
-
             $answer = $data['review']['reviewResult']['reviewAnswer'];
             $license = License::where('applicant_id', $applicantId)->first();
 
@@ -391,9 +390,8 @@ class SumsubController extends Controller
                         if ($updates['status'] == License::STATUS_APPROVED) {
                             (new PingramSmsService())->sendMessage(
                                 $license->user->phone_no,
-                                'Welcome to Eastline Equipment Sales & Auctions! Your registration is complete. Start browsing, bidding, or use Buy It Now.'
+                                'Welcome to Eastline Equipment Auctions! Your registration is complete. Start browsing, bidding, or use Buy It Now.'
                             );
-
                         }
                     }
                 }

@@ -13,6 +13,6 @@
     @endif
     <p><strong>Message:</strong></p>
     <p>{{ $userMessage }}</p>
-    <p>Best regards,<br>{{ \App\Models\Settings::get('company_name', 'Eastline Equipment Sales & Auctions') }} Team</p>
+    <p>Best regards,<br>{{ \App\Models\Settings::get('company_name', 'Eastline Equipment Auctions') }} Team</p>
 </body>
 </html>

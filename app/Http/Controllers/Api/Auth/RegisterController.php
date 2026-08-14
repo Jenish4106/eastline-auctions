@@ -61,7 +61,7 @@ class RegisterController extends Controller
 
             (new PingramSmsService())->sendMessage(
                 $user->phone_no,
-                'Welcome to Eastline Equipment Sales & Auctions! Your registration is pending. Complete identity verification to be able to start bidding, or use Buy It Now.'
+                'Welcome to Eastline Equipment Auctions! Your registration is pending. Complete identity verification to be able to start bidding, or use Buy It Now.'
             );
 
             try {

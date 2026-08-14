@@ -148,7 +148,7 @@ class CheckoutController extends Controller
                 $this->sendAuctionCancelledEmails($machinery, $user, $activeAuctionBids);
             }
 
-            $companyName = Settings::get('company_name', 'Eastline Equipment Sales & Auctions');
+            $companyName = Settings::get('company_name', 'Eastline Equipment Auctions');
             $companyAddress = Settings::get('address') ?? '';
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';
@@ -334,7 +334,7 @@ class CheckoutController extends Controller
 
             (new PingramSmsService())->sendMessage(
                 $winningUser->phone_no,
-                'Thank you for your purchase with Eastline Equipment Sales & Auctions! Your Buy It Now item is secured. You will get the invoice shortly to complete payment.'
+                'Thank you for your purchase with Eastline Equipment Auctions! Your Buy It Now item is secured. You will get the invoice shortly to complete payment.'
             );
 
             return response()->json([
@@ -401,7 +401,7 @@ class CheckoutController extends Controller
 
             $order = null;
 
-            $companyName = Settings::get('company_name', 'Eastline Equipment Sales & Auctions');
+            $companyName = Settings::get('company_name', 'Eastline Equipment Auctions');
             $companyAddress = Settings::get('address') ?? '';
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';

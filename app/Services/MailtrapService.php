@@ -23,7 +23,7 @@ class MailtrapService
         $this->username = \App\Models\Settings::get('mailtrap_username', 'api');
         $this->password = \App\Models\Settings::get('mailtrap_password', 'fe5b85891e0ed3f9ec515cf73d39747f');
         $this->senderEmail = \App\Models\Settings::get('mailtrap_sender_email', 'info@eastlineauctions.com');
-        $this->senderName = \App\Models\Settings::get('mailtrap_sender_name', 'Eastline Equipment Sales & Auctions');
+        $this->senderName = \App\Models\Settings::get('mailtrap_sender_name', 'Eastline Equipment Auctions');
     }
 
     /**

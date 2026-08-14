@@ -2,11 +2,11 @@
 
 namespace App\Mail;
 
+use App\Models\Settings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\View;
-use App\Models\Settings;
 
 class LicenseApprovedMail extends Mailable
 {
@@ -21,9 +21,10 @@ class LicenseApprovedMail extends Mailable
 
     public function build()
     {
-        return $this->subject('License Approved - ' . Settings::get('company_name', 'Eastline Equipment Sales & Auctions'))
-                    ->view('emails.license-approved')
-                    ->with(['user' => $this->user]);
+        return $this
+            ->subject('License Approved - ' . Settings::get('company_name', 'Eastline Equipment Auctions'))
+            ->view('emails.license-approved')
+            ->with(['user' => $this->user]);
     }
 
     public function renderHtmlContent()
@@ -33,6 +34,6 @@ class LicenseApprovedMail extends Mailable
 
     public function getSubject()
     {
-        return 'License Approved - ' . Settings::get('company_name', 'Eastline Equipment Sales & Auctions');
+        return 'License Approved - ' . Settings::get('company_name', 'Eastline Equipment Auctions');
     }
 }

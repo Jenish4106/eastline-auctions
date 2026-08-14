@@ -15,6 +15,6 @@
     @endif
 
     <p>If you have any questions, please feel free to contact us.</p>
-    <p>Best regards,<br>{{ \App\Models\Settings::get('company_name', 'Eastline Equipment Sales & Auctions') }} Team</p>
+    <p>Best regards,<br>{{ \App\Models\Settings::get('company_name', 'Eastline Equipment Auctions') }} Team</p>
 </body>
 </html>

@@ -108,6 +108,6 @@ return [
      */
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'info@eastlineauctions.com'),
-        'name' => env('MAIL_FROM_NAME', 'Eastline Equipment Sales & Auctions'),
+        'name' => env('MAIL_FROM_NAME', 'Eastline Equipment Auctions'),
     ],
 ];

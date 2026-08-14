@@ -62,7 +62,7 @@ class AuctionCompletionService
                 }
 
                 // Sms
-                $message = 'Thank you for your purchase with Eastline Equipment Sales & Auctions! Your Won item is secured. Sign in to view your invoice and complete payment.';
+                $message = 'Thank you for your purchase with Eastline Equipment Auctions! Your Won item is secured. Sign in to view your invoice and complete payment.';
                 $smsSent = $this->smsService->sendMessage(
                     $winner->phone_no,
                     $message

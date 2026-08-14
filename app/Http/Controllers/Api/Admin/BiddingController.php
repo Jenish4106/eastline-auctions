@@ -8,17 +8,17 @@ use App\Models\Machinery;
 use App\Models\MachineryFileManager;
 use App\Models\Order;
 use App\Models\Settings;
+use App\Models\User;
+use App\Services\AuctionCompletionService;
+use App\Services\FileResolverService;
+use App\Services\MailtrapService;
+use App\Services\PingramSmsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
-use App\Services\FileResolverService;
-use App\Services\MailtrapService;
-use Illuminate\Support\Facades\View;
-use App\Models\User;
 use Illuminate\Support\Facades\Validator;
-use App\Services\AuctionCompletionService;
-use App\Services\PingramSmsService;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
 
 class BiddingController extends Controller
 {
@@ -80,7 +80,8 @@ class BiddingController extends Controller
 
             $machineries = $query
                 ->withCount(['bids' => function ($q) {
-                    $q->whereColumn('bids.auction_id', 'machinery.auction_id')
+                    $q
+                        ->whereColumn('bids.auction_id', 'machinery.auction_id')
                         ->whereHas('user');
                 }])
                 ->leftJoin(\Illuminate\Support\Facades\DB::raw('(SELECT bids.machinery_id, bids.auction_id, MAX(bids.amount) as highest_bid FROM bids INNER JOIN users ON bids.user_id = users.id GROUP BY bids.machinery_id, bids.auction_id) as bid_max'), function ($join) {
@@ -173,7 +174,8 @@ class BiddingController extends Controller
 
             $machinery = Machinery::with([
                 'bids' => function ($q) {
-                    $q->whereHas('user')
+                    $q
+                        ->whereHas('user')
                         ->with('user:id,first_name,last_name,email,phone_no');
                 }
             ])->where('id', $machineryId)->first();
@@ -317,7 +319,8 @@ class BiddingController extends Controller
                 ->leftJoin('categories', 'machinery.category_id', '=', 'categories.id')
                 ->whereHas('wonUser')
                 ->whereHas('bids', function ($q) {
-                    $q->whereHas('user')
+                    $q
+                        ->whereHas('user')
                         ->whereColumn('bids.auction_id', 'machinery.auction_id');
                 })
                 ->whereNotNull('machinery.won_user')
@@ -490,7 +493,6 @@ class BiddingController extends Controller
                 'success' => true,
                 'message' => 'Bid deleted successfully',
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -591,7 +593,8 @@ class BiddingController extends Controller
                 }
             ])
                 ->whereHas('bids', function ($q) {
-                    $q->whereColumn('bids.auction_id', 'machinery.auction_id')
+                    $q
+                        ->whereColumn('bids.auction_id', 'machinery.auction_id')
                         ->whereHas('user');
                 })
                 ->where('id', $machineryId)
@@ -643,14 +646,14 @@ class BiddingController extends Controller
     public function updateContractStatus(Request $request)
     {
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-            'machinery_id'   => 'required|exists:machinery,id',
-            'action'         => 'required|in:approve,reject',
-            'bank_name'              => 'nullable|string|max:255',
-            'beneficiary_name'       => 'nullable|string|max:255',
-            'beneficiary_address'    => 'nullable|string',
-            'account_number'         => 'nullable|string|max:50',
-            'routing_number'         => 'nullable|string|max:50',
-            'branch_address'         => 'nullable|string',
+            'machinery_id' => 'required|exists:machinery,id',
+            'action' => 'required|in:approve,reject',
+            'bank_name' => 'nullable|string|max:255',
+            'beneficiary_name' => 'nullable|string|max:255',
+            'beneficiary_address' => 'nullable|string',
+            'account_number' => 'nullable|string|max:50',
+            'routing_number' => 'nullable|string|max:50',
+            'branch_address' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -719,7 +722,7 @@ class BiddingController extends Controller
                     }
 
                     // Generate Invoice
-                    $companyName = Settings::get('company_name', 'Eastline Equipment Sales & Auctions');
+                    $companyName = Settings::get('company_name', 'Eastline Equipment Auctions');
                     $companyAddress = Settings::get('address') ?? '';
                     $companyPhone = Settings::get('phone_no') ?? '';
                     $companyEmail = Settings::get('email') ?? '';
@@ -780,14 +783,14 @@ class BiddingController extends Controller
                             'user' => $user,
                             'machineryName' => $machineryName
                         ])->render();
-                        
+
                         $attachments = [];
-                        
+
                         $contractFile = MachineryFileManager::where('machinery_id', $machinery->id)
                             ->where('type', 'contract_pdf')
                             ->latest()
                             ->first();
-                            
+
                         if ($contractFile && File::exists(public_path($contractFile->image_path))) {
                             $contractFilePath = public_path($contractFile->image_path);
                             $attachments[] = [
@@ -796,16 +799,16 @@ class BiddingController extends Controller
                                 'type' => 'application/pdf',
                             ];
                         }
-                        
+
                         $mailtrapService = new MailtrapService();
                         $mailtrapService->sendEmail(
-                            $user->email, 
-                            'Contract Approved - ' . $machineryName, 
-                            $htmlContent, 
+                            $user->email,
+                            'Contract Approved - ' . $machineryName,
+                            $htmlContent,
                             $attachments
                         );
 
-                        //Sms
+                        // Sms
                         $smsMessage = "Hi {$user->first_name}, your contract for {$machineryName} has been approved. Please check your email for details.";
                         $smsService = new \App\Services\PingramSmsService();
                         $smsSent = $smsService->sendMessage(
@@ -835,11 +838,11 @@ class BiddingController extends Controller
                             'user' => $user,
                             'machineryName' => $machineryName
                         ])->render();
-                        
+
                         $mailtrapService = new MailtrapService();
                         $mailtrapService->sendEmail(
-                            $user->email, 
-                            'Contract Rejected - ' . $machineryName, 
+                            $user->email,
+                            'Contract Rejected - ' . $machineryName,
                             $htmlContent,
                             []
                         );
