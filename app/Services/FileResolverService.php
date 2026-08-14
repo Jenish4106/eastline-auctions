@@ -2,10 +2,14 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Storage;
+
 class FileResolverService
 {
+    private static array $s3Cache = [];
+
     /**
-     * Resolve category image URL dynamically (No cache, direct resolution)
+     * Resolve category image URL dynamically
      * Priority: 1. AWS S3  2. Local Public Server  3. Default Image
      */
     public static function resolveCategoryImageUrl(?string $filename): string
@@ -26,13 +30,23 @@ class FileResolverService
         }
 
         // 1. Try S3 / Cloudflare R2 first
-        $awsUrl = config('filesystems.disks.s3.url');
-        if (!empty($awsUrl)) {
-            return rtrim($awsUrl, '/') . '/uploads/category/images/' . $cleanFilename;
-        }
+        if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.secret'))) {
+            $s3Path = 'uploads/category/images/' . $cleanFilename;
+            try {
+                if (!isset(self::$s3Cache[$s3Path])) {
+                    self::$s3Cache[$s3Path] = Storage::disk('s3')->exists($s3Path);
+                }
 
-        if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.bucket'))) {
-            return 'https://' . config('filesystems.disks.s3.bucket') . '.s3.amazonaws.com/uploads/category/images/' . $cleanFilename;
+                if (self::$s3Cache[$s3Path]) {
+                    $awsUrl = config('filesystems.disks.s3.url');
+                    if (!empty($awsUrl)) {
+                        return rtrim($awsUrl, '/') . '/' . $s3Path;
+                    }
+                    return Storage::disk('s3')->url($s3Path);
+                }
+            } catch (\Throwable $e) {
+                // S3 check failed, fallback to local server
+            }
         }
 
         // 2. Try Local Public Server
@@ -46,7 +60,7 @@ class FileResolverService
     }
 
     /**
-     * Resolve machinery image URL dynamically (No cache, direct resolution)
+     * Resolve machinery image URL dynamically
      * Priority: 1. AWS S3  2. Local Public Server  3. Default Image
      */
     public static function resolveMachineryImageUrl(?string $filename): string
@@ -67,13 +81,23 @@ class FileResolverService
         }
 
         // 1. Try S3 / Cloudflare R2 first
-        $awsUrl = config('filesystems.disks.s3.url');
-        if (!empty($awsUrl)) {
-            return rtrim($awsUrl, '/') . '/uploads/machinery/images/' . $cleanFilename;
-        }
+        if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.secret'))) {
+            $s3Path = 'uploads/machinery/images/' . $cleanFilename;
+            try {
+                if (!isset(self::$s3Cache[$s3Path])) {
+                    self::$s3Cache[$s3Path] = Storage::disk('s3')->exists($s3Path);
+                }
 
-        if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.bucket'))) {
-            return 'https://' . config('filesystems.disks.s3.bucket') . '.s3.amazonaws.com/uploads/machinery/images/' . $cleanFilename;
+                if (self::$s3Cache[$s3Path]) {
+                    $awsUrl = config('filesystems.disks.s3.url');
+                    if (!empty($awsUrl)) {
+                        return rtrim($awsUrl, '/') . '/' . $s3Path;
+                    }
+                    return Storage::disk('s3')->url($s3Path);
+                }
+            } catch (\Throwable $e) {
+                // S3 check failed, fallback to local server
+            }
         }
 
         // 2. Try Local Public Server
@@ -135,7 +159,7 @@ class FileResolverService
     }
 
     /**
-     * Resolve machinery video URL dynamically (No cache, direct resolution)
+     * Resolve machinery video URL dynamically
      * Priority: 1. AWS S3  2. Local Public Server  3. Default Video
      */
     public static function resolveMachineryVideoUrl(?string $filename): string
@@ -156,13 +180,23 @@ class FileResolverService
         }
 
         // 1. Try S3 / Cloudflare R2 first
-        $awsUrl = config('filesystems.disks.s3.url');
-        if (!empty($awsUrl)) {
-            return rtrim($awsUrl, '/') . '/uploads/machinery/videos/' . $cleanFilename;
-        }
+        if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.secret'))) {
+            $s3Path = 'uploads/machinery/videos/' . $cleanFilename;
+            try {
+                if (!isset(self::$s3Cache[$s3Path])) {
+                    self::$s3Cache[$s3Path] = Storage::disk('s3')->exists($s3Path);
+                }
 
-        if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.bucket'))) {
-            return 'https://' . config('filesystems.disks.s3.bucket') . '.s3.amazonaws.com/uploads/machinery/videos/' . $cleanFilename;
+                if (self::$s3Cache[$s3Path]) {
+                    $awsUrl = config('filesystems.disks.s3.url');
+                    if (!empty($awsUrl)) {
+                        return rtrim($awsUrl, '/') . '/' . $s3Path;
+                    }
+                    return Storage::disk('s3')->url($s3Path);
+                }
+            } catch (\Throwable $e) {
+                // S3 check failed, fallback to local server
+            }
         }
 
         // 2. Try Local Public Server
