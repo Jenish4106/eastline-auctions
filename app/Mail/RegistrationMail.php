@@ -21,7 +21,7 @@ class RegistrationMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Welcome to ' . Settings::get('company_name', 'Mcfarland Equipment'))
+        return $this->subject('Welcome to ' . Settings::get('company_name', 'Eastline Equipment Sales & Auctions'))
                     ->view('emails.registration')
                     ->with(['user' => $this->user]);
     }
@@ -33,6 +33,6 @@ class RegistrationMail extends Mailable
 
     public function getSubject()
     {
-        return 'Welcome to ' . Settings::get('company_name', 'Mcfarland Equipment');
+        return 'Welcome to ' . Settings::get('company_name', 'Eastline Equipment Sales & Auctions');
     }
 }

@@ -8,7 +8,7 @@ use App\Models\License;
 use App\Mail\LicenseApprovedMail;
 use App\Mail\LicenseDeclinedMail;
 use App\Services\MailtrapService;
-use App\Services\TwilioSmsService;
+use App\Services\PingramSmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
@@ -479,9 +479,9 @@ class UserController extends Controller
                 $user->is_license = 1;
                 $message = 'License approved successfully';
 
-                (new TwilioSmsService())->sendMessage(
+                (new PingramSmsService())->sendMessage(
                     $user->phone_no,
-                    'Welcome to Mcfarland Equipment Sales & Auctions! Your registration is complete. Start browsing, bidding, or use Buy It Now.'
+                    'Welcome to Eastline Equipment Sales & Auctions! Your registration is complete. Start browsing, bidding, or use Buy It Now.'
                 );
                 
                 try {

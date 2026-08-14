@@ -93,6 +93,57 @@ class FileResolverService
     }
 
     /**
+     * Resolve machinery image as base64 data URI (ideal for PDF rendering like DomPDF)
+     * Priority: 1. AWS S3  2. Local Public Server  3. Default Image
+     */
+    public static function resolveMachineryImageBase64(?string $filename): ?string
+    {
+        $defaultLocalPath = public_path('uploads/defaults/default.png');
+        $defaultBase64 = file_exists($defaultLocalPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($defaultLocalPath))
+            : null;
+
+        if (empty($filename)) {
+            return $defaultBase64;
+        }
+
+        $cleanFilename = basename(parse_url($filename, PHP_URL_PATH) ?? $filename);
+
+        // 1. Try AWS S3 / Cloudflare R2 first
+        if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.secret'))) {
+            $s3Path = 'uploads/machinery/images/' . $cleanFilename;
+            try {
+                if (Storage::disk('s3')->exists($s3Path)) {
+                    $s3Url = Storage::disk('s3')->url($s3Path);
+                    $context = stream_context_create([
+                        'http' => ['timeout' => 5],
+                        'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
+                    ]);
+                    $content = @file_get_contents($s3Url, false, $context);
+                    if ($content !== false && !empty($content)) {
+                        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                        $mime = finfo_buffer($finfo, $content) ?: 'image/jpeg';
+                        finfo_close($finfo);
+                        return 'data:' . $mime . ';base64,' . base64_encode($content);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Fallback to local server
+            }
+        }
+
+        // 2. Try Local Public Server
+        $localPath = public_path('uploads/machinery/images/' . $cleanFilename);
+        if (file_exists($localPath)) {
+            $mime = mime_content_type($localPath) ?: 'image/jpeg';
+            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($localPath));
+        }
+
+        // 3. Fallback to Default Image
+        return $defaultBase64;
+    }
+
+    /**
      * Resolve machinery video URL dynamically
      * Priority: 1. AWS S3  2. Local Public Server  3. Default Video
      */

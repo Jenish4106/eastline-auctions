@@ -18,12 +18,12 @@ class MailtrapService
 
     public function __construct()
     {
-        $this->host        = \App\Models\Settings::get('mailtrap_host', 'live.smtp.mailtrap.io');
-        $this->port        = \App\Models\Settings::get('mailtrap_port', '587');
-        $this->username    = \App\Models\Settings::get('mailtrap_username', 'api');
-        $this->password    = \App\Models\Settings::get('mailtrap_password', 'fe5b85891e0ed3f9ec515cf73d39747f');
+        $this->host = \App\Models\Settings::get('mailtrap_host', 'live.smtp.mailtrap.io');
+        $this->port = \App\Models\Settings::get('mailtrap_port', '587');
+        $this->username = \App\Models\Settings::get('mailtrap_username', 'api');
+        $this->password = \App\Models\Settings::get('mailtrap_password', 'fe5b85891e0ed3f9ec515cf73d39747f');
         $this->senderEmail = \App\Models\Settings::get('mailtrap_sender_email', 'info@eastlineauctions.com');
-        $this->senderName  = \App\Models\Settings::get('mailtrap_sender_name', 'Eastline Equipment Sales & Auctions');
+        $this->senderName = \App\Models\Settings::get('mailtrap_sender_name', 'Eastline Equipment Sales & Auctions');
     }
 
     /**
@@ -50,7 +50,7 @@ class MailtrapService
             );
 
             $transport = Transport::fromDsn($dsn);
-            $mailer    = new Mailer($transport);
+            $mailer = new Mailer($transport);
 
             $email = (new Email())
                 ->from(new \Symfony\Component\Mime\Address($this->senderEmail, $this->senderName))
@@ -76,17 +76,16 @@ class MailtrapService
             $mailer->send($email);
 
             Log::info('Mailtrap Email Sent Successfully', [
-                'to'      => $to,
+                'to' => $to,
                 'subject' => $subject,
             ]);
 
             return true;
-
         } catch (\Throwable $e) {
             Log::error('Mailtrap Email Sending Failed: ' . $e->getMessage(), [
-                'to'      => $to,
+                'to' => $to,
                 'subject' => $subject,
-                'trace'   => $e->getTraceAsString(),
+                'trace' => $e->getTraceAsString(),
             ]);
             return false;
         }

@@ -747,7 +747,7 @@ class BiddingController extends Controller
 
             $winningUser = User::find($machinery->won_user);
 
-            $companyName = Settings::get('company_name', 'Mcfarland Equipment');
+            $companyName = Settings::get('company_name', 'Eastline Equipment Sales & Auctions');
             $companyAddress = Settings::get('address') ?? '';
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';

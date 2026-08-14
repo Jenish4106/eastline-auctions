@@ -7,8 +7,9 @@ use App\Mail\ResendInvoiceMail;
 use App\Models\Order;
 use App\Models\Settings;
 use App\Models\MachineryFileManager;
+use App\Services\FileResolverService;
 use App\Services\MailtrapService;
-use App\Services\TwilioSmsService;
+use App\Services\PingramSmsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -281,9 +282,9 @@ class OrderController extends Controller
                 }
 
                 if ((int) $request->status === 3) {
-                    (new TwilioSmsService())->sendMessage(
+                    (new PingramSmsService())->sendMessage(
                         $order->user->phone_no,
-                        'Thank you for your purchase with McFarland Equipment Sales & Auctions! Your invoice is now available. Please sign in to your account to review the invoice and complete payment.'
+                        'Thank you for your purchase with Eastline Equipment Sales & Auctions! Your invoice is now available. Please sign in to your account to review the invoice and complete payment.'
                     );
                 }
             }
@@ -507,7 +508,7 @@ class OrderController extends Controller
                 }
             }
 
-            $companyName = Settings::get('company_name', 'Mcfarland Equipment');
+            $companyName = Settings::get('company_name', 'Eastline Equipment Sales & Auctions');
             $companyAddress = Settings::get('address') ?? '';
             $companyPhone = Settings::get('phone_no') ?? '';
             $companyEmail = Settings::get('email') ?? '';
@@ -520,11 +521,8 @@ class OrderController extends Controller
             $machineryImageUrl = null;
 
             if ($firstImage) {
-                $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
-                if (File::exists(public_path($imagePathRel))) {
-                    $machineryImage = $this->imageToBase64(public_path($imagePathRel));
-                    $machineryImageUrl = asset('public/' . ltrim($imagePathRel, '/'));
-                }
+                $machineryImage = FileResolverService::resolveMachineryImageBase64($firstImage->image_path);
+                $machineryImageUrl = FileResolverService::resolveMachineryImageUrl($firstImage->image_path);
             }
 
             $invoiceData = [

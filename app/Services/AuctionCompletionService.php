@@ -3,19 +3,21 @@
 namespace App\Services;
 
 use App\Mail\SendContractMail;
-use App\Services\TwilioSmsService;
 use App\Models\Bid;
 use App\Models\Machinery;
 use App\Models\User;
+use App\Services\PingramSmsService;
 use Carbon\Carbon;
 
 class AuctionCompletionService
 {
-    protected TwilioSmsService $smsService;
-    public function __construct(TwilioSmsService $smsService)
+    protected PingramSmsService $smsService;
+
+    public function __construct(PingramSmsService $smsService)
     {
         $this->smsService = $smsService;
     }
+
     public function complete(Machinery $machinery, bool $sendWinnerEmail = true): array
     {
         $highestBid = Bid::where('machinery_id', $machinery->id)
@@ -51,7 +53,7 @@ class AuctionCompletionService
             $winner = User::find($highestBid->user_id);
 
             if ($winner) {
-                //Email
+                // Email
                 if ($sendWinnerEmail) {
                     $mail = new SendContractMail($winner, $machinery->fresh(), null);
                     $mailtrapService = new \App\Services\MailtrapService();
@@ -59,8 +61,8 @@ class AuctionCompletionService
                     $emailSent = $mailtrapService->sendEmail($winner->email, $mail->getSubject(), $htmlContent);
                 }
 
-                //Sms
-                $message = "Thank you for your purchase with McFarland Equipment Sales & Auctions! Your Won item is secured. Sign in to view your invoice and complete payment.";
+                // Sms
+                $message = 'Thank you for your purchase with Eastline Equipment Sales & Auctions! Your Won item is secured. Sign in to view your invoice and complete payment.';
                 $smsSent = $this->smsService->sendMessage(
                     $winner->phone_no,
                     $message

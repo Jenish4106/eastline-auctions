@@ -28,8 +28,8 @@
         }
 
         .logo {
-            max-width: 120px;
-            max-height: 50px;
+            max-width: 240px;
+            max-height: 90px;
         }
 
         .company-info {
@@ -210,8 +210,10 @@
             <td>
                 @if(isset($machineryImage) && $machineryImage)
                     <img src="{{ $machineryImage }}" class="machinery-image">
+                @elseif(isset($machineryImageUrl) && $machineryImageUrl)
+                    <img src="{{ $machineryImageUrl }}" class="machinery-image">
                 @else
-                    No Image
+                    <img src="{{ asset('public/uploads/defaults/default.png') }}" class="machinery-image">
                 @endif
             </td>
 

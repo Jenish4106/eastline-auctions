@@ -22,7 +22,8 @@
             padding-bottom: 10px;
         }
         .logo {
-            max-height: 50px;
+            max-width: 240px;
+            max-height: 110px;
             margin-bottom: 5px;
         }
         .company-info {

@@ -12,12 +12,13 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use App\Services\FileResolverService;
 use App\Services\MailtrapService;
 use Illuminate\Support\Facades\View;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use App\Services\AuctionCompletionService;
-use App\Services\TwilioSmsService;
+use App\Services\PingramSmsService;
 
 class BiddingController extends Controller
 {
@@ -718,7 +719,7 @@ class BiddingController extends Controller
                     }
 
                     // Generate Invoice
-                    $companyName = Settings::get('company_name', 'Mcfarland Equipment');
+                    $companyName = Settings::get('company_name', 'Eastline Equipment Sales & Auctions');
                     $companyAddress = Settings::get('address') ?? '';
                     $companyPhone = Settings::get('phone_no') ?? '';
                     $companyEmail = Settings::get('email') ?? '';
@@ -730,11 +731,8 @@ class BiddingController extends Controller
                     $machineryImageUrl = null;
 
                     if ($firstImage) {
-                        $imagePathRel = 'uploads/machinery/images/' . ltrim($firstImage->image_path, '/');
-                        if (File::exists(public_path($imagePathRel))) {
-                            $machineryImage = $this->imageToBase64(public_path($imagePathRel));  // For PDF generation
-                            $machineryImageUrl = asset($imagePathRel);  // For Frontend display
-                        }
+                        $machineryImage = FileResolverService::resolveMachineryImageBase64($firstImage->image_path);
+                        $machineryImageUrl = FileResolverService::resolveMachineryImageUrl($firstImage->image_path);
                     }
 
                     $invoiceData = [
@@ -809,7 +807,7 @@ class BiddingController extends Controller
 
                         //Sms
                         $smsMessage = "Hi {$user->first_name}, your contract for {$machineryName} has been approved. Please check your email for details.";
-                        $twilio = new \App\Services\TwilioSmsService();
+                        $twilio = new \App\Services\PingramSmsService();
                         $smsSent = $twilio->sendMessage(
                             $user->phone_no,
                             $smsMessage
