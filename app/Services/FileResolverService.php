@@ -6,21 +6,26 @@ use Illuminate\Support\Facades\Cache;
 
 class FileResolverService
 {
-    /**
-     * Fast check with 24-hour cache key per filename.
-     * New uploads create new filenames, so they resolve instantly.
-     * Missing S3 files (404) cache false and fallback to default.png.
-     */
-    private static function isS3FileValid(string $s3Url, string $cleanFilename): bool
-    {
-        $cacheKey = 's3_exists_' . md5($cleanFilename);
+    private static array $inMemoryCache = [];
 
-        return Cache::remember($cacheKey, 86400, function () use ($s3Url) {
+    /**
+     * Ultra-fast S3 check (50ms socket timeout + double-layer cache)
+     * Handles deleted S3 images (404) gracefully without frontend changes.
+     */
+    private static function isS3ImageValid(string $s3Url, string $cleanFilename): bool
+    {
+        if (isset(self::$inMemoryCache[$cleanFilename])) {
+            return self::$inMemoryCache[$cleanFilename];
+        }
+
+        $cacheKey = 's3_valid_v3_' . md5($cleanFilename);
+
+        $isValid = Cache::remember($cacheKey, 86400, function () use ($s3Url) {
             try {
                 $ch = curl_init($s3Url);
                 curl_setopt($ch, CURLOPT_NOBODY, true);
-                curl_setopt($ch, CURLOPT_TIMEOUT_MS, 300);
-                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 200);
+                curl_setopt($ch, CURLOPT_TIMEOUT_MS, 50);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 30);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
                 curl_exec($ch);
@@ -32,6 +37,9 @@ class FileResolverService
                 return true;
             }
         });
+
+        self::$inMemoryCache[$cleanFilename] = $isValid;
+        return $isValid;
     }
 
     /**
@@ -58,9 +66,10 @@ class FileResolverService
             : (!empty($awsUrl) ? rtrim($awsUrl, '/') . '/uploads/category/images/' . $cleanFilename : null);
 
         if (!empty($s3Url)) {
-            if (self::isS3FileValid($s3Url, $cleanFilename)) {
+            if (self::isS3ImageValid($s3Url, $cleanFilename)) {
                 return $s3Url;
             }
+            return $defaultUrl;
         }
 
         // 2. Local Server Check (Priority 2)
@@ -97,9 +106,10 @@ class FileResolverService
             : (!empty($awsUrl) ? rtrim($awsUrl, '/') . '/uploads/machinery/images/' . $cleanFilename : null);
 
         if (!empty($s3Url)) {
-            if (self::isS3FileValid($s3Url, $cleanFilename)) {
+            if (self::isS3ImageValid($s3Url, $cleanFilename)) {
                 return $s3Url;
             }
+            return $defaultUrl;
         }
 
         // 2. Local Server Check (Priority 2)
@@ -185,9 +195,10 @@ class FileResolverService
             : (!empty($awsUrl) ? rtrim($awsUrl, '/') . '/uploads/machinery/videos/' . $cleanFilename : null);
 
         if (!empty($s3Url)) {
-            if (self::isS3FileValid($s3Url, $cleanFilename)) {
+            if (self::isS3ImageValid($s3Url, $cleanFilename)) {
                 return $s3Url;
             }
+            return $defaultUrl;
         }
 
         // 2. Local Server Check (Priority 2)
