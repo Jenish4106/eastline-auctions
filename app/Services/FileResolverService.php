@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Storage;
 
 class FileResolverService
 {
+    private static array $s3Cache = [];
+
     /**
      * Resolve category image URL dynamically
      * Priority: 1. AWS S3  2. Local Public Server  3. Default Image
@@ -27,25 +29,28 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        // 1. Try S3 first
+        // 1. S3 Check
         if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.secret'))) {
             $s3Path = 'uploads/category/images/' . $cleanFilename;
             try {
-                if (Storage::disk('s3')->exists($s3Path)) {
+                if (!isset(self::$s3Cache[$s3Path])) {
+                    self::$s3Cache[$s3Path] = Storage::disk('s3')->exists($s3Path);
+                }
+                if (self::$s3Cache[$s3Path]) {
                     return Storage::disk('s3')->url($s3Path);
                 }
             } catch (\Throwable $e) {
-                // S3 check failed or unreachable, fallback to public server
+                // S3 check failed, fallback to local server
             }
         }
 
-        // 2. Try Public/Local Server
+        // 2. Local Server Check
         $localPath = public_path('uploads/category/images/' . $cleanFilename);
         if (file_exists($localPath)) {
             return asset('public/uploads/category/images/' . $cleanFilename) . '?time=' . time();
         }
 
-        // 3. Fallback Default Image
+        // 3. Default Image Fallback (if image is missing or broken)
         return $defaultUrl;
     }
 
@@ -70,25 +75,28 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        // 1. Try S3 first
+        // 1. S3 Check
         if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.secret'))) {
             $s3Path = 'uploads/machinery/images/' . $cleanFilename;
             try {
-                if (Storage::disk('s3')->exists($s3Path)) {
+                if (!isset(self::$s3Cache[$s3Path])) {
+                    self::$s3Cache[$s3Path] = Storage::disk('s3')->exists($s3Path);
+                }
+                if (self::$s3Cache[$s3Path]) {
                     return Storage::disk('s3')->url($s3Path);
                 }
             } catch (\Throwable $e) {
-                // S3 check failed or unreachable, fallback to public server
+                // S3 check failed, fallback to local server
             }
         }
 
-        // 2. Try Public/Local Server
+        // 2. Local Server Check
         $localPath = public_path('uploads/machinery/images/' . $cleanFilename);
         if (file_exists($localPath)) {
             return asset('public/uploads/machinery/images/' . $cleanFilename) . '?time=' . time();
         }
 
-        // 3. Fallback Default Image
+        // 3. Default Image Fallback (if image is missing or broken)
         return $defaultUrl;
     }
 
@@ -109,14 +117,17 @@ class FileResolverService
 
         $cleanFilename = basename(parse_url($filename, PHP_URL_PATH) ?? $filename);
 
-        // 1. Try AWS S3 / Cloudflare R2 first
+        // 1. S3 Check
         if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.secret'))) {
             $s3Path = 'uploads/machinery/images/' . $cleanFilename;
             try {
-                if (Storage::disk('s3')->exists($s3Path)) {
+                if (!isset(self::$s3Cache[$s3Path])) {
+                    self::$s3Cache[$s3Path] = Storage::disk('s3')->exists($s3Path);
+                }
+                if (self::$s3Cache[$s3Path]) {
                     $s3Url = Storage::disk('s3')->url($s3Path);
                     $context = stream_context_create([
-                        'http' => ['timeout' => 5],
+                        'http' => ['timeout' => 3],
                         'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
                     ]);
                     $content = @file_get_contents($s3Url, false, $context);
@@ -132,14 +143,14 @@ class FileResolverService
             }
         }
 
-        // 2. Try Local Public Server
+        // 2. Local Server Check
         $localPath = public_path('uploads/machinery/images/' . $cleanFilename);
         if (file_exists($localPath)) {
             $mime = mime_content_type($localPath) ?: 'image/jpeg';
             return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($localPath));
         }
 
-        // 3. Fallback to Default Image
+        // 3. Default Image Fallback
         return $defaultBase64;
     }
 
@@ -164,25 +175,28 @@ class FileResolverService
             return $defaultUrl;
         }
 
-        // 1. Try S3 first
+        // 1. S3 Check
         if (!empty(config('filesystems.disks.s3.key')) && !empty(config('filesystems.disks.s3.secret'))) {
             $s3Path = 'uploads/machinery/videos/' . $cleanFilename;
             try {
-                if (Storage::disk('s3')->exists($s3Path)) {
+                if (!isset(self::$s3Cache[$s3Path])) {
+                    self::$s3Cache[$s3Path] = Storage::disk('s3')->exists($s3Path);
+                }
+                if (self::$s3Cache[$s3Path]) {
                     return Storage::disk('s3')->url($s3Path);
                 }
             } catch (\Throwable $e) {
-                // S3 check failed or unreachable, fallback to public server
+                // S3 check failed, fallback to local server
             }
         }
 
-        // 2. Try Public/Local Server
+        // 2. Local Server Check
         $localPath = public_path('uploads/machinery/videos/' . $cleanFilename);
         if (file_exists($localPath)) {
             return asset('public/uploads/machinery/videos/' . $cleanFilename) . '?time=' . time();
         }
 
-        // 3. Fallback Default Video
+        // 3. Default Video Fallback
         return $defaultUrl;
     }
 }
