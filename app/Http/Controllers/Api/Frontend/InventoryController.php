@@ -7,6 +7,7 @@ use App\Models\Machinery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use App\Services\FileResolverService;
 
 class InventoryController extends Controller
 {
@@ -282,27 +283,9 @@ class InventoryController extends Controller
 
             $machinery->images = $machinery->images->map(function ($image) use ($defaultUrl) {
                 if ($image->type === 'video') {
-                    if ($image->image_path !== 'default-machine.mp4') {
-                        $machineryFilePath = public_path('uploads/machinery/videos/' . ltrim($image->image_path, '/'));
-                        if (file_exists($machineryFilePath)) {
-                            $image->full_url = asset('public/uploads/machinery/videos/' . ltrim($image->image_path, '/')) . '?time=' . time();
-                        } else {
-                            $image->full_url = null;
-                        }
-                    } else {
-                        $image->full_url = null;
-                    }
+                    $image->full_url = $this->resolveMachineryVideoUrl($image->image_path);
                 } else {
-                    if ($image->image_path !== 'default.png') {
-                        $machineryFilePath = public_path('uploads/machinery/images/' . ltrim($image->image_path, '/'));
-                        if (file_exists($machineryFilePath)) {
-                            $image->full_url = asset('public/uploads/machinery/images/' . ltrim($image->image_path, '/')) . '?time=' . time();
-                        } else {
-                            $image->full_url = $defaultUrl;
-                        }
-                    } else {
-                        $image->full_url = $defaultUrl;
-                    }
+                    $image->full_url = $this->resolveMachineryImageUrl($image->image_path);
                 }
                 return $image;
             })->filter(function ($image) use ($defaultUrl, &$seenDefault) {
@@ -360,51 +343,16 @@ class InventoryController extends Controller
 
     private function resolveCategoryImageUrl($filename)
     {
-        if (empty($filename)) {
-            return asset('public/uploads/defaults/default.png') . '?time=' . time();
-        }
-
-        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
-            return $filename;
-        }
-
-        $cleanFilename = ltrim($filename, '/');
-
-        $categoryImagePath = public_path('uploads/category/images/' . $cleanFilename);
-        if (file_exists($categoryImagePath)) {
-            return asset('public/uploads/category/images/' . $cleanFilename) . '?time=' . time();
-        }
-
-        // If not found locally, use S3 URL if S3 is configured
-        // if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
-        //     return Storage::disk('s3')->url('uploads/category/images/' . $cleanFilename);
-        // }
-
-        return asset('public/uploads/defaults/default.png') . '?time=' . time();
+        return FileResolverService::resolveCategoryImageUrl($filename);
     }
 
     private function resolveMachineryImageUrl($filename)
     {
-        if (empty($filename)) {
-            return asset('public/uploads/defaults/default.png') . '?time=' . time();
-        }
+        return FileResolverService::resolveMachineryImageUrl($filename);
+    }
 
-        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
-            return $filename;
-        }
-
-        $cleanFilename = ltrim($filename, '/');
-
-        $machineryImagePath = public_path('uploads/machinery/images/' . $cleanFilename);
-        if (file_exists($machineryImagePath)) {
-            return asset('public/uploads/machinery/images/' . $cleanFilename) . '?time=' . time();
-        }
-
-        // If not found locally, use S3 URL if S3 is configured
-        // if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
-        //     return Storage::disk('s3')->url('uploads/machinery/images/' . $cleanFilename);
-        // }
-
-        return asset('public/uploads/defaults/default.png') . '?time=' . time();
+    private function resolveMachineryVideoUrl($filename)
+    {
+        return FileResolverService::resolveMachineryVideoUrl($filename);
     }
 }

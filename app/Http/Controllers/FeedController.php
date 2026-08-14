@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Machinery;
+use App\Services\FileResolverService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
@@ -51,15 +52,8 @@ class FeedController extends Controller
             foreach ($machineries as $machinery) {
                 $availability = ($machinery->status == '1') ? 'in stock' : 'out of stock';
 
-                $firstImageUrl = '';
                 $firstImage = $machinery->images->first();
-                if ($firstImage && $firstImage->type === 'image') {
-                    if (str_starts_with($firstImage->image_path, 'http://') || str_starts_with($firstImage->image_path, 'https://')) {
-                        $firstImageUrl = $firstImage->image_path;
-                    } else {
-                        $firstImageUrl = asset('public/uploads/machinery/images/' . $firstImage->image_path) . '?time=' . time();
-                    }
-                }
+                $firstImageUrl = FileResolverService::resolveMachineryImageUrl($firstImage ? $firstImage->image_path : null);
 
                 $year = $machinery->year ?? '';
                 $make = $machinery->make ?? '';

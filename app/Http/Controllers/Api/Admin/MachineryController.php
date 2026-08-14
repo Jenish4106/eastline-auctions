@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use App\Services\FileResolverService;
 
 class MachineryController extends Controller
 {
@@ -320,20 +321,12 @@ class MachineryController extends Controller
 
             $imageUrls = [];
             foreach ($images as $image) {
-                $path = $image->image_path;
-                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-                    $imageUrls[] = $path;
-                } else {
-                    $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($path, '/'));
-                    if (file_exists($machineryImagePath)) {
-                        $imageUrls[] = asset('public/uploads/machinery/images/' . ltrim($path, '/'));
-                    }
-                }
+                $imageUrls[] = $this->resolveMachineryImageUrl($image->image_path);
             }
             if (empty($imageUrls)) {
                 $imageUrls = [asset('public/uploads/defaults/default.png') . '?time=' . time()];
             }
-            $machinery->image_urls = array_values(array_unique($imageUrls));
+            $machinery->image_urls = array_values(array_unique(array_filter($imageUrls)));
 
             $videos = $machinery->images->filter(function ($file) {
                 return $file->type === 'video' && $file->image_path !== 'default-machine.mp4';
@@ -341,17 +334,12 @@ class MachineryController extends Controller
 
             $videoUrls = [];
             foreach ($videos as $video) {
-                $path = $video->image_path;
-                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-                    $videoUrls[] = $path;
-                } else {
-                    $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($path, '/'));
-                    if (file_exists($machineryVideoPath)) {
-                        $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($path, '/'));
-                    }
+                $url = $this->resolveMachineryVideoUrl($video->image_path);
+                if ($url) {
+                    $videoUrls[] = $url;
                 }
             }
-            $machinery->video_urls = array_values(array_unique($videoUrls));
+            $machinery->video_urls = array_values(array_unique(array_filter($videoUrls)));
 
             unset($machinery->images);
 
@@ -509,20 +497,12 @@ class MachineryController extends Controller
 
             $imageUrls = [];
             foreach ($images as $image) {
-                $path = $image->image_path;
-                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-                    $imageUrls[] = $path;
-                } else {
-                    $machineryImagePath = public_path('uploads/machinery/images/' . ltrim($path, '/'));
-                    if (file_exists($machineryImagePath)) {
-                        $imageUrls[] = asset('public/uploads/machinery/images/' . ltrim($path, '/'));
-                    }
-                }
+                $imageUrls[] = $this->resolveMachineryImageUrl($image->image_path);
             }
             if (empty($imageUrls)) {
                 $imageUrls = [asset('public/uploads/defaults/default.png') . '?time=' . time()];
             }
-            $machinery->image_urls = array_values(array_unique($imageUrls));
+            $machinery->image_urls = array_values(array_unique(array_filter($imageUrls)));
 
             $videos = $machinery->images->filter(function ($file) {
                 return $file->type === 'video' && $file->image_path !== 'default-machine.mp4';
@@ -530,18 +510,12 @@ class MachineryController extends Controller
 
             $videoUrls = [];
             foreach ($videos as $video) {
-                $path = $video->image_path;
-                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-                    $videoUrls[] = $path;
-                } else {
-                    $machineryVideoPath = public_path('uploads/machinery/videos/' . ltrim($path, '/'));
-                    if (file_exists($machineryVideoPath)) {
-                        $videoUrls[] = asset('public/uploads/machinery/videos/' . ltrim($path, '/'));
-                    }
+                $url = $this->resolveMachineryVideoUrl($video->image_path);
+                if ($url) {
+                    $videoUrls[] = $url;
                 }
             }
-            $machinery->video_urls = array_values(array_unique($videoUrls));
-            $machinery->video_urls = array_values(array_unique($videoUrls));
+            $machinery->video_urls = array_values(array_unique(array_filter($videoUrls)));
 
             unset($machinery->images);
 
@@ -733,27 +707,7 @@ class MachineryController extends Controller
      */
     private function resolveMachineryImageUrl($filename)
     {
-        if (empty($filename)) {
-            return asset('public/uploads/defaults/default.png') . '?time=' . time();
-        }
-
-        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
-            return $filename;
-        }
-
-        $cleanFilename = ltrim($filename, '/');
-
-        $machineryImagePath = public_path('uploads/machinery/images/' . $cleanFilename);
-        if (file_exists($machineryImagePath)) {
-            return asset('public/uploads/machinery/images/' . $cleanFilename) . '?time=' . time();
-        }
-
-        // If not found locally, use S3 URL if S3 is configured
-        // if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
-        //     return Storage::disk('s3')->url('uploads/machinery/images/' . $cleanFilename);
-        // }
-
-        return asset('public/uploads/defaults/default.png') . '?time=' . time();
+        return FileResolverService::resolveMachineryImageUrl($filename);
     }
 
     /**
@@ -761,26 +715,6 @@ class MachineryController extends Controller
      */
     private function resolveMachineryVideoUrl($filename)
     {
-        if (empty($filename)) {
-            return null;
-        }
-
-        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
-            return $filename;
-        }
-
-        $cleanFilename = ltrim($filename, '/');
-
-        $machineryVideoPath = public_path('uploads/machinery/videos/' . $cleanFilename);
-        if (file_exists($machineryVideoPath)) {
-            return asset('public/uploads/machinery/videos/' . $cleanFilename) . '?time=' . time();
-        }
-
-        // If not found locally, use S3 URL if S3 is configured
-        // if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
-        //     return Storage::disk('s3')->url('uploads/machinery/videos/' . $cleanFilename);
-        // }
-
-        return null;
+        return FileResolverService::resolveMachineryVideoUrl($filename);
     }
 }

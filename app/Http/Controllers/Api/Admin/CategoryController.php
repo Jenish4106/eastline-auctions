@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use App\Services\FileResolverService;
 
 class CategoryController extends Controller
 {
@@ -327,26 +328,6 @@ class CategoryController extends Controller
      */
     private function resolveCategoryImageUrl($filename)
     {
-        if (empty($filename)) {
-            return asset('public/uploads/defaults/default.png') . '?time=' . time();
-        }
-
-        if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
-            return $filename;
-        }
-
-        $cleanFilename = ltrim($filename, '/');
-
-        $categoryImagePath = public_path('uploads/category/images/' . $cleanFilename);
-        if (file_exists($categoryImagePath)) {
-            return asset('public/uploads/category/images/' . $cleanFilename) . '?time=' . time();
-        }
-
-        // If not found locally, use S3 URL if S3 is configured
-        // if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret')) {
-        //     return Storage::disk('s3')->url('uploads/category/images/' . $cleanFilename);
-        // }
-
-        return asset('public/uploads/defaults/default.png') . '?time=' . time();
+        return FileResolverService::resolveCategoryImageUrl($filename);
     }
 }

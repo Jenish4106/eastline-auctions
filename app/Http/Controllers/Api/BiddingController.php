@@ -14,6 +14,7 @@ use App\Models\Settings;
 use App\Models\User;
 use App\Services\GoogleMapsService;
 use App\Services\MailtrapService;
+use App\Services\FileResolverService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -258,13 +259,7 @@ class BiddingController extends Controller
                 }
 
                 $firstImageObj = $machinery->images ? $machinery->images->firstWhere('type', 'image') : null;
-                $firstImageUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
-                if ($firstImageObj) {
-                    $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
-                    if (file_exists($path1)) {
-                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/')) . '?time=' . time();
-                    }
-                }
+                $firstImageUrl = FileResolverService::resolveMachineryImageUrl($firstImageObj ? $firstImageObj->image_path : null);
 
                 return [
                     'id' => $machinery->id,
@@ -365,14 +360,8 @@ class BiddingController extends Controller
                 }
             }
 
-            $firstImageObj = $machinery->images->firstWhere('type', 'image');
-            $firstImageUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
-            if ($firstImageObj) {
-                $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
-                if (file_exists($path1)) {
-                    $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/')) . '?time=' . time();
-                }
-            }
+            $firstImageObj = $machinery->images ? $machinery->images->firstWhere('type', 'image') : null;
+            $firstImageUrl = FileResolverService::resolveMachineryImageUrl($firstImageObj ? $firstImageObj->image_path : null);
 
             $machineryDetails = [
                 'auction_id' => $machinery->auction_id,
@@ -490,14 +479,8 @@ class BiddingController extends Controller
                     ->where('auction_id', $machinery->auction_id)
                     ->max('amount');
 
-                $firstImageObj = $machinery->images->firstWhere('type', 'image');
-                $firstImageUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
-                if ($firstImageObj) {
-                    $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
-                    if (file_exists($path1)) {
-                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/')) . '?time=' . time();
-                    }
-                }
+                $firstImageObj = $machinery->images ? $machinery->images->firstWhere('type', 'image') : null;
+                $firstImageUrl = FileResolverService::resolveMachineryImageUrl($firstImageObj ? $firstImageObj->image_path : null);
 
                 $contractStatusMap = [
                     0 => 'Pending',
@@ -893,14 +876,8 @@ class BiddingController extends Controller
                     return null;
                 }
 
-                $firstImageObj = $order->machinery->images->firstWhere('type', 'image');
-                $firstImageUrl = asset('public/uploads/defaults/default.png') . '?time=' . time();
-                if ($firstImageObj) {
-                    $path1 = public_path('uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/'));
-                    if (file_exists($path1)) {
-                        $firstImageUrl = asset('public/uploads/machinery/images/' . ltrim($firstImageObj->image_path, '/')) . '?time=' . time();
-                    }
-                }
+                $firstImageObj = ($order->machinery && $order->machinery->images) ? $order->machinery->images->firstWhere('type', 'image') : null;
+                $firstImageUrl = FileResolverService::resolveMachineryImageUrl($firstImageObj ? $firstImageObj->image_path : null);
 
                 $deliveryStatusMap = [
                     0 => 'Order Submitted',
