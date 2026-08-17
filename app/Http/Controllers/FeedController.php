@@ -38,7 +38,6 @@ class FeedController extends Controller
             'Brand',
             'Product Type',
             'Category',
-            'Listing Type',
             'Year',
             'Time Left',
             'Current Bid'
@@ -148,7 +147,6 @@ class FeedController extends Controller
                     $brand,
                     $productType,
                     $categoryName,
-                    $customLabel1,
                     $year,
                     $timeLeftStr,
                     $formattedBidPrice
