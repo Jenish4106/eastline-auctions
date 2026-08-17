@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\CatalogImageController;
 use App\Http\Controllers\FeedController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +22,3 @@ Route::get('/meta-catalog-feed', [FeedController::class, 'metaCatalogFeed']);
 Route::get('/meta-catalog-feed.csv', [FeedController::class, 'metaCatalogFeed']);
 Route::get('/api/meta-catalog-feed', [FeedController::class, 'metaCatalogFeed']);
 Route::get('/api/meta-catalog-feed.csv', [FeedController::class, 'metaCatalogFeed']);
-
-Route::get('/catalog/images/{id}.jpg', [CatalogImageController::class, 'generateImage']);
-Route::get('/api/catalog/images/{id}.jpg', [CatalogImageController::class, 'generateImage']);

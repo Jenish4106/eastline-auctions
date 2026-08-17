@@ -27,19 +27,21 @@ class FeedController extends Controller
         ];
 
         $columns = [
-            'id',
-            'title',
-            'description',
-            'availability',
-            'condition',
-            'price',
-            'link',
-            'image_link',
-            'brand',
-            'product_type',
-            'category',
-            'listing_type',
-            'year'
+            'ID',
+            'Title',
+            'Description',
+            'Availability',
+            'Condition',
+            'Price',
+            'Link',
+            'Image Link',
+            'Brand',
+            'Product Type',
+            'Category',
+            'Listing Type',
+            'Year',
+            'Time Left',
+            'Current Bid'
         ];
 
         $callback = function () use ($machineries, $columns) {
@@ -57,43 +59,48 @@ class FeedController extends Controller
                 $currentBidVal = $highestBid ?? ($machinery->buy_now_price > 0 ? $machinery->buy_now_price : $machinery->bid_start_price);
                 $formattedBidPrice = '$' . number_format((float)$currentBidVal, 0);
 
-                // Calculate Availability
-                $endTime = $machinery->bid_end_time ? Carbon::parse($machinery->bid_end_time) : null;
-                $isActive = ($machinery->status == 1) && ($machinery->bid_status == 1) && ($endTime && $endTime->gt($now));
+                // Calculate Availability & Dates
+                $startTime = !empty($machinery->bid_start_time) ? Carbon::parse($machinery->bid_start_time) : null;
+                $endTime = !empty($machinery->bid_end_time) ? Carbon::parse($machinery->bid_end_time) : null;
+
+                $hasStarted = !$startTime || $startTime->lte($now);
+                $isSoldOrCompleted = in_array((string)$machinery->bid_status, ['2', '3', 'sold'], true) || !empty($machinery->won_user);
+                $isActive = ($machinery->status == 1) && $hasStarted && !$isSoldOrCompleted && ($endTime && $endTime->gt($now));
 
                 $availability = $isActive ? 'in stock' : 'out of stock';
 
-                // Calculate Dynamic Title
-                if ($isActive && $endTime) {
+                // Product Title
+                $year = $machinery->year ?? '';
+                $make = $machinery->make ?? '';
+                $model = $machinery->model ?? '';
+                $title = trim("$year $make $model");
+                if (empty($title)) {
+                    $title = "Machinery #" . ($machinery->auction_id ?? $machinery->id);
+                }
+
+                // Time Left calculation
+                $timeLeftStr = '';
+                if ($startTime && $startTime->gt($now)) {
+                    $timeLeftStr = "Auction Starts Soon";
+                } elseif ($endTime && $endTime->gt($now) && !$isSoldOrCompleted) {
                     $diffInSeconds = $now->diffInSeconds($endTime, false);
-                    if ($diffInSeconds > 0) {
-                        $days = (int)floor($diffInSeconds / 86400);
-                        $remainingSeconds = $diffInSeconds % 86400;
-                        $hours = (int)floor($remainingSeconds / 3600);
-                        $minutes = (int)floor(($remainingSeconds % 3600) / 60);
+                    $days = (int)floor($diffInSeconds / 86400);
+                    $remainingSeconds = $diffInSeconds % 86400;
+                    $hours = (int)floor($remainingSeconds / 3600);
+                    $minutes = (int)floor(($remainingSeconds % 3600) / 60);
 
-                        if ($days > 0) {
-                            $timeStr = $days === 1 ? "1 day left to bid" : "{$days} days left to bid";
-                        } elseif ($hours > 0) {
-                            $timeStr = $hours === 1 ? "1 hour left to bid" : "{$hours} hours left to bid";
-                        } else {
-                            $minVal = max(1, $minutes);
-                            $timeStr = $minVal === 1 ? "1 minute left to bid" : "{$minVal} minutes left to bid";
-                        }
-
-                        $title = "{$timeStr} | Current bid: {$formattedBidPrice}";
+                    if ($days > 0) {
+                        $timeLeftStr = $days === 1 ? "1 day left to bid" : "{$days} days left to bid";
+                    } elseif ($hours > 0) {
+                        $timeLeftStr = $hours === 1 ? "1 hour left to bid" : "{$hours} hours left to bid";
                     } else {
-                        $title = "Auction Ended | Final bid: {$formattedBidPrice}";
+                        $minVal = max(1, $minutes);
+                        $timeLeftStr = $minVal === 1 ? "1 minute left to bid" : "{$minVal} minutes left to bid";
                     }
+                } elseif ($endTime && $endTime->lte($now)) {
+                    $timeLeftStr = "Auction Ended";
                 } else {
-                    $year = $machinery->year ?? '';
-                    $make = $machinery->make ?? '';
-                    $model = $machinery->model ?? '';
-                    $fallbackName = trim("$year $make $model");
-                    if (empty($fallbackName)) {
-                        $fallbackName = "Machinery #" . $machinery->id;
-                    }
-                    $title = "{$fallbackName} | Out of Stock";
+                    $timeLeftStr = "N/A";
                 }
 
                 // Price field format: 10800.00 USD
@@ -124,19 +131,13 @@ class FeedController extends Controller
 
                 $machineryUrl = "{$frontendUrl}/inventory/{$categorySlug}/{$makeSlug}/{$modelSlug}/{$auctionId}";
 
-                // Dynamic Image URL with cache buster parameter v= under /api
-                $appUrl = rtrim(url('/'), '/');
-                if (!str_ends_with($appUrl, '/api')) {
-                    $appUrl .= '/api';
-                }
-                $versionHash = substr(md5(($machinery->updated_at ?? $now) . '_' . $currentBidVal . '_' . ($machinery->bid_end_time ?? '')), 0, 8);
-                $imageLink = $appUrl . '/catalog/images/' . $machinery->id . '.jpg?v=' . $versionHash;
+                $firstImage = $machinery->images->first();
+                $imageLink = FileResolverService::resolveMachineryImageUrl($firstImage ? $firstImage->image_path : null);
 
                 $customLabel1 = $machinery->buy_now_price > 0 ? 'buy_now' : 'auction';
-                $year = $machinery->year ?? '';
 
                 fputcsv($file, [
-                    $machinery->id,
+                    $auctionId,
                     $title,
                     $description,
                     $availability,
@@ -148,7 +149,9 @@ class FeedController extends Controller
                     $productType,
                     $categoryName,
                     $customLabel1,
-                    $year
+                    $year,
+                    $timeLeftStr,
+                    $formattedBidPrice
                 ]);
             }
 
