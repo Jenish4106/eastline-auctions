@@ -130,7 +130,7 @@ class FeedController extends Controller
 
         $firstImage = $machinery->images->first();
         $originalImageLink = FileResolverService::resolveMachineryImageUrl($firstImage ? $firstImage->image_path : null);
-        $catalogImageLink = url("/api/catalog-image/{$auctionId}.png");
+        $catalogImageLink = url("/catalog-image/{$auctionId}.png");
         $imageLink = $catalogImageLink;
 
 
@@ -189,12 +189,12 @@ class FeedController extends Controller
     $endTime = !empty($machinery->bid_end_time) ? Carbon::parse($machinery->bid_end_time) : null;
     $isSoldOrCompleted = in_array((string) $machinery->bid_status, ['2', '3', 'sold'], true) || !empty($machinery->won_user);
 
-    $timeLeftMain = 'STARTS SOON';
-    $timeLeftSub = 'TO BID';
+    $timeLeftMain = '';
+    $timeLeftSub = '';
 
     if ($startTime && $startTime->gt($now)) {
-      $timeLeftMain = 'STARTS SOON';
-      $timeLeftSub = 'TO BID';
+      $timeLeftMain = 'SOON';
+      $timeLeftSub = 'STARTS SOON';
     } elseif ($endTime && $endTime->gt($now) && !$isSoldOrCompleted) {
       $diffInSeconds = $now->diffInSeconds($endTime, false);
       $days = (int) floor($diffInSeconds / 86400);
@@ -210,27 +210,29 @@ class FeedController extends Controller
         $timeLeftSub = 'LEFT TO BID';
       } else {
         $minVal = max(1, $minutes);
-        $timeLeftMain = $minVal === 1 ? '1 MINUTE' : "{$minVal} MINUTES";
+        $timeLeftMain = $minVal === 1 ? '1 MIN' : "{$minVal} MINS";
         $timeLeftSub = 'LEFT TO BID';
       }
-    } elseif (($endTime && $endTime->lte($now)) || $isSoldOrCompleted) {
-      $timeLeftMain = 'AUCTION';
-      $timeLeftSub = 'ENDED';
+    } elseif ($endTime && $endTime->lte($now)) {
+      $timeLeftMain = 'ENDED';
+      $timeLeftSub = 'AUCTION ENDED';
+    } else {
+      $timeLeftMain = 'LIVE';
+      $timeLeftSub = 'AUCTION OPEN';
     }
 
-    // 3. Product Title, Category & Auction ID
+    // 3. Category & Title
+    $categoryName = strtoupper($machinery->category ? $machinery->category->category_name : 'EQUIPMENT');
     $year = $machinery->year ?? '';
     $make = $machinery->make ?? '';
     $model = $machinery->model ?? '';
-    $title = trim("$year $make $model");
+    $title = strtoupper(trim("$year $make $model"));
     if (empty($title)) {
-      $title = 'Machinery #' . ($machinery->auction_id ?? $machinery->id);
+      $title = 'MACHINERY #' . ($machinery->auction_id ?? $machinery->id);
     }
+    $auctionId = $machinery->auction_id ?? $machinery->id;
 
-    $categoryName = strtoupper($machinery->category ? $machinery->category->category_name : 'EQUIPMENT');
-    $auctionId = (string) ($machinery->auction_id ?? $machinery->id);
-
-    // 4. Product Image Resolution (First image ordered by ID asc)
+    // 4. Product Image Resolution
     $firstImage = \App\Models\MachineryFileManager::where('machinery_id', $machinery->id)
       ->where('type', 'image')
       ->orderBy('id', 'asc')
@@ -258,8 +260,7 @@ class FeedController extends Controller
       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1080 1080" width="1080" height="1080">
         <defs>
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&amp;display=swap');
-            text { font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif; }
+            text { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; }
           </style>
           <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="#ff4500"/>
