@@ -632,38 +632,19 @@ class FeedController extends Controller
   private function convertSvgToPng($svgString, $machinery = null)
   {
     $pngBytes = null;
+    // Sanitize letter-spacing attributes specifically for Linux Imagick rasterization engine to prevent text stretching
+    $renderSvg = preg_replace('/letter-spacing="[^"]*"/', '', $svgString);
 
-    // 1. Try Dompdf Engine (Cleanest vector font rasterization across all Linux distributions)
-    if (class_exists('\Dompdf\Dompdf')) {
-      try {
-        $dompdf = new \Dompdf\Dompdf([
-          'isRemoteEnabled' => true,
-          'isHtml5ParserEnabled' => true,
-        ]);
-        $html = "<html><head><style>@page { margin: 0px; } body { margin: 0px; padding: 0px; background: #0a0b0d; }</style></head><body>{$svgString}</body></html>";
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper([0, 0, 1080, 1080]);
-        $dompdf->render();
-        $canvas = $dompdf->getCanvas();
-        if ($canvas && method_exists($canvas, 'get_cpdf')) {
-          // Processed vector SVG page
-        }
-      } catch (\Throwable $e) {
-        // Fallback
-      }
-    }
-
-    $fontPath = public_path('fonts/Montserrat-Bold.ttf');
-
-    // 2. Try PHP Native Imagick Extension with explicit font config
-    if (empty($pngBytes) && extension_loaded('imagick')) {
+    // 1. Try PHP Native Imagick Extension with explicit font config
+    if (extension_loaded('imagick')) {
       try {
         $im = new \Imagick();
+        $fontPath = public_path('fonts/Montserrat-Bold.ttf');
         if (file_exists($fontPath)) {
           $im->setFont($fontPath);
         }
         $im->setResolution(150, 150);
-        $im->readImageBlob($svgString);
+        $im->readImageBlob($renderSvg);
         $im->setImageFormat('png24');
         $pngBytes = $im->getImageBlob();
         $im->clear();
@@ -679,10 +660,11 @@ class FeedController extends Controller
 
 
 
+
     // 2. Try Intervention Image package driver
     if (empty($pngBytes) && class_exists('\Intervention\Image\ImageManagerStatic')) {
       try {
-        $imgObj = \Intervention\Image\ImageManagerStatic::make($svgString);
+        $imgObj = \Intervention\Image\ImageManagerStatic::make($renderSvg);
         $pngBytes = (string) $imgObj->encode('png');
         if (!empty($pngBytes)) {
           Log::info('CatalogImage: Converted SVG to PNG using Intervention Image V2 (ImageManagerStatic).');
@@ -697,14 +679,14 @@ class FeedController extends Controller
       try {
         if (class_exists('\Intervention\Image\Drivers\Imagick\Driver')) {
           $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Imagick\Driver());
-          $imgObj = $manager->read($svgString);
+          $imgObj = $manager->read($renderSvg);
           $pngBytes = (string) $imgObj->toPng();
           if (!empty($pngBytes)) {
             Log::info('CatalogImage: Converted SVG to PNG using Intervention Image V3 (Imagick Driver).');
           }
         } elseif (class_exists('\Intervention\Image\Drivers\Gd\Driver')) {
           $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
-          $imgObj = $manager->read($svgString);
+          $imgObj = $manager->read($renderSvg);
           $pngBytes = (string) $imgObj->toPng();
           if (!empty($pngBytes)) {
             Log::info('CatalogImage: Converted SVG to PNG using Intervention Image V3 (GD Driver).');
@@ -715,7 +697,6 @@ class FeedController extends Controller
         $pngBytes = null;
       }
     }
-
 
     // 3. Fallback to CLI commands if package or Imagick extension is not enabled
     if (empty($pngBytes)) {
@@ -728,7 +709,8 @@ class FeedController extends Controller
       $tempSvg = $tempDir . '/' . $uniq . '.svg';
       $tempPng = $tempDir . '/' . $uniq . '.png';
 
-      file_put_contents($tempSvg, $svgString);
+      file_put_contents($tempSvg, $renderSvg);
+
 
       // Try CLI commands in sequence: convert, magick convert, rsvg-convert
       $cliCommands = [
