@@ -251,14 +251,16 @@ class FeedController extends Controller
 
     // HTML/SVG representation matching approved template 100%
     $titleSvg = htmlspecialchars($title, ENT_XML1, 'UTF-8');
-    $categorySvg = htmlspecialchars($categoryName, ENT_XML1, 'UTF-8');
-    $auctionIdSvg = htmlspecialchars($auctionId, ENT_XML1, 'UTF-8');
+    $fullIdSvg = htmlspecialchars("ID: " . $auctionId, ENT_XML1, 'UTF-8');
+    $fullCategorySvg = htmlspecialchars("CATEGORY: " . $categoryName, ENT_XML1, 'UTF-8');
     $formattedPriceSvg = htmlspecialchars($formattedBidPrice, ENT_XML1, 'UTF-8');
+
     $timeLeftMainSvg = htmlspecialchars($timeLeftMain, ENT_XML1, 'UTF-8');
     $timeLeftSubSvg = htmlspecialchars($timeLeftSub, ENT_XML1, 'UTF-8');
     $photoSrcSvg = !empty($imageBase64) ? $imageBase64 : $imageUrl;
 
     $fontStyleSvg = "text { font-family: 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif; }";
+
 
 
 
@@ -298,9 +300,8 @@ class FeedController extends Controller
           <text x="2" y="86" fill="#ffffff" font-size="20" font-weight="800">EQUIPMENT AUCTIONS</text>
         </g>
 
-
-        <!-- Top Right Diagonal Timer Banner (Clipped along rounded corner) -->
-        <path d="M 590 12 L 1068 12 L 1068 152 L 640 152 Z" fill="#ff5500" clip-path="url(#cardClip)" />
+        <!-- Top Right Diagonal Timer Banner (Native curved path without clip-path for Linux Imagick compatibility) -->
+        <path d="M 620 12 L 1044 12 A 24 24 0 0 1 1068 36 L 1068 152 L 670 152 Z" fill="#ff5500" />
 
         <g transform="translate(625, 28)">
           <!-- White Circle for Clock Icon -->
@@ -380,17 +381,18 @@ class FeedController extends Controller
             <!-- Tag Icon -->
             <path d="M 0 6 L 6 0 L 16 0 L 16 8 L 8 16 Z" fill="none" stroke="#a1a5b7" stroke-width="2.2"/>
             <circle cx="10" cy="5" r="1.5" fill="#a1a5b7"/>
-            <text x="24" y="14" fill="#ffffff" font-size="19" font-weight="700">ID: <tspan fill="#a1a5b7">{$auctionIdSvg}</tspan></text>
+            <text x="24" y="14" fill="#a1a5b7" font-size="19" font-weight="700">{$fullIdSvg}</text>
             
             <!-- Separator -->
-            <text x="260" y="14" fill="#4a5064" font-size="19" font-weight="700">|</text>
+            <text x="210" y="14" fill="#4a5064" font-size="19" font-weight="700">|</text>
             
             <!-- Folder Icon -->
-            <g transform="translate(285, -2)">
+            <g transform="translate(235, -2)">
               <path d="M 0 2 L 8 2 L 12 6 L 24 6 L 24 18 L 0 18 Z" fill="none" stroke="#ff5500" stroke-width="2.5"/>
-              <text x="32" y="16" fill="#a1a5b7" font-size="20" font-weight="700">CATEGORY: <tspan fill="#ff5500">{$categorySvg}</tspan></text>
+              <text x="32" y="16" fill="#ff5500" font-size="19" font-weight="700">{$fullCategorySvg}</text>
             </g>
           </g>
+
         </g>
 
         <!-- 6. BOTTOM FEATURE BAR (TRUST BADGES) -->
@@ -442,29 +444,15 @@ class FeedController extends Controller
           <!-- Centered Gradient Website Pill Container -->
           <rect x="240" y="0" width="600" height="50" rx="25" fill="#ff5500" stroke="#ff6a00" stroke-width="2" />
 
-          
-          <!-- Bottom Hazard Stripes (Left) -->
-          <g transform="translate(45, 16)">
-            <polygon points="0,18 10,0 20,0 10,18" fill="#ff5500" />
-            <polygon points="15,18 25,0 35,0 25,18" fill="#ff5500" />
-            <polygon points="30,18 40,0 50,0 40,18" fill="#ff5500" />
-          </g>
-          
-          <!-- Bottom Hazard Stripes (Right) -->
-          <g transform="translate(975, 16)">
-            <polygon points="0,18 10,0 20,0 10,18" fill="#ff5500" />
-            <polygon points="15,18 25,0 35,0 25,18" fill="#ff5500" />
-            <polygon points="30,18 40,0 50,0 40,18" fill="#ff5500" />
-          </g>
-
           <!-- Center Globe Icon + Website Link inside Pill -->
-          <g transform="translate(305, 25)">
+          <g transform="translate(340, 25)">
             <circle cx="15" cy="0" r="12" fill="none" stroke="#ffffff" stroke-width="2"/>
             <ellipse cx="15" cy="0" rx="5" ry="12" fill="none" stroke="#ffffff" stroke-width="1.5"/>
             <line x1="3" y1="0" x2="27" y2="0" stroke="#ffffff" stroke-width="1.5"/>
-            <text x="44" y="8" fill="#ffffff" font-size="22" font-weight="900" letter-spacing="3.5">EASTLINEAUCTIONS.COM</text>
+            <text x="44" y="8" fill="#ffffff" font-size="22" font-weight="900">EASTLINEAUCTIONS.COM</text>
           </g>
         </g>
+
 
 
 
