@@ -294,12 +294,13 @@ class FeedController extends Controller
         <!-- 3. TOP HEADER -->
         <!-- Official Eastline Brand Text (Left Side Header) -->
         <g transform="translate(170, 24)">
-          <text x="0" y="54" fill="#ffffff" font-size="52" font-weight="900" letter-spacing="1">EAST<tspan fill="#ff5500">LINE</tspan></text>
-          <text x="2" y="86" fill="#ffffff" font-size="22" font-weight="800" letter-spacing="3">EQUIPMENT AUCTIONS</text>
+          <text x="0" y="54" fill="#ffffff" font-size="50" font-weight="900">EAST<tspan fill="#ff5500">LINE</tspan></text>
+          <text x="2" y="86" fill="#ffffff" font-size="20" font-weight="800">EQUIPMENT AUCTIONS</text>
         </g>
 
+
         <!-- Top Right Diagonal Timer Banner (Clipped along rounded corner) -->
-        <path d="M 590 12 L 1068 12 L 1068 152 L 640 152 Z" fill="url(#orangeGrad)" clip-path="url(#cardClip)" />
+        <path d="M 590 12 L 1068 12 L 1068 152 L 640 152 Z" fill="#ff5500" clip-path="url(#cardClip)" />
 
         <g transform="translate(625, 28)">
           <!-- White Circle for Clock Icon -->
@@ -325,7 +326,7 @@ class FeedController extends Controller
             <rect x="0" y="0" width="380" height="490" rx="16" ry="16" fill="#101217" stroke="#2b2e3b" stroke-width="2" />
             
             <!-- Orange Header Pill -->
-            <rect x="25" y="20" width="330" height="44" rx="22" fill="url(#orangeGrad)" />
+            <rect x="25" y="20" width="330" height="44" rx="22" fill="#ff5500" />
             <text x="190" y="49" text-anchor="middle" fill="#ffffff" font-size="19" font-weight="900" letter-spacing="2">AUCTION BIDDING</text>
             
             <!-- CURRENT BID Header -->
@@ -336,7 +337,7 @@ class FeedController extends Controller
             
             <!-- BID NOW Button -->
             <g transform="translate(45, 215)">
-              <rect x="0" y="0" width="290" height="68" rx="34" fill="url(#btnGrad)" />
+              <rect x="0" y="0" width="290" height="68" rx="34" fill="#ff5500" />
               
               <!-- Black Circle with White Gavel Icon -->
               <circle cx="48" cy="34" r="25" fill="#000000" />
@@ -374,12 +375,21 @@ class FeedController extends Controller
           <!-- Divider Line -->
           <line x1="35" y1="84" x2="985" y2="84" stroke="#252833" stroke-width="2" />
           
-          <!-- Lower Metadata Row (ID & CATEGORY INLINE FLOW) -->
+          <!-- Lower Metadata Row (ID & CATEGORY) -->
           <g transform="translate(35, 116)">
             <!-- Tag Icon -->
             <path d="M 0 6 L 6 0 L 16 0 L 16 8 L 8 16 Z" fill="none" stroke="#a1a5b7" stroke-width="2.2"/>
             <circle cx="10" cy="5" r="1.5" fill="#a1a5b7"/>
-            <text x="24" y="14" fill="#ffffff" font-size="19" font-weight="700">ID: <tspan fill="#a1a5b7">{$auctionIdSvg}</tspan>   <tspan fill="#4a5064">|</tspan>   <tspan fill="#a1a5b7">CATEGORY:</tspan> <tspan fill="#ff5500">{$categorySvg}</tspan></text>
+            <text x="24" y="14" fill="#ffffff" font-size="19" font-weight="700">ID: <tspan fill="#a1a5b7">{$auctionIdSvg}</tspan></text>
+            
+            <!-- Separator -->
+            <text x="260" y="14" fill="#4a5064" font-size="19" font-weight="700">|</text>
+            
+            <!-- Folder Icon -->
+            <g transform="translate(285, -2)">
+              <path d="M 0 2 L 8 2 L 12 6 L 24 6 L 24 18 L 0 18 Z" fill="none" stroke="#ff5500" stroke-width="2.5"/>
+              <text x="32" y="16" fill="#a1a5b7" font-size="20" font-weight="700">CATEGORY: <tspan fill="#ff5500">{$categorySvg}</tspan></text>
+            </g>
           </g>
         </g>
 
@@ -430,7 +440,8 @@ class FeedController extends Controller
         <!-- 7. FOOTER BAR -->
         <g transform="translate(0, 995)">
           <!-- Centered Gradient Website Pill Container -->
-          <rect x="240" y="0" width="600" height="50" rx="25" fill="url(#btnGrad)" stroke="#ff6a00" stroke-width="2" />
+          <rect x="240" y="0" width="600" height="50" rx="25" fill="#ff5500" stroke="#ff6a00" stroke-width="2" />
+
           
           <!-- Bottom Hazard Stripes (Left) -->
           <g transform="translate(45, 16)">
