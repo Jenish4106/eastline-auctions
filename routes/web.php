@@ -22,3 +22,10 @@ Route::get('/meta-catalog-feed', [FeedController::class, 'metaCatalogFeed']);
 Route::get('/meta-catalog-feed.csv', [FeedController::class, 'metaCatalogFeed']);
 Route::get('/api/meta-catalog-feed', [FeedController::class, 'metaCatalogFeed']);
 Route::get('/api/meta-catalog-feed.csv', [FeedController::class, 'metaCatalogFeed']);
+
+Route::get('/catalog-image/{id}', [FeedController::class, 'catalogImage']);
+Route::get('/catalog-image/{id}.png', [FeedController::class, 'catalogImage']);
+Route::get('/catalog-image/{id}.jpg', [FeedController::class, 'catalogImage']);
+Route::get('/api/catalog-image/{id}', [FeedController::class, 'catalogImage']);
+Route::get('/api/catalog-image/{id}.png', [FeedController::class, 'catalogImage']);
+Route::get('/api/catalog-image/{id}.jpg', [FeedController::class, 'catalogImage']);
