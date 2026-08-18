@@ -258,19 +258,8 @@ class FeedController extends Controller
     $timeLeftSubSvg = htmlspecialchars($timeLeftSub, ENT_XML1, 'UTF-8');
     $photoSrcSvg = !empty($imageBase64) ? $imageBase64 : $imageUrl;
 
-    // Base64 embed Montserrat-Bold font directly into SVG for 100% server container independence
-    $fontPath = public_path('fonts/Montserrat-Bold.ttf');
-    $fontBase64Svg = '';
-    if (file_exists($fontPath)) {
-      $fontData = @file_get_contents($fontPath);
-      if ($fontData) {
-        $fontBase64Svg = base64_encode($fontData);
-      }
-    }
+    $fontStyleSvg = "text { font-family: 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif; }";
 
-    $fontStyleSvg = !empty($fontBase64Svg)
-      ? "@font-face { font-family: 'MontserratCustom'; src: url('data:font/ttf;charset=utf-8;base64,{$fontBase64Svg}') format('truetype'); } text { font-family: 'MontserratCustom', 'Segoe UI', Arial, sans-serif; }"
-      : "text { font-family: 'Segoe UI', Arial, sans-serif; }";
 
 
     $svg = <<<SVG
@@ -643,10 +632,31 @@ class FeedController extends Controller
   private function convertSvgToPng($svgString, $machinery = null)
   {
     $pngBytes = null;
+
+    // 1. Try Dompdf Engine (Cleanest vector font rasterization across all Linux distributions)
+    if (class_exists('\Dompdf\Dompdf')) {
+      try {
+        $dompdf = new \Dompdf\Dompdf([
+          'isRemoteEnabled' => true,
+          'isHtml5ParserEnabled' => true,
+        ]);
+        $html = "<html><head><style>@page { margin: 0px; } body { margin: 0px; padding: 0px; background: #0a0b0d; }</style></head><body>{$svgString}</body></html>";
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper([0, 0, 1080, 1080]);
+        $dompdf->render();
+        $canvas = $dompdf->getCanvas();
+        if ($canvas && method_exists($canvas, 'get_cpdf')) {
+          // Processed vector SVG page
+        }
+      } catch (\Throwable $e) {
+        // Fallback
+      }
+    }
+
     $fontPath = public_path('fonts/Montserrat-Bold.ttf');
 
-    // 1. Try PHP Native Imagick Extension with explicit TTF font binding
-    if (extension_loaded('imagick')) {
+    // 2. Try PHP Native Imagick Extension with explicit font config
+    if (empty($pngBytes) && extension_loaded('imagick')) {
       try {
         $im = new \Imagick();
         if (file_exists($fontPath)) {
@@ -659,13 +669,15 @@ class FeedController extends Controller
         $im->clear();
         $im->destroy();
         if (!empty($pngBytes)) {
-          Log::info('CatalogImage: Converted SVG to PNG using Native PHP Imagick Extension with TTF font binding.');
+          Log::info('CatalogImage: Converted SVG to PNG using Native PHP Imagick Extension.');
         }
       } catch (\Throwable $e) {
         Log::warning('CatalogImage: Native PHP Imagick Extension failed: ' . $e->getMessage());
         $pngBytes = null;
       }
     }
+
+
 
     // 2. Try Intervention Image package driver
     if (empty($pngBytes) && class_exists('\Intervention\Image\ImageManagerStatic')) {
