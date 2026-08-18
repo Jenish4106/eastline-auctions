@@ -130,8 +130,9 @@ class FeedController extends Controller
 
         $firstImage = $machinery->images->first();
         $originalImageLink = FileResolverService::resolveMachineryImageUrl($firstImage ? $firstImage->image_path : null);
-        $catalogImageLink = url("/catalog-image/{$auctionId}.png");
+        $catalogImageLink = url("/api/catalog-image/{$auctionId}.png");
         $imageLink = $catalogImageLink;
+
 
         $customLabel1 = $machinery->buy_now_price > 0 ? 'buy_now' : 'auction';
 
@@ -483,27 +484,59 @@ class FeedController extends Controller
 
   private function convertSvgToPng($svgString, $machinery = null)
   {
-    $tempDir = storage_path('app/temp');
-    if (!file_exists($tempDir)) {
-      @mkdir($tempDir, 0777, true);
+    $pngBytes = null;
+
+    // 1. Try PHP Imagick extension first (Fastest & native on Linux servers)
+    if (extension_loaded('imagick')) {
+      try {
+        $im = new \Imagick();
+        $im->setResolution(150, 150);
+        $im->readImageBlob($svgString);
+        $im->setImageFormat('png24');
+        $pngBytes = $im->getImageBlob();
+        $im->clear();
+        $im->destroy();
+      } catch (\Throwable $e) {
+        $pngBytes = null;
+      }
     }
 
-    $uniq = uniqid('cat_');
-    $tempSvg = $tempDir . '/' . $uniq . '.svg';
-    $tempPng = $tempDir . '/' . $uniq . '.png';
+    // 2. Fallback to CLI commands if Imagick extension is not enabled
+    if (empty($pngBytes)) {
+      $tempDir = storage_path('app/temp');
+      if (!file_exists($tempDir)) {
+        @mkdir($tempDir, 0777, true);
+      }
 
-    file_put_contents($tempSvg, $svgString);
+      $uniq = uniqid('cat_');
+      $tempSvg = $tempDir . '/' . $uniq . '.svg';
+      $tempPng = $tempDir . '/' . $uniq . '.png';
 
-    $cmd = 'magick convert -density 150 "' . $tempSvg . '" "' . $tempPng . '" 2>&1';
-    @exec($cmd, $output, $returnCode);
+      file_put_contents($tempSvg, $svgString);
 
-    if (file_exists($tempPng) && filesize($tempPng) > 0) {
-      $pngBytes = file_get_contents($tempPng);
+      // Try CLI commands in sequence: convert, magick convert, rsvg-convert
+      $cliCommands = [
+        'convert -density 150 "' . $tempSvg . '" "' . $tempPng . '" 2>&1',
+        'magick convert -density 150 "' . $tempSvg . '" "' . $tempPng . '" 2>&1',
+        'rsvg-convert -w 2250 -h 2250 "' . $tempSvg . '" -o "' . $tempPng . '" 2>&1'
+      ];
+
+      foreach ($cliCommands as $cmd) {
+        @exec($cmd, $output, $returnCode);
+        if (file_exists($tempPng) && filesize($tempPng) > 0) {
+          $pngBytes = file_get_contents($tempPng);
+          break;
+        }
+      }
+
       @unlink($tempSvg);
       @unlink($tempPng);
+    }
 
+    if ($pngBytes) {
       $mainImg = @imagecreatefromstring($pngBytes);
       if ($mainImg) {
+
         $canvasW = imagesx($mainImg);
         $scale = $canvasW / 1080.0;
 
