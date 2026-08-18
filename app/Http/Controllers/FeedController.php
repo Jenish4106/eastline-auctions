@@ -15,7 +15,6 @@ class FeedController extends Controller
 {
   public function metaCatalogFeed()
   {
-    // Fetch all machinery with category and bids
     $machineries = Machinery::with(['category', 'bids', 'images' => function ($q) {
       $q->where('type', 'image')->orderBy('id');
     }])->get();
@@ -259,10 +258,13 @@ class FeedController extends Controller
     $timeLeftSubSvg = htmlspecialchars($timeLeftSub, ENT_XML1, 'UTF-8');
     $photoSrcSvg = !empty($imageBase64) ? $imageBase64 : $imageUrl;
 
-    $fontStyleSvg = "text { font-family: 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif; }";
-
-
-
+    $fontPath = public_path('fonts/Montserrat-Bold.ttf');
+    if (file_exists($fontPath)) {
+      $fontData = base64_encode(file_get_contents($fontPath));
+      $fontStyleSvg = "@font-face { font-family: 'EastlineCatalog'; src: url('data:font/truetype;charset=utf-8;base64,{$fontData}') format('truetype'); font-weight: 900; font-style: normal; } text { font-family: 'EastlineCatalog', 'Montserrat', 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif; }";
+    } else {
+      $fontStyleSvg = "text { font-family: 'Montserrat', 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif; }";
+    }
 
     $svg = <<<SVG
       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1080 1080" width="1080" height="1080">
@@ -321,7 +323,7 @@ class FeedController extends Controller
         <g>
           <!-- Left Column: Machinery Photo Container (620x490 4:3 Box) -->
           <rect x="30" y="165" width="620" height="490" rx="16" ry="16" fill="#16181f" stroke="#2b2e3b" stroke-width="2" />
-          <image href="{$photoSrcSvg}" x="30" y="165" width="620" height="490" preserveAspectRatio="xMidYMid slice" clip-path="url(#imgClip)" />
+          <image id="catalogMachineryPhoto" href="{$photoSrcSvg}" x="30" y="165" width="620" height="490" preserveAspectRatio="xMidYMid slice" clip-path="url(#imgClip)" />
 
 
           <!-- Right Column: Current Bid & BID NOW Action Panel (380x490) -->
@@ -626,8 +628,8 @@ class FeedController extends Controller
   private function convertSvgToPng($svgString, $machinery = null)
   {
     $pngBytes = null;
-    // Sanitize letter-spacing attributes specifically for Linux Imagick rasterization engine to prevent text stretching
     $renderSvg = preg_replace('/letter-spacing="[^"]*"/', '', $svgString);
+    $renderSvg = preg_replace('/<image\s+id="catalogMachineryPhoto"[^>]*\/>\s*/', '', $renderSvg);
 
     // 1. Try PHP Native Imagick Extension with explicit font config
     if (extension_loaded('imagick')) {
@@ -772,19 +774,24 @@ class FeedController extends Controller
                 $frameW = (int) (620 * $scale);
                 $frameH = (int) (490 * $scale);
 
-                // Smart Fit inside 620x490 4:3 Box (0% cropping, 0% stretching!)
+                // Cover-fit the photo into the 620x490 frame without stretching.
                 $targetRatio = $frameW / $frameH;
-                $srcW = $pw;
-                $srcH = (int) ($pw / $targetRatio);
                 $srcX = 0;
-                $srcY = (int) (($ph - $srcH) / 2);
-                if ($srcY < 0) {
-                  $srcY = 0;
+                $srcY = 0;
+                if (($pw / $ph) > $targetRatio) {
                   $srcH = $ph;
                   $srcW = (int) ($ph * $targetRatio);
                   $srcX = (int) (($pw - $srcW) / 2);
+                } else {
+                  $srcW = $pw;
+                  $srcH = (int) ($pw / $targetRatio);
+                  $srcY = (int) (($ph - $srcH) / 2);
                 }
 
+                $srcX = max(0, $srcX);
+                $srcY = max(0, $srcY);
+                $srcW = min($pw - $srcX, $srcW);
+                $srcH = min($ph - $srcY, $srcH);
 
                 imagecopyresampled($mainImg, $prodImg, $frameX, $frameY, $srcX, $srcY, $frameW, $frameH, $srcW, $srcH);
                 imagedestroy($prodImg);
@@ -817,12 +824,24 @@ class FeedController extends Controller
                   }
                 }
 
+                $border = imagecolorallocate($mainImg, 43, 46, 59);
+                $borderThickness = max(1, (int) round(2 * $scale));
+                for ($i = 0; $i < $borderThickness; $i++) {
+                  $x1 = $frameX + $i;
+                  $y1 = $frameY + $i;
+                  $x2 = $frameX + $frameW - $i - 1;
+                  $y2 = $frameY + $frameH - $i - 1;
+                  $radius = max(1, $r - $i);
 
-
-
-
-
-
+                  imageline($mainImg, $x1 + $radius, $y1, $x2 - $radius, $y1, $border);
+                  imageline($mainImg, $x1 + $radius, $y2, $x2 - $radius, $y2, $border);
+                  imageline($mainImg, $x1, $y1 + $radius, $x1, $y2 - $radius, $border);
+                  imageline($mainImg, $x2, $y1 + $radius, $x2, $y2 - $radius, $border);
+                  imagearc($mainImg, $x1 + $radius, $y1 + $radius, $radius * 2, $radius * 2, 180, 270, $border);
+                  imagearc($mainImg, $x2 - $radius, $y1 + $radius, $radius * 2, $radius * 2, 270, 360, $border);
+                  imagearc($mainImg, $x2 - $radius, $y2 - $radius, $radius * 2, $radius * 2, 0, 90, $border);
+                  imagearc($mainImg, $x1 + $radius, $y2 - $radius, $radius * 2, $radius * 2, 90, 180, $border);
+                }
               }
             }
           }
