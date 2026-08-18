@@ -469,19 +469,26 @@ class FeedController extends Controller
 
     $pngBytes = $this->convertSvgToPng($svg, $machinery);
 
-    if (!$pngBytes) {
-      // Pure PHP GD Fallback if ImageMagick extension or exec() CLI is disabled on production server
-      $pngBytes = $this->generateCatalogPngGd($machinery, $timeLeftMain, $timeLeftSub, $formattedBidPrice, $title, $categoryName, $auctionId);
+    if ($pngBytes) {
+      return Response::make($pngBytes, 200, [
+        'Content-Type' => 'image/png',
+        'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.png"',
+        'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
+        'Pragma' => 'no-cache',
+        'Expires' => '0',
+      ]);
     }
 
-    return Response::make($pngBytes, 200, [
-      'Content-Type' => 'image/png',
-      'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.png"',
+    return Response::make($svg, 200, [
+      'Content-Type' => 'image/svg+xml; charset=utf-8',
+      'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.svg"',
       'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
       'Pragma' => 'no-cache',
       'Expires' => '0',
     ]);
   }
+
+
 
   private function generateCatalogPngGd($machinery, $timeLeftMain, $timeLeftSub, $formattedBidPrice, $title, $categoryName, $auctionId)
   {
