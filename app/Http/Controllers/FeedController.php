@@ -296,14 +296,16 @@ class FeedController extends Controller
         <!-- 3. TOP HEADER -->
         <!-- Official Eastline Brand Text (Left Side Header) -->
         <g transform="translate(170, 24)">
-          <text x="0" y="54" fill="#ffffff" font-size="50" font-weight="900">EAST<tspan fill="#ff5500">LINE</tspan></text>
+          <!-- Keep EAST/LINE as separate fixed text nodes; some Linux SVG rasterizers misplace inline tspans. -->
+          <text x="0" y="54" fill="#ffffff" font-size="50" font-weight="900">EAST</text>
+          <text x="126" y="54" fill="#ff5500" font-size="50" font-weight="900">LINE</text>
           <text x="2" y="86" fill="#ffffff" font-size="20" font-weight="800">EQUIPMENT AUCTIONS</text>
         </g>
 
         <!-- Top Right Diagonal Timer Banner (Native curved path without clip-path for Linux Imagick compatibility) -->
-        <path d="M 620 12 L 1044 12 A 24 24 0 0 1 1068 36 L 1068 152 L 670 152 Z" fill="#ff5500" />
+        <path d="M 540 12 L 1044 12 A 24 24 0 0 1 1068 36 L 1068 152 L 650 152 Z" fill="#ff5500" />
 
-        <g transform="translate(625, 28)">
+        <g transform="translate(610, 28)">
           <!-- White Circle for Clock Icon -->
           <circle cx="45" cy="44" r="40" fill="#ffffff"/>
           <!-- Clock Icon Hands -->
@@ -403,8 +405,8 @@ class FeedController extends Controller
           <g transform="translate(30, 16)">
             <path d="M 16 2 L 30 7 L 30 18 C 30 25 22 30 16 32 C 10 30 2 25 2 18 L 2 7 Z" fill="none" stroke="#ff5500" stroke-width="3" stroke-linejoin="round"/>
             <path d="M 9 16 L 14 21 L 23 11" fill="none" stroke="#ff5500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="42" y="15" fill="#ffffff" font-size="14" font-weight="800">INSPECTED</text>
-            <text x="42" y="30" fill="#ffffff" font-size="14" font-weight="800">&amp; VERIFIED</text>
+            <text x="42" y="16" fill="#ffffff" font-size="16" font-weight="800">INSPECTED</text>
+            <text x="42" y="33" fill="#ffffff" font-size="16" font-weight="800">&amp; VERIFIED</text>
           </g>
           <line x1="245" y1="12" x2="245" y2="52" stroke="#252834" stroke-width="2"/>
 
@@ -412,8 +414,8 @@ class FeedController extends Controller
           <g transform="translate(270, 16)">
             <circle cx="16" cy="16" r="8.5" fill="none" stroke="#ff5500" stroke-width="3"/>
             <path d="M 16 1 V 5 M 16 27 V 31 M 1 16 H 5 M 27 16 H 31 M 5.4 5.4 L 8.2 8.2 M 23.8 23.8 L 26.6 26.6 M 5.4 26.6 L 8.2 23.8 M 23.8 8.2 L 26.6 5.4" stroke="#ff5500" stroke-width="3" stroke-linecap="round"/>
-            <text x="42" y="15" fill="#ffffff" font-size="14" font-weight="800">QUALITY</text>
-            <text x="42" y="30" fill="#ffffff" font-size="14" font-weight="800">EQUIPMENT</text>
+            <text x="42" y="16" fill="#ffffff" font-size="16" font-weight="800">QUALITY</text>
+            <text x="42" y="33" fill="#ffffff" font-size="16" font-weight="800">EQUIPMENT</text>
           </g>
           <line x1="495" y1="12" x2="495" y2="52" stroke="#252834" stroke-width="2"/>
 
@@ -423,8 +425,8 @@ class FeedController extends Controller
             <path d="M 20 11 H 27 L 31 16 V 21 H 20 Z" fill="none" stroke="#ff5500" stroke-width="3" stroke-linejoin="round"/>
             <circle cx="7" cy="23" r="3.5" fill="#ff5500"/>
             <circle cx="26" cy="23" r="3.5" fill="#ff5500"/>
-            <text x="42" y="15" fill="#ffffff" font-size="14" font-weight="800">NATIONWIDE</text>
-            <text x="42" y="30" fill="#ffffff" font-size="14" font-weight="800">SHIPPING</text>
+            <text x="42" y="16" fill="#ffffff" font-size="16" font-weight="800">NATIONWIDE</text>
+            <text x="42" y="33" fill="#ffffff" font-size="16" font-weight="800">SHIPPING</text>
           </g>
           <line x1="755" y1="12" x2="755" y2="52" stroke="#252834" stroke-width="2"/>
 
@@ -434,8 +436,8 @@ class FeedController extends Controller
             <path d="M 8 12 V 7 C 8 3.5 11 1.5 16 1.5 C 21 1.5 24 3.5 24 7 V 12" fill="none" stroke="#ff5500" stroke-width="3"/>
             <circle cx="16" cy="19" r="2.5" fill="#ff5500"/>
             <rect x="14.5" y="19" width="3" height="6" rx="1" fill="#ff5500"/>
-            <text x="40" y="15" fill="#ffffff" font-size="14" font-weight="800">SECURE</text>
-            <text x="40" y="30" fill="#ffffff" font-size="14" font-weight="800">BIDDING</text>
+            <text x="40" y="16" fill="#ffffff" font-size="16" font-weight="800">SECURE</text>
+            <text x="40" y="33" fill="#ffffff" font-size="16" font-weight="800">BIDDING</text>
           </g>
         </g>
 
@@ -445,20 +447,13 @@ class FeedController extends Controller
           <rect x="240" y="0" width="600" height="50" rx="25" fill="#ff5500" stroke="#ff6a00" stroke-width="2" />
 
           <!-- Center Globe Icon + Website Link inside Pill -->
-          <g transform="translate(340, 25)">
+          <g transform="translate(365, 25)">
             <circle cx="15" cy="0" r="12" fill="none" stroke="#ffffff" stroke-width="2"/>
             <ellipse cx="15" cy="0" rx="5" ry="12" fill="none" stroke="#ffffff" stroke-width="1.5"/>
             <line x1="3" y1="0" x2="27" y2="0" stroke="#ffffff" stroke-width="1.5"/>
             <text x="44" y="8" fill="#ffffff" font-size="22" font-weight="900">EASTLINEAUCTIONS.COM</text>
           </g>
         </g>
-
-
-
-
-
-
-
       </svg>
       SVG;
 
