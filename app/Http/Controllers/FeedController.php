@@ -385,30 +385,18 @@ class FeedController extends Controller
           <!-- Divider Line -->
           <line x1="35" y1="84" x2="985" y2="84" stroke="#252833" stroke-width="2" />
           
-          <!-- Lower Metadata Row (ID & CATEGORY) -->
+          <!-- Lower Metadata Row (ID & CATEGORY INLINE FLOW) -->
           <g transform="translate(35, 116)">
             <!-- Tag Icon -->
             <path d="M 0 6 L 6 0 L 16 0 L 16 8 L 8 16 Z" fill="none" stroke="#a1a5b7" stroke-width="2.2"/>
             <circle cx="10" cy="5" r="1.5" fill="#a1a5b7"/>
-            <text x="24" y="14" fill="#ffffff" font-size="19" font-weight="700">ID: <tspan fill="#a1a5b7">{$auctionIdSvg}</tspan></text>
-            
-            <!-- Separator -->
-            <text x="210" y="14" fill="#4a5064" font-size="19" font-weight="700">|</text>
-            
-            <!-- Folder Icon -->
-            <g transform="translate(235, -2)">
-              <path d="M 0 2 L 8 2 L 12 6 L 24 6 L 24 18 L 0 18 Z" fill="none" stroke="#ff5500" stroke-width="2.5"/>
-              <text x="32" y="16" fill="#a1a5b7" font-size="20" font-weight="700">CATEGORY: <tspan fill="#ff5500">{$categorySvg}</tspan></text>
-            </g>
+            <text x="24" y="14" fill="#ffffff" font-size="19" font-weight="700">ID: <tspan fill="#a1a5b7">{$auctionIdSvg}</tspan>   <tspan fill="#4a5064">|</tspan>   <tspan fill="#a1a5b7">CATEGORY:</tspan> <tspan fill="#ff5500">{$categorySvg}</tspan></text>
           </g>
         </g>
 
         <!-- 6. BOTTOM FEATURE BAR (TRUST BADGES) -->
         <g transform="translate(30, 843)">
           <rect x="0" y="0" width="1020" height="65" rx="10" fill="#0a0b0e" stroke="#1f222b" stroke-width="1.5"/>
-
-
-
           
           <!-- Badge 1: Inspected & Verified (Shield with Checkmark) -->
           <g transform="translate(30, 16)">
@@ -477,6 +465,8 @@ class FeedController extends Controller
             <text x="44" y="8" fill="#ffffff" font-size="22" font-weight="900" letter-spacing="3.5">EASTLINEAUCTIONS.COM</text>
           </g>
         </g>
+
+
 
 
 
@@ -653,9 +643,32 @@ class FeedController extends Controller
   private function convertSvgToPng($svgString, $machinery = null)
   {
     $pngBytes = null;
+    $fontPath = public_path('fonts/Montserrat-Bold.ttf');
 
-    // 1. Try Intervention Image package driver first
-    if (class_exists('\Intervention\Image\ImageManagerStatic')) {
+    // 1. Try PHP Native Imagick Extension with explicit TTF font binding
+    if (extension_loaded('imagick')) {
+      try {
+        $im = new \Imagick();
+        if (file_exists($fontPath)) {
+          $im->setFont($fontPath);
+        }
+        $im->setResolution(150, 150);
+        $im->readImageBlob($svgString);
+        $im->setImageFormat('png24');
+        $pngBytes = $im->getImageBlob();
+        $im->clear();
+        $im->destroy();
+        if (!empty($pngBytes)) {
+          Log::info('CatalogImage: Converted SVG to PNG using Native PHP Imagick Extension with TTF font binding.');
+        }
+      } catch (\Throwable $e) {
+        Log::warning('CatalogImage: Native PHP Imagick Extension failed: ' . $e->getMessage());
+        $pngBytes = null;
+      }
+    }
+
+    // 2. Try Intervention Image package driver
+    if (empty($pngBytes) && class_exists('\Intervention\Image\ImageManagerStatic')) {
       try {
         $imgObj = \Intervention\Image\ImageManagerStatic::make($svgString);
         $pngBytes = (string) $imgObj->encode('png');
@@ -691,24 +704,6 @@ class FeedController extends Controller
       }
     }
 
-    // 2. Try PHP Imagick extension
-    if (empty($pngBytes) && extension_loaded('imagick')) {
-      try {
-        $im = new \Imagick();
-        $im->setResolution(150, 150);
-        $im->readImageBlob($svgString);
-        $im->setImageFormat('png24');
-        $pngBytes = $im->getImageBlob();
-        $im->clear();
-        $im->destroy();
-        if (!empty($pngBytes)) {
-          Log::info('CatalogImage: Converted SVG to PNG using Native PHP Imagick Extension.');
-        }
-      } catch (\Throwable $e) {
-        Log::warning('CatalogImage: Native PHP Imagick Extension failed: ' . $e->getMessage());
-        $pngBytes = null;
-      }
-    }
 
     // 3. Fallback to CLI commands if package or Imagick extension is not enabled
     if (empty($pngBytes)) {
