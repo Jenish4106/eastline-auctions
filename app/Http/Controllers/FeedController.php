@@ -260,7 +260,8 @@ class FeedController extends Controller
       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1080 1080" width="1080" height="1080">
         <defs>
           <style>
-            text { font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; }
+            text { font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif; }
+
           </style>
           <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="#ff4500"/>
