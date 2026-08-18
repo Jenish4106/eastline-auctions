@@ -6,10 +6,12 @@ use App\Models\Machinery;
 use App\Services\FileResolverService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Str;
 
 class FeedController extends Controller
+
 {
   public function metaCatalogFeed()
   {
@@ -652,8 +654,45 @@ class FeedController extends Controller
   {
     $pngBytes = null;
 
-    // 1. Try PHP Imagick extension first (Fastest & native on Linux servers)
-    if (extension_loaded('imagick')) {
+    // 1. Try Intervention Image package driver first
+    if (class_exists('\Intervention\Image\ImageManagerStatic')) {
+      try {
+        $imgObj = \Intervention\Image\ImageManagerStatic::make($svgString);
+        $pngBytes = (string) $imgObj->encode('png');
+        if (!empty($pngBytes)) {
+          Log::info('CatalogImage: Converted SVG to PNG using Intervention Image V2 (ImageManagerStatic).');
+        }
+      } catch (\Throwable $e) {
+        Log::warning('CatalogImage: Intervention Image V2 failed: ' . $e->getMessage());
+        $pngBytes = null;
+      }
+    }
+
+    if (empty($pngBytes) && class_exists('\Intervention\Image\ImageManager')) {
+      try {
+        if (class_exists('\Intervention\Image\Drivers\Imagick\Driver')) {
+          $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Imagick\Driver());
+          $imgObj = $manager->read($svgString);
+          $pngBytes = (string) $imgObj->toPng();
+          if (!empty($pngBytes)) {
+            Log::info('CatalogImage: Converted SVG to PNG using Intervention Image V3 (Imagick Driver).');
+          }
+        } elseif (class_exists('\Intervention\Image\Drivers\Gd\Driver')) {
+          $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+          $imgObj = $manager->read($svgString);
+          $pngBytes = (string) $imgObj->toPng();
+          if (!empty($pngBytes)) {
+            Log::info('CatalogImage: Converted SVG to PNG using Intervention Image V3 (GD Driver).');
+          }
+        }
+      } catch (\Throwable $e) {
+        Log::warning('CatalogImage: Intervention Image V3 failed: ' . $e->getMessage());
+        $pngBytes = null;
+      }
+    }
+
+    // 2. Try PHP Imagick extension
+    if (empty($pngBytes) && extension_loaded('imagick')) {
       try {
         $im = new \Imagick();
         $im->setResolution(150, 150);
@@ -662,12 +701,16 @@ class FeedController extends Controller
         $pngBytes = $im->getImageBlob();
         $im->clear();
         $im->destroy();
+        if (!empty($pngBytes)) {
+          Log::info('CatalogImage: Converted SVG to PNG using Native PHP Imagick Extension.');
+        }
       } catch (\Throwable $e) {
+        Log::warning('CatalogImage: Native PHP Imagick Extension failed: ' . $e->getMessage());
         $pngBytes = null;
       }
     }
 
-    // 2. Fallback to CLI commands if Imagick extension is not enabled
+    // 3. Fallback to CLI commands if package or Imagick extension is not enabled
     if (empty($pngBytes)) {
       $tempDir = storage_path('app/temp');
       if (!file_exists($tempDir)) {
@@ -691,6 +734,7 @@ class FeedController extends Controller
         @exec($cmd, $output, $returnCode);
         if (file_exists($tempPng) && filesize($tempPng) > 0) {
           $pngBytes = file_get_contents($tempPng);
+          Log::info('CatalogImage: Converted SVG to PNG using CLI command: ' . $cmd);
           break;
         }
       }
@@ -698,6 +742,11 @@ class FeedController extends Controller
       @unlink($tempSvg);
       @unlink($tempPng);
     }
+
+    if (empty($pngBytes)) {
+      Log::error('CatalogImage: All SVG to PNG conversion drivers/methods failed. Returning raw SVG fallback.');
+    }
+
 
     if ($pngBytes) {
       $mainImg = @imagecreatefromstring($pngBytes);
