@@ -469,20 +469,162 @@ class FeedController extends Controller
 
     $pngBytes = $this->convertSvgToPng($svg, $machinery);
 
-    if ($pngBytes) {
-      return Response::make($pngBytes, 200, [
-        'Content-Type' => 'image/png',
-        'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.png"',
-        'Cache-Control' => 'public, max-age=3600',
-      ]);
+    if (!$pngBytes) {
+      // Pure PHP GD Fallback if ImageMagick extension or exec() CLI is disabled on production server
+      $pngBytes = $this->generateCatalogPngGd($machinery, $timeLeftMain, $timeLeftSub, $formattedBidPrice, $title, $categoryName, $auctionId);
     }
 
-    return Response::make($svg, 200, [
-      'Content-Type' => 'image/svg+xml; charset=utf-8',
-      'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.svg"',
-      'Cache-Control' => 'public, max-age=3600',
+    return Response::make($pngBytes, 200, [
+      'Content-Type' => 'image/png',
+      'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.png"',
+      'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
+      'Pragma' => 'no-cache',
+      'Expires' => '0',
     ]);
   }
+
+  private function generateCatalogPngGd($machinery, $timeLeftMain, $timeLeftSub, $formattedBidPrice, $title, $categoryName, $auctionId)
+  {
+    $w = 1080;
+    $h = 1080;
+    $img = imagecreatetruecolor($w, $h);
+
+    $cBg = imagecolorallocate($img, 10, 11, 13);
+    $cCardBg = imagecolorallocate($img, 13, 14, 18);
+    $cBoxBg = imagecolorallocate($img, 16, 18, 23);
+    $cOrange = imagecolorallocate($img, 255, 85, 0);
+    $cWhite = imagecolorallocate($img, 255, 255, 255);
+    $cMuted = imagecolorallocate($img, 161, 165, 183);
+    $cBorder = imagecolorallocate($img, 35, 38, 48);
+
+    imagefill($img, 0, 0, $cBg);
+
+    // Outer Frame
+    imagefilledrectangle($img, 12, 12, 1068, 1068, $cCardBg);
+    imagerectangle($img, 12, 12, 1068, 1068, $cOrange);
+
+    // Header Logo
+    $logoLocalPath = public_path('settings/1766215409_logo.png');
+    if (!file_exists($logoLocalPath)) {
+      $logoLocalPath = public_path('settings/1766215409_logo.jpg');
+    }
+    if (file_exists($logoLocalPath)) {
+      $logoImg = @imagecreatefromstring(file_get_contents($logoLocalPath));
+      if ($logoImg) {
+        imagecopyresampled($img, $logoImg, 32, 22, 0, 0, 125, 125, imagesx($logoImg), imagesy($logoImg));
+        imagedestroy($logoImg);
+      }
+    }
+
+    $fontFile = public_path('fonts/Montserrat-Bold.ttf');
+
+    // Header Brand Text
+    if (file_exists($fontFile)) {
+      @imagettftext($img, 36, 0, 170, 78, $cWhite, $fontFile, "EASTLINE");
+      @imagettftext($img, 15, 0, 172, 110, $cWhite, $fontFile, "EQUIPMENT AUCTIONS");
+    } else {
+      imagestring($img, 5, 170, 50, "EASTLINE", $cWhite);
+      imagestring($img, 3, 172, 80, "EQUIPMENT AUCTIONS", $cWhite);
+    }
+
+    // Top Right Timer Banner
+    imagefilledrectangle($img, 620, 12, 1068, 152, $cOrange);
+    if (file_exists($fontFile)) {
+      @imagettftext($img, 32, 0, 725, 72, $cWhite, $fontFile, $timeLeftMain);
+      @imagettftext($img, 16, 0, 725, 106, $cWhite, $fontFile, $timeLeftSub);
+    }
+
+    // Photo Box (620x490)
+    imagefilledrectangle($img, 30, 165, 650, 655, $cBoxBg);
+    imagerectangle($img, 30, 165, 650, 655, $cBorder);
+
+    // Overlay machinery photo inside 620x490 box
+    if ($machinery) {
+      $firstImage = \App\Models\MachineryFileManager::where('machinery_id', $machinery->id)
+        ->where('type', 'image')->orderBy('id', 'asc')->first();
+      if (!$firstImage && $machinery->images) {
+        $firstImage = $machinery->images->first();
+      }
+      $imgPath = $firstImage ? $firstImage->image_path : ($machinery->main_image ?? null);
+      if (!empty($imgPath)) {
+        $photoUrl = FileResolverService::resolveMachineryImageUrl($imgPath);
+        $photoBytes = @file_get_contents($photoUrl);
+        if ($photoBytes) {
+          $prodImg = @imagecreatefromstring($photoBytes);
+          if ($prodImg) {
+            $pw = imagesx($prodImg);
+            $ph = imagesy($prodImg);
+            $targetRatio = 620.0 / 490.0;
+            $srcW = $pw;
+            $srcH = (int) ($pw / $targetRatio);
+            $srcX = 0;
+            $srcY = (int) (($ph - $srcH) / 2);
+            if ($srcY < 0) {
+              $srcY = 0;
+              $srcH = $ph;
+              $srcW = (int) ($ph * $targetRatio);
+              $srcX = (int) (($pw - $srcW) / 2);
+            }
+            imagecopyresampled($img, $prodImg, 30, 165, $srcX, $srcY, 620, 490, $srcW, $srcH);
+            imagedestroy($prodImg);
+          }
+        }
+      }
+    }
+
+    // Right Bidding Panel (380x490)
+    imagefilledrectangle($img, 670, 165, 1050, 655, $cBoxBg);
+    imagerectangle($img, 670, 165, 1050, 655, $cBorder);
+
+    // Bidding Pill Header
+    imagefilledrectangle($img, 695, 185, 1025, 229, $cOrange);
+    if (file_exists($fontFile)) {
+      @imagettftext($img, 14, 0, 755, 214, $cWhite, $fontFile, "AUCTION BIDDING");
+      @imagettftext($img, 15, 0, 760, 283, $cMuted, $fontFile, "CURRENT BID");
+      @imagettftext($img, 42, 0, 740, 350, $cOrange, $fontFile, $formattedBidPrice);
+    }
+
+    // BID NOW Button
+    imagefilledrectangle($img, 715, 380, 1005, 448, $cOrange);
+    if (file_exists($fontFile)) {
+      @imagettftext($img, 22, 0, 805, 424, $cWhite, $fontFile, "BID NOW");
+    }
+
+    // Product Title Panel (1020x156)
+    imagefilledrectangle($img, 30, 671, 1050, 827, $cBoxBg);
+    imagerectangle($img, 30, 671, 1050, 827, $cBorder);
+    if (file_exists($fontFile)) {
+      @imagettftext($img, 30, 0, 65, 725, $cWhite, $fontFile, $title);
+      $metaText = "ID: {$auctionId}   |   CATEGORY: {$categoryName}";
+      @imagettftext($img, 15, 0, 65, 787, $cOrange, $fontFile, $metaText);
+    } else {
+      imagestring($img, 5, 65, 710, $title, $cWhite);
+      imagestring($img, 4, 65, 770, "ID: {$auctionId} | CATEGORY: {$categoryName}", $cOrange);
+    }
+
+    // Trust Badges Bar
+    imagefilledrectangle($img, 30, 843, 1050, 908, $cCardBg);
+    if (file_exists($fontFile)) {
+      @imagettftext($img, 11, 0, 100, 880, $cWhite, $fontFile, "INSPECTED & VERIFIED");
+      @imagettftext($img, 11, 0, 340, 880, $cWhite, $fontFile, "QUALITY EQUIPMENT");
+      @imagettftext($img, 11, 0, 590, 880, $cWhite, $fontFile, "NATIONWIDE SHIPPING");
+      @imagettftext($img, 11, 0, 850, 880, $cWhite, $fontFile, "SECURE BIDDING");
+    }
+
+    // Footer Bar
+    imagefilledrectangle($img, 240, 995, 840, 1045, $cOrange);
+    if (file_exists($fontFile)) {
+      @imagettftext($img, 16, 0, 350, 1028, $cWhite, $fontFile, "EASTLINEAUCTIONS.COM");
+    }
+
+    ob_start();
+    imagepng($img);
+    $pngData = ob_get_clean();
+    imagedestroy($img);
+
+    return $pngData;
+  }
+
 
   private function convertSvgToPng($svgString, $machinery = null)
   {
