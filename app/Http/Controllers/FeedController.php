@@ -256,13 +256,28 @@ class FeedController extends Controller
     $timeLeftSubSvg = htmlspecialchars($timeLeftSub, ENT_XML1, 'UTF-8');
     $photoSrcSvg = !empty($imageBase64) ? $imageBase64 : $imageUrl;
 
+    // Base64 embed Montserrat-Bold font directly into SVG for 100% server container independence
+    $fontPath = public_path('fonts/Montserrat-Bold.ttf');
+    $fontBase64Svg = '';
+    if (file_exists($fontPath)) {
+      $fontData = @file_get_contents($fontPath);
+      if ($fontData) {
+        $fontBase64Svg = base64_encode($fontData);
+      }
+    }
+
+    $fontStyleSvg = !empty($fontBase64Svg)
+      ? "@font-face { font-family: 'MontserratCustom'; src: url('data:font/ttf;charset=utf-8;base64,{$fontBase64Svg}') format('truetype'); } text { font-family: 'MontserratCustom', 'Segoe UI', Arial, sans-serif; }"
+      : "text { font-family: 'Segoe UI', Arial, sans-serif; }";
+
+
     $svg = <<<SVG
       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1080 1080" width="1080" height="1080">
         <defs>
           <style>
-            text { font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif; }
-
+            {$fontStyleSvg}
           </style>
+
           <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="#ff4500"/>
             <stop offset="100%" stop-color="#ff6a00"/>
