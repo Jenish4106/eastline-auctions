@@ -182,7 +182,7 @@ class FeedController extends Controller
 
     // 1. Calculate Highest / Current Bid
     $highestBid = $machinery->bids->where('auction_id', $machinery->auction_id)->max('amount');
-    $currentBidVal = $highestBid ?? ($machinery->buy_now_price > 0 ? $machinery->buy_now_price : $machinery->bid_start_price);
+    $currentBidVal = $highestBid ?? ($machinery->bid_start_price > 0 ? $machinery->bid_start_price : $machinery->buy_now_price);
     $formattedBidPrice = '$' . number_format((float) $currentBidVal, 0);
 
     // 2. Time Left Calculation
