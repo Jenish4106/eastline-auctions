@@ -215,20 +215,6 @@ class FeedController extends Controller
     }
     $auctionId = $machinery->auction_id ?? $machinery->id;
 
-    $pngBytes = null;
-    // Imagick primary — renders SVG pixel-perfectly including fonts and images
-    // GD fallback only if Imagick not available
-
-    if ($pngBytes) {
-      return Response::make($pngBytes, 200, [
-        'Content-Type' => 'image/png',
-        'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.png"',
-        'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
-        'Pragma' => 'no-cache',
-        'Expires' => '0',
-      ]);
-    }
-
     $imagePath = null;
     $firstImage = \App\Models\MachineryFileManager::where('machinery_id', $machinery->id)
       ->where('type', 'image')
@@ -243,10 +229,17 @@ class FeedController extends Controller
 
     if ((empty($imageBase64) || str_contains($imageBase64, 'defaults/default.png')) && !empty($imagePath)) {
       $cleanName = basename(parse_url($imagePath, PHP_URL_PATH) ?? $imagePath);
-      $localP = public_path('uploads/machinery/images/' . $cleanName);
-      if (file_exists($localP)) {
-        $mime = mime_content_type($localP) ?: 'image/jpeg';
-        $imageBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($localP));
+      $possibleLocalPaths = [
+        public_path('uploads/machinery/images/' . $cleanName),
+        public_path('public/uploads/machinery/images/' . $cleanName),
+        storage_path('app/public/uploads/machinery/images/' . $cleanName),
+      ];
+      foreach ($possibleLocalPaths as $localP) {
+        if (file_exists($localP)) {
+          $mime = mime_content_type($localP) ?: 'image/jpeg';
+          $imageBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($localP));
+          break;
+        }
       }
     }
     if ((empty($imageBase64) || str_contains($imageBase64, 'defaults/default.png')) && !empty($imageUrl)) {
@@ -254,6 +247,8 @@ class FeedController extends Controller
     }
 
     $photoSrc = $this->normalizeCatalogImageDataUri(!empty($imageBase64) ? $imageBase64 : $imageUrl);
+
+    // 1. Try SVG to PNG Conversion (Imagick / Intervention) with embedded base64 image
     $fontPath = public_path('fonts/Montserrat-Bold.ttf');
     $fontStyleSvg = file_exists($fontPath)
       ? "@font-face{font-family:'EC';src:url('data:font/truetype;base64," . base64_encode(file_get_contents($fontPath)) . "') format('truetype');font-weight:900} text{font-family:'EC','Montserrat',Arial,sans-serif}"
@@ -263,10 +258,8 @@ class FeedController extends Controller
     $pE = htmlspecialchars($formattedBidPrice, ENT_XML1, 'UTF-8');
     $mE = htmlspecialchars($timeLeftMain, ENT_XML1, 'UTF-8');
     $sE = htmlspecialchars($timeLeftSub, ENT_XML1, 'UTF-8');
-    // Use URL for photo (not base64) to avoid Imagick memory overflow
-    $iE = htmlspecialchars($imageUrl, ENT_XML1, 'UTF-8');
+    $iE = htmlspecialchars($photoSrc, ENT_XML1, 'UTF-8');
 
-    // Load LIVE AUCTION badge PNG as base64 (small file, safe)
     $liveAuctionPath = public_path('settings/live-auction.png');
     $liveAuctionB64  = file_exists($liveAuctionPath)
       ? 'data:image/png;base64,' . base64_encode(file_get_contents($liveAuctionPath)) : '';
@@ -290,47 +283,31 @@ class FeedController extends Controller
       <g clip-path="url(#cp)">
         <rect x="20" y="20" width="1040" height="640" fill="#0A1727"/>
         <image href="{$iE}" xlink:href="{$iE}" x="20" y="20" width="1040" height="640" preserveAspectRatio="xMidYMid slice" clip-path="url(#ph)"/>
-        <!-- white section starts right at image bottom, diagonal rises 40px on right -->
         <path d="M20 660 L840 620 L1060 660 L1060 960 L20 960Z" fill="#ffffff"/>
-        <!-- LIVE AUCTION badge -->
-        <!-- LIVE AUCTION badge — PNG image -->
         <image href="{$liveAuctionE}" xlink:href="{$liveAuctionE}" x="20" y="44" width="320" height="80" preserveAspectRatio="xMinYMid meet"/>
-        <!-- Title -->
         <text x="56" y="752" fill="#0A1727" font-size="66" class="ht">{$tE}</text>
         <rect x="58" y="766" width="100" height="7" rx="3.5" fill="#f97316"/>
-        <!-- CURRENT BID label -->
         <text x="56" y="808" fill="#6b7280" font-size="20" class="sm">CURRENT BID</text>
-        <!-- Price — baseline y=844, centre ~810 -->
         <text x="56" y="884" fill="#0A1727" font-size="64" class="ht">{$pE}</text>
-        <!-- Divider -->
         <line x1="348" y1="802" x2="348" y2="912" stroke="#d1d5db" stroke-width="2"/>
-        <!-- Clock icon -->
         <circle cx="396" cy="856" r="26" fill="none" stroke="#f97316" stroke-width="4"/>
         <polyline points="396,842 396,856 408,856" fill="none" stroke="#f97316" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- Time text -->
         <text x="430" y="848" fill="#0A1727" font-size="24" class="ht">{$mE}</text>
         <text x="430" y="872" fill="#6b7280" font-size="16" class="sm">{$sE}</text>
-        <!-- BID NOW button — rounded parallelogram with shadow -->
-        <!-- shadow layer -->
         <path d="M668 821 Q662 821 664 829 L644 893 Q642 901 650 901 L962 901 Q970 901 972 893 L992 829 Q994 821 988 821 Z" fill="rgba(0,0,0,0.18)"/>
-        <!-- white border ring -->
-        <path d="M662 813 Q656 813 658 821 L637 887 Q635 895 643 895 L964 895 Q972 895 974 887 L995 821 Q997 813 991 813 Z" fill="#ffffff"/>
-        <!-- orange fill -->
+        <path d="M662 813 Q656 813 658 821 L637 887 Q635 895 643 895 L964 895 Q972 895 995 821 Q997 813 991 813 Z" fill="#ffffff"/>
         <path d="M664 817 Q658 817 660 825 L639 890 Q637 897 645 897 L962 897 Q970 897 972 890 L993 825 Q995 817 989 817 Z" fill="url(#og)"/>
         <circle cx="700" cy="856" r="24" fill="#ffffff"/>
         <g transform="translate(687,843) scale(1.1)"><g transform="rotate(-45 12 12)"><rect x="6" y="6" width="13" height="7" rx="1.5" fill="#ea580c"/><rect x="11" y="11" width="4" height="13" rx="1" fill="#ea580c"/></g><rect x="4" y="21" width="17" height="3" rx="1" fill="#ea580c"/></g>
         <text x="734" y="863" fill="#ffffff" font-size="26" class="ht">BID NOW</text>
         <path d="M940 844 L952 856 L940 868" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <!-- Footer -->
         <rect x="20" y="960" width="1040" height="100" fill="#0A1727"/>
-        <!-- Badge 1: INSPECT ON SITE -->
         <g transform="translate(68, 993)">
           <path d="M16 0 L32 6 L32 20 C32 28 23 34 16 36 C9 34 0 28 0 20 L0 6Z" fill="none" stroke="#f97316" stroke-width="2.5"/>
           <path d="M8 18 L14 24 L26 11" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
           <text x="42" y="26" fill="#ffffff" font-size="20" class="sm">INSPECT ON SITE</text>
         </g>
         <line x1="370" y1="978" x2="370" y2="1052" stroke="#334155" stroke-width="2"/>
-        <!-- Badge 2: SHIPPING AVAILABLE -->
         <g transform="translate(400, 999)">
           <rect x="0" y="0" width="26" height="22" rx="1" fill="none" stroke="#f97316" stroke-width="2.5"/>
           <path d="M26 7 H36 L44 14 V22 H26Z" fill="none" stroke="#f97316" stroke-width="2.5"/>
@@ -339,7 +316,6 @@ class FeedController extends Controller
           <text x="56" y="19" fill="#ffffff" font-size="20" class="sm">SHIPPING AVAILABLE</text>
         </g>
         <line x1="718" y1="978" x2="718" y2="1052" stroke="#334155" stroke-width="2"/>
-        <!-- Badge 3: SECURE BIDDING -->
         <g transform="translate(748, 998)">
           <rect x="0" y="13" width="26" height="20" rx="2" fill="none" stroke="#f97316" stroke-width="2.5"/>
           <path d="M4 13 V8 C4 3 7 0 13 0 C19 0 22 3 22 8 V13" fill="none" stroke="#f97316" stroke-width="2.5"/>
@@ -361,7 +337,7 @@ class FeedController extends Controller
       ]);
     }
 
-    // GD last-resort fallback
+    // 2. GD Fallback: Pure PHP pixel-perfect renderer
     if (extension_loaded('gd')) {
       try {
         $gdPng = $this->generateCatalogPngGd(
@@ -447,10 +423,8 @@ class FeedController extends Controller
     $this->drawCoverImage($img, $machinery, $photoX, $photoY, $photoW, $photoH);
 
     // ── diagonal white section separator ─────────────────────────────────────
-    // White polygon: bottom-left flat, rises diagonally to ~40px higher on right
-    $sepTop = $photoY + $photoH;  // ~620
-    $diagRise = 48;  // how many px the right side is higher
-    // polygon: left at sepTop, right at (sepTop - diagRise), down to card bottom
+    $sepTop = $photoY + $photoH;  // ~660
+    $diagRise = 40;  // how many px the right side is higher
     $cardBot = $cy + $ch;  // 1060
     $whiteX = $cx;
     $whiteXr = $cx + $cw;
@@ -465,22 +439,6 @@ class FeedController extends Controller
       $whiteX,
       $cardBot,
     ], 4, $cWhite);
-
-    // ── soft drop-shadow below the diagonal edge (multi-layer) ───────────────
-    for ($s = 6; $s >= 1; $s--) {
-      $alpha = (int) (120 - $s * 16);  // 104 → 24  (GD alpha: 0=opaque 127=transparent)
-      $sc = imagecolorallocatealpha($img, 0, 0, 0, $alpha);
-      imagefilledpolygon($img, [
-        $whiteX,
-        $sepTop + $s,
-        $whiteXr,
-        $sepTop - $diagRise + $s,
-        $whiteXr,
-        $sepTop - $diagRise + $s + 4,
-        $whiteX,
-        $sepTop + $s + 4,
-      ], 4, $sc);
-    }
 
     // ── left + right border lines on the white section ───────────────────────
     $footerTop = $cardBot - 100;
@@ -728,21 +686,71 @@ class FeedController extends Controller
     }
 
     $cleanName = basename(parse_url($imagePath, PHP_URL_PATH) ?? $imagePath);
-    $localPath = public_path('uploads/machinery/images/' . $cleanName);
-    if (file_exists($localPath)) {
-      return @file_get_contents($localPath);
+    $possibleLocalPaths = [
+      public_path('uploads/machinery/images/' . $cleanName),
+      public_path('public/uploads/machinery/images/' . $cleanName),
+      storage_path('app/public/uploads/machinery/images/' . $cleanName),
+      storage_path('app/uploads/machinery/images/' . $cleanName),
+      base_path('uploads/machinery/images/' . $cleanName),
+    ];
+
+    foreach ($possibleLocalPaths as $localPath) {
+      if (file_exists($localPath) && is_file($localPath)) {
+        $content = @file_get_contents($localPath);
+        if (!empty($content)) {
+          return $content;
+        }
+      }
     }
 
     $photoUrl = FileResolverService::resolveMachineryImageUrl($imagePath);
-    if (str_starts_with($photoUrl, 'http://') || str_starts_with($photoUrl, 'https://')) {
-      $context = stream_context_create([
-        'http' => ['timeout' => 4],
-        'ssl' => ['verify_peer' => false, 'verify_peer_name' => false],
-      ]);
-      return @file_get_contents(strtok($photoUrl, '?'), false, $context) ?: null;
+    if (!empty($photoUrl) && (str_starts_with($photoUrl, 'http://') || str_starts_with($photoUrl, 'https://'))) {
+      if (!str_contains($photoUrl, 'defaults/default.png')) {
+        return $this->fetchRawUrlBytes($photoUrl);
+      }
     }
 
     return null;
+  }
+
+  private function fetchRawUrlBytes(?string $url): ?string
+  {
+    if (empty($url) || (!str_starts_with($url, 'http://') && !str_starts_with($url, 'https://'))) {
+      return null;
+    }
+
+    $cleanUrl = strtok($url, '?');
+    $content = null;
+
+    if (function_exists('curl_init')) {
+      $ch = curl_init($cleanUrl);
+      curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
+        CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) EastlineCatalog/1.0',
+      ]);
+      $response = curl_exec($ch);
+      $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      curl_close($ch);
+
+      if ($response !== false && $status >= 200 && $status < 300) {
+        $content = $response;
+      }
+    }
+
+    if (empty($content)) {
+      $context = stream_context_create([
+        'http' => ['timeout' => 10, 'user_agent' => 'EastlineCatalog/1.0'],
+        'ssl' => ['verify_peer' => false, 'verify_peer_name' => false],
+      ]);
+      $content = @file_get_contents($cleanUrl, false, $context) ?: null;
+    }
+
+    return $content;
   }
 
   private function drawGavelIcon($img, $x, $y, $scale, $color)
@@ -800,50 +808,17 @@ class FeedController extends Controller
   private function drawFooterLock($img, $x, $y, $color)
   {
     imagesetthickness($img, 3);
-    imagerectangle($img, $x, $y + 27, $x + 38, $y + 55, $color);
-    imagearc($img, $x + 19, $y + 27, 27, 38, 180, 360, $color);
-    imageline($img, $x + 6, $y + 27, $x + 6, $y + 18, $color);
-    imageline($img, $x + 32, $y + 27, $x + 32, $y + 18, $color);
-    imagefilledellipse($img, $x + 19, $y + 40, 5, 5, $color);
+    imagerectangle($img, $x, $y + 16, $x + 28, $y + 36, $color);
+    imagearc($img, $x + 14, $y + 16, 20, 24, 180, 360, $color);
+    imageline($img, $x + 4, $y + 16, $x + 4, $y + 9, $color);
+    imageline($img, $x + 24, $y + 16, $x + 24, $y + 9, $color);
+    imagefilledellipse($img, $x + 14, $y + 26, 4, 4, $color);
     imagesetthickness($img, 1);
   }
 
   private function fetchCatalogImageDataUri(?string $imageUrl): ?string
   {
-    if (empty($imageUrl) || (!str_starts_with($imageUrl, 'http://') && !str_starts_with($imageUrl, 'https://'))) {
-      return null;
-    }
-
-    $cleanUrl = strtok($imageUrl, '?');
-    $content = null;
-
-    if (function_exists('curl_init')) {
-      $ch = curl_init($cleanUrl);
-      curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_CONNECTTIMEOUT => 5,
-        CURLOPT_TIMEOUT => 10,
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_SSL_VERIFYHOST => false,
-      ]);
-      $response = curl_exec($ch);
-      $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-      curl_close($ch);
-
-      if ($response !== false && $status >= 200 && $status < 300) {
-        $content = $response;
-      }
-    }
-
-    if (empty($content)) {
-      $context = stream_context_create([
-        'http' => ['timeout' => 10],
-        'ssl' => ['verify_peer' => false, 'verify_peer_name' => false],
-      ]);
-      $content = @file_get_contents($cleanUrl, false, $context) ?: null;
-    }
-
+    $content = $this->fetchRawUrlBytes($imageUrl);
     if (empty($content)) {
       return null;
     }
