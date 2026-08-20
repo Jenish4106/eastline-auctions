@@ -216,17 +216,8 @@ class FeedController extends Controller
     $auctionId = $machinery->auction_id ?? $machinery->id;
 
     $pngBytes = null;
-    if (extension_loaded('gd')) {
-      try {
-        $pngBytes = $this->generateCatalogPngGd(
-          $machinery, $timeLeftMain, $timeLeftSub,
-          $formattedBidPrice, $title, $categoryName, $auctionId
-        );
-      } catch (\Throwable $e) {
-        Log::warning('CatalogImage GD failed: ' . $e->getMessage());
-        $pngBytes = null;
-      }
-    }
+    // Imagick primary — renders SVG pixel-perfectly including fonts and images
+    // GD fallback only if Imagick not available
 
     if ($pngBytes) {
       return Response::make($pngBytes, 200, [
@@ -369,6 +360,27 @@ class FeedController extends Controller
       ]);
     }
 
+    // GD last-resort fallback
+    if (extension_loaded('gd')) {
+      try {
+        $gdPng = $this->generateCatalogPngGd(
+          $machinery, $timeLeftMain, $timeLeftSub,
+          $formattedBidPrice, $title, $categoryName, $auctionId
+        );
+        if ($gdPng) {
+          return Response::make($gdPng, 200, [
+            'Content-Type' => 'image/png',
+            'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.png"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+          ]);
+        }
+      } catch (\Throwable $e) {
+        Log::warning('CatalogImage GD fallback failed: ' . $e->getMessage());
+      }
+    }
+
     return Response::make($svg, 200, [
       'Content-Type' => 'image/svg+xml; charset=utf-8',
       'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.svg"',
@@ -486,50 +498,46 @@ class FeedController extends Controller
 
     // ── title block ───────────────────────────────────────────────────────────
     $titleX = $cx + 56;
-    $titleY = $sepTop + 58;   // pushed down — less overlap with photo edge
+    $titleY = $sepTop + 100;   // enough gap below diagonal edge
 
-    // auto-size title — bigger max, more room
     $maxTitleW = $cw - 112;
-    $titleSize = $this->fitTextSize($title, 76, 38, $maxTitleW, $font);
+    $titleSize = $this->fitTextSize($title, 68, 34, $maxTitleW, $font);
     $this->gdText($img, $title, $titleX, $titleY, $titleSize, $cTitle, $font);
 
-    // orange underline accent — wider
-    $this->gdFillRoundRect($img, $titleX + 2, $titleY + 16, 108, 8, 4, $cOrange);
+    $this->gdFillRoundRect($img, $titleX + 2, $titleY + 14, 100, 8, 4, $cOrange);
 
     // ── 3-column info row ─────────────────────────────────────────────────────
-    $rowY = $titleY + 90;  // more breathing room after title
+    $rowY = $titleY + 80;
 
     // Col 1 — CURRENT BID + price
     $col1X = $cx + 56;
-    $this->gdText($img, 'CURRENT BID', $col1X, $rowY + 28, 22, $cMuted, $font);
-    $priceSize = $this->fitTextSize($formattedBidPrice, 74, 44, 290, $font);
-    $this->gdText($img, $formattedBidPrice, $col1X, $rowY + 32 + $priceSize, $priceSize, $cTitle, $font);
+    $this->gdText($img, 'CURRENT BID', $col1X, $rowY + 26, 20, $cMuted, $font);
+    $priceSize = $this->fitTextSize($formattedBidPrice, 62, 38, 240, $font);
+    $this->gdText($img, $formattedBidPrice, $col1X, $rowY + 26 + $priceSize + 8, $priceSize, $cTitle, $font);
 
     // vertical divider
-    $div1X = $col1X + 310;
-    imageline($img, $div1X, $rowY + 8, $div1X, $rowY + 118, $cDivider);
+    $div1X = $col1X + 270;
+    imageline($img, $div1X, $rowY + 10, $div1X, $rowY + 108, $cDivider);
 
     // Col 2 — clock + time left
-    $col2X = $div1X + 30;
-    $clockCX = $col2X + 34;
-    $clockCY = $rowY + 64;
+    $col2X = $div1X + 22;
+    $clockCX = $col2X + 28; $clockCY = $rowY + 60;
     imagesetthickness($img, 5);
-    imagearc($img, $clockCX, $clockCY, 62, 62, 0, 360, $cOrange);
-    imageline($img, $clockCX, $clockCY - 19, $clockCX, $clockCY, $cOrange);
-    imageline($img, $clockCX, $clockCY, $clockCX + 15, $clockCY, $cOrange);
+    imagearc($img, $clockCX, $clockCY, 54, 54, 0, 360, $cOrange);
+    imageline($img, $clockCX, $clockCY - 16, $clockCX, $clockCY, $cOrange);
+    imageline($img, $clockCX, $clockCY, $clockCX + 13, $clockCY, $cOrange);
     imagesetthickness($img, 1);
 
-    $timeTextX = $col2X + 78;
-    $this->gdText($img, $timeLeftMain, $timeTextX, $rowY + 52, 32, $cTitle, $font);
-    $this->gdText($img, $timeLeftSub, $timeTextX, $rowY + 88, 21, $cMuted, $font);
+    $timeTextX = $col2X + 66;
+    $this->gdText($img, $timeLeftMain, $timeTextX, $rowY + 48, 24, $cTitle, $font);
+    $this->gdText($img, $timeLeftSub,  $timeTextX, $rowY + 78, 17, $cMuted,  $font);
 
-    // ── Col 3 — BID NOW button (rounded parallelogram/rectangle with surround shadow) ──
-    // ── Col 3 — BID NOW button (rounded parallelogram) ───────────────────────
-    $btnX = $cx + 68 + 580;
-    $btnY = $rowY + 8;
-    $btnW = $cw - ($btnX - $cx) - 40;
-    $btnH = 90;
-    $btnR = 18;
+    // Col 3 — BID NOW button
+    $btnX  = $col2X + 66 + 170;
+    $btnY  = $rowY + 4;
+    $btnW  = ($cx + $cw - 30) - $btnX;
+    $btnH  = 84;
+    $btnR  = 16;
 
     for ($sh = 6; $sh >= 1; $sh--) {
       $shAlpha = 118 + (int)($sh * 1.4);
