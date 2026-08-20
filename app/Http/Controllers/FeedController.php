@@ -738,30 +738,35 @@ class FeedController extends Controller
 
   private function drawGavelIcon($img, $x, $y, $scale, $color)
   {
-    imagesetthickness($img, max(3, (int) round(5 * $scale)));
-    imageline($img, $x + (int) (9 * $scale), $y + (int) (24 * $scale), $x + (int) (30 * $scale), $y + (int) (45 * $scale), $color);
+    // Clean upward-arrow / gavel icon
+    $s  = (float)$scale;
+    $cx = (int)($x + 16 * $s);
+    $cy = (int)($y + 16 * $s);
+    $r  = (int)(11 * $s);
+
+    // vertical shaft
+    imagesetthickness($img, max(2, (int)(4 * $s)));
+    imageline($img, $cx, $cy - $r + 2, $cx, $cy + (int)(4 * $s), $color);
     imagesetthickness($img, 1);
+
+    // filled arrowhead (upward triangle)
+    $hw = (int)(8 * $s);
+    $ht = (int)(9 * $s);
     imagefilledpolygon($img, [
-      $x + (int) (9 * $scale),
-      $y + (int) (8 * $scale),
-      $x + (int) (24 * $scale),
-      $y + (int) (22 * $scale),
-      $x + (int) (18 * $scale),
-      $y + (int) (28 * $scale),
-      $x + (int) (3 * $scale),
-      $y + (int) (14 * $scale),
-    ], 4, $color);
-    imagefilledpolygon($img, [
-      $x + (int) (28 * $scale),
-      $y + (int) (0 * $scale),
-      $x + (int) (42 * $scale),
-      $y + (int) (14 * $scale),
-      $x + (int) (36 * $scale),
-      $y + (int) (20 * $scale),
-      $x + (int) (22 * $scale),
-      $y + (int) (6 * $scale),
-    ], 4, $color);
-    $this->drawRoundedRect($img, $x + (int) (3 * $scale), $y + (int) (39 * $scale), (int) (32 * $scale), (int) (4 * $scale), 2, $color);
+      $cx,        $cy - $r,
+      $cx - $hw,  $cy - $r + $ht,
+      $cx + $hw,  $cy - $r + $ht,
+    ], 3, $color);
+
+    // base bar
+    $bw2 = (int)(9 * $s);
+    $bh2 = max(2, (int)(3 * $s));
+    imagefilledrectangle($img,
+      $cx - $bw2, $cy + (int)(5 * $s),
+      $cx + $bw2, $cy + (int)(5 * $s) + $bh2,
+      $color
+    );
+    imagesetthickness($img, 1);
   }
 
   private function drawFooterShield($img, $x, $y, $color)
