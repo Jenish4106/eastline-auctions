@@ -215,6 +215,28 @@ class FeedController extends Controller
     }
     $auctionId = $machinery->auction_id ?? $machinery->id;
 
+    // 1. Primary: GD Renderer (Pure PHP, pixel-perfect, works reliably across local & production environments)
+    if (extension_loaded('gd')) {
+      try {
+        $gdPng = $this->generateCatalogPngGd(
+          $machinery, $timeLeftMain, $timeLeftSub,
+          $formattedBidPrice, $title, $categoryName, $auctionId
+        );
+        if (!empty($gdPng)) {
+          return Response::make($gdPng, 200, [
+            'Content-Type' => 'image/png',
+            'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.png"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+          ]);
+        }
+      } catch (\Throwable $e) {
+        Log::warning('CatalogImage GD rendering failed: ' . $e->getMessage());
+      }
+    }
+
+    // 2. Fallback: SVG to PNG Conversion (Imagick / Intervention)
     $imagePath = null;
     $firstImage = \App\Models\MachineryFileManager::where('machinery_id', $machinery->id)
       ->where('type', 'image')
@@ -248,7 +270,6 @@ class FeedController extends Controller
 
     $photoSrc = $this->normalizeCatalogImageDataUri(!empty($imageBase64) ? $imageBase64 : $imageUrl);
 
-    // 1. Try SVG to PNG Conversion (Imagick / Intervention) with embedded base64 image
     $fontPath = public_path('fonts/Montserrat-Bold.ttf');
     $fontStyleSvg = file_exists($fontPath)
       ? "@font-face{font-family:'EC';src:url('data:font/truetype;base64," . base64_encode(file_get_contents($fontPath)) . "') format('truetype');font-weight:900} text{font-family:'EC','Montserrat',Arial,sans-serif}"
@@ -325,38 +346,6 @@ class FeedController extends Controller
       </g>
       </svg>
       SVG;
-
-    $svgPng = $this->convertSvgToPng($svg, $machinery);
-    if ($svgPng) {
-      return Response::make($svgPng, 200, [
-        'Content-Type' => 'image/png',
-        'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.png"',
-        'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
-        'Pragma' => 'no-cache',
-        'Expires' => '0',
-      ]);
-    }
-
-    // 2. GD Fallback: Pure PHP pixel-perfect renderer
-    if (extension_loaded('gd')) {
-      try {
-        $gdPng = $this->generateCatalogPngGd(
-          $machinery, $timeLeftMain, $timeLeftSub,
-          $formattedBidPrice, $title, $categoryName, $auctionId
-        );
-        if ($gdPng) {
-          return Response::make($gdPng, 200, [
-            'Content-Type' => 'image/png',
-            'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.png"',
-            'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-          ]);
-        }
-      } catch (\Throwable $e) {
-        Log::warning('CatalogImage GD fallback failed: ' . $e->getMessage());
-      }
-    }
 
     return Response::make($svg, 200, [
       'Content-Type' => 'image/svg+xml; charset=utf-8',
