@@ -268,14 +268,13 @@ class FeedController extends Controller
       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1080 1080" width="1080" height="1080">
       <defs>
         <style>{$fontStyleSvg} .ht{font-weight:900} .sm{font-weight:800}</style>
-        <linearGradient id="og" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#ea580c"/><stop offset="50%" stop-color="#f97316"/><stop offset="100%" stop-color="#ea580c"/>
-        </linearGradient>
       </defs>
       <rect width="1080" height="1080" fill="#f0f0f0"/>
       <rect x="20" y="20" width="1040" height="1040" rx="24" fill="#ffffff"/>
       <rect x="20" y="20" width="1040" height="640" fill="#0A1727"/>
       <image href="{$iE}" xlink:href="{$iE}" x="20" y="20" width="1040" height="640" preserveAspectRatio="xMidYMid slice"/>
+      <path d="M20 20 L20 44 A24 24 0 0 1 44 20 Z" fill="#f0f0f0"/>
+      <path d="M1060 20 L1060 44 A24 24 0 0 0 1036 20 Z" fill="#f0f0f0"/>
       <path d="M20 660 L840 620 L1060 660 L1060 960 L20 960Z" fill="#ffffff"/>
       <image href="{$liveAuctionE}" xlink:href="{$liveAuctionE}" x="20" y="44" width="320" height="80" preserveAspectRatio="xMinYMid meet"/>
       <text x="56" y="752" fill="#0A1727" font-size="66" class="ht">{$tE}</text>
@@ -289,7 +288,7 @@ class FeedController extends Controller
       <text x="430" y="872" fill="#6b7280" font-size="16" class="sm">{$sE}</text>
       <path d="M668 821 Q662 821 664 829 L644 893 Q642 901 650 901 L962 901 Q970 901 972 893 L992 829 Q994 821 988 821 Z" fill="rgba(0,0,0,0.18)"/>
       <path d="M662 813 Q656 813 658 821 L637 887 Q635 895 643 895 L964 895 Q972 895 995 821 Q997 813 991 813 Z" fill="#ffffff"/>
-      <path d="M664 817 Q658 817 660 825 L639 890 Q637 897 645 897 L962 897 Q970 897 972 890 L993 825 Q995 817 989 817 Z" fill="url(#og)"/>
+      <path d="M664 817 Q658 817 660 825 L639 890 Q637 897 645 897 L962 897 Q970 897 972 890 L993 825 Q995 817 989 817 Z" fill="#f97316"/>
       <circle cx="700" cy="856" r="24" fill="#ffffff"/>
       <g transform="translate(687,843) scale(1.1)"><g transform="rotate(-45 12 12)"><rect x="6" y="6" width="13" height="7" rx="1.5" fill="#ea580c"/><rect x="11" y="11" width="4" height="13" rx="1" fill="#ea580c"/></g><rect x="4" y="21" width="17" height="3" rx="1" fill="#ea580c"/></g>
       <text x="734" y="863" fill="#ffffff" font-size="26" class="ht">BID NOW</text>
