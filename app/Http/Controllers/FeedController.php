@@ -264,6 +264,11 @@ class FeedController extends Controller
       ? 'data:image/png;base64,' . base64_encode(file_get_contents($liveAuctionPath)) : '';
     $liveAuctionE = htmlspecialchars($liveAuctionB64, ENT_XML1, 'UTF-8');
 
+    $bidNowPath = public_path('settings/bid-now.png');
+    $bidNowB64  = file_exists($bidNowPath)
+      ? 'data:image/png;base64,' . base64_encode(file_get_contents($bidNowPath)) : '';
+    $bidNowE = htmlspecialchars($bidNowB64, ENT_XML1, 'UTF-8');
+
     $svg = <<<SVG
       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1080 1080" width="1080" height="1080">
       <defs>
@@ -286,15 +291,7 @@ class FeedController extends Controller
       <polyline points="396,842 396,856 408,856" fill="none" stroke="#f97316" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
       <text x="430" y="848" fill="#0A1727" font-size="24" class="ht">{$mE}</text>
       <text x="430" y="872" fill="#6b7280" font-size="16" class="sm">{$sE}</text>
-      <path d="M668 821 Q662 821 664 829 L644 893 Q642 901 650 901 L962 901 Q970 901 972 893 L992 829 Q994 821 988 821 Z" fill="rgba(0,0,0,0.18)"/>
-      <path d="M662 813 Q656 813 658 821 L637 887 Q635 895 643 895 L964 895 Q972 895 995 821 Q997 813 991 813 Z" fill="#ffffff"/>
-      <path d="M664 817 Q658 817 660 825 L639 890 Q637 897 645 897 L962 897 Q970 897 972 890 L993 825 Q995 817 989 817 Z" fill="#f97316"/>
-      <circle cx="700" cy="856" r="24" fill="#ffffff"/>
-      <path d="M691 846 L700 837 L707 844 L698 853 Z" fill="#ea580c"/>
-      <path d="M699 845 L708 854" stroke="#ea580c" stroke-width="3.5" stroke-linecap="round"/>
-      <path d="M690 862 L710 862" stroke="#ea580c" stroke-width="3" stroke-linecap="round"/>
-      <text x="734" y="863" fill="#ffffff" font-size="26" class="ht">BID NOW</text>
-      <path d="M940 844 L952 856 L940 868" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <image href="{$bidNowE}" xlink:href="{$bidNowE}" x="575" y="805" width="455" height="98" preserveAspectRatio="xMaxYMid meet"/>
       <path d="M20 960 L1060 960 L1060 1036 Q1060 1060 1036 1060 L44 1060 Q20 1060 20 1036 Z" fill="#0A1727"/>
       <g transform="translate(68, 993)">
         <path d="M16 0 L32 6 L32 20 C32 28 23 34 16 36 C9 34 0 28 0 20 L0 6Z" fill="none" stroke="#f97316" stroke-width="2.5"/>
@@ -455,24 +452,17 @@ class FeedController extends Controller
     $this->gdText($img, $timeLeftMain, 430, 848, 24, $cTitle, $font);
     $this->gdText($img, $timeLeftSub, 430, 872, 16, $cMuted, $font);
 
-    // BID NOW skewed parallelogram button
-    $shC = imagecolorallocatealpha($img, 0, 0, 0, 104);
-    imagefilledpolygon($img, [668, 825, 992, 825, 966, 905, 642, 905], 4, $shC);
-    imagefilledpolygon($img, [662, 813, 995, 813, 970, 895, 637, 895], 4, $cWhite);
-    imagefilledpolygon($img, [664, 817, 993, 817, 968, 893, 639, 893], 4, $cOrange);
-
-    // White circle inside button
-    imagefilledellipse($img, 700, 856, 48, 48, $cWhite);
-    $this->drawGavelIcon($img, 683, 839, 1.1, $cOrangeD);
-
-    // BID NOW text
-    $this->gdText($img, 'BID NOW', 734, 863, 26, $cWhite, $font);
-
-    // Arrow chevron >
-    imagesetthickness($img, 4);
-    imageline($img, 940, 844, 952, 856, $cWhite);
-    imageline($img, 952, 856, 940, 868, $cWhite);
-    imagesetthickness($img, 1);
+    // BID NOW PNG image
+    $bidNowFile = public_path('settings/bid-now.png');
+    if (file_exists($bidNowFile)) {
+      $btnImg = @imagecreatefrompng($bidNowFile);
+      if ($btnImg) {
+        $bw = imagesx($btnImg); $bh = imagesy($btnImg);
+        $drawH = 98; $drawW = (int)round($bw * $drawH / $bh);
+        imagecopyresampled($img, $btnImg, 1030 - $drawW, 805, 0, 0, $drawW, $drawH, $bw, $bh);
+        imagedestroy($btnImg);
+      }
+    }
 
     // Footer bar (100px height, y: 960 to 1060)
     $this->gdFillRoundRect($img, 20, 960, 1040, 100, 24, $cDark);
