@@ -215,28 +215,6 @@ class FeedController extends Controller
     }
     $auctionId = $machinery->auction_id ?? $machinery->id;
 
-    // 1. Primary: GD Renderer (Pure PHP, pixel-perfect, works reliably across local & production environments)
-    if (extension_loaded('gd')) {
-      try {
-        $gdPng = $this->generateCatalogPngGd(
-          $machinery, $timeLeftMain, $timeLeftSub,
-          $formattedBidPrice, $title, $categoryName, $auctionId
-        );
-        if (!empty($gdPng)) {
-          return Response::make($gdPng, 200, [
-            'Content-Type' => 'image/png',
-            'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.png"',
-            'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-          ]);
-        }
-      } catch (\Throwable $e) {
-        Log::warning('CatalogImage GD rendering failed: ' . $e->getMessage());
-      }
-    }
-
-    // 2. Fallback: SVG to PNG Conversion (Imagick / Intervention)
     $imagePath = null;
     $firstImage = \App\Models\MachineryFileManager::where('machinery_id', $machinery->id)
       ->where('type', 'image')
@@ -293,59 +271,85 @@ class FeedController extends Controller
         <linearGradient id="og" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stop-color="#ea580c"/><stop offset="50%" stop-color="#f97316"/><stop offset="100%" stop-color="#ea580c"/>
         </linearGradient>
-        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#0b1320"/><stop offset="100%" stop-color="#111c2e"/>
-        </linearGradient>
-        <clipPath id="cp"><rect x="20" y="20" width="1040" height="1040" rx="24" ry="24"/></clipPath>
-        <clipPath id="ph"><rect x="20" y="20" width="1040" height="640"/></clipPath>
       </defs>
       <rect width="1080" height="1080" fill="#f0f0f0"/>
       <rect x="20" y="20" width="1040" height="1040" rx="24" fill="#ffffff"/>
-      <g clip-path="url(#cp)">
-        <rect x="20" y="20" width="1040" height="640" fill="#0A1727"/>
-        <image href="{$iE}" xlink:href="{$iE}" x="20" y="20" width="1040" height="640" preserveAspectRatio="xMidYMid slice" clip-path="url(#ph)"/>
-        <path d="M20 660 L840 620 L1060 660 L1060 960 L20 960Z" fill="#ffffff"/>
-        <image href="{$liveAuctionE}" xlink:href="{$liveAuctionE}" x="20" y="44" width="320" height="80" preserveAspectRatio="xMinYMid meet"/>
-        <text x="56" y="752" fill="#0A1727" font-size="66" class="ht">{$tE}</text>
-        <rect x="58" y="766" width="100" height="7" rx="3.5" fill="#f97316"/>
-        <text x="56" y="808" fill="#6b7280" font-size="20" class="sm">CURRENT BID</text>
-        <text x="56" y="884" fill="#0A1727" font-size="64" class="ht">{$pE}</text>
-        <line x1="348" y1="802" x2="348" y2="912" stroke="#d1d5db" stroke-width="2"/>
-        <circle cx="396" cy="856" r="26" fill="none" stroke="#f97316" stroke-width="4"/>
-        <polyline points="396,842 396,856 408,856" fill="none" stroke="#f97316" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <text x="430" y="848" fill="#0A1727" font-size="24" class="ht">{$mE}</text>
-        <text x="430" y="872" fill="#6b7280" font-size="16" class="sm">{$sE}</text>
-        <path d="M668 821 Q662 821 664 829 L644 893 Q642 901 650 901 L962 901 Q970 901 972 893 L992 829 Q994 821 988 821 Z" fill="rgba(0,0,0,0.18)"/>
-        <path d="M662 813 Q656 813 658 821 L637 887 Q635 895 643 895 L964 895 Q972 895 995 821 Q997 813 991 813 Z" fill="#ffffff"/>
-        <path d="M664 817 Q658 817 660 825 L639 890 Q637 897 645 897 L962 897 Q970 897 972 890 L993 825 Q995 817 989 817 Z" fill="url(#og)"/>
-        <circle cx="700" cy="856" r="24" fill="#ffffff"/>
-        <g transform="translate(687,843) scale(1.1)"><g transform="rotate(-45 12 12)"><rect x="6" y="6" width="13" height="7" rx="1.5" fill="#ea580c"/><rect x="11" y="11" width="4" height="13" rx="1" fill="#ea580c"/></g><rect x="4" y="21" width="17" height="3" rx="1" fill="#ea580c"/></g>
-        <text x="734" y="863" fill="#ffffff" font-size="26" class="ht">BID NOW</text>
-        <path d="M940 844 L952 856 L940 868" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <rect x="20" y="960" width="1040" height="100" fill="#0A1727"/>
-        <g transform="translate(68, 993)">
-          <path d="M16 0 L32 6 L32 20 C32 28 23 34 16 36 C9 34 0 28 0 20 L0 6Z" fill="none" stroke="#f97316" stroke-width="2.5"/>
-          <path d="M8 18 L14 24 L26 11" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
-          <text x="42" y="26" fill="#ffffff" font-size="20" class="sm">INSPECT ON SITE</text>
-        </g>
-        <line x1="370" y1="978" x2="370" y2="1052" stroke="#334155" stroke-width="2"/>
-        <g transform="translate(400, 999)">
-          <rect x="0" y="0" width="26" height="22" rx="1" fill="none" stroke="#f97316" stroke-width="2.5"/>
-          <path d="M26 7 H36 L44 14 V22 H26Z" fill="none" stroke="#f97316" stroke-width="2.5"/>
-          <circle cx="8" cy="25" r="4" fill="#f97316"/>
-          <circle cx="36" cy="25" r="4" fill="#f97316"/>
-          <text x="56" y="19" fill="#ffffff" font-size="20" class="sm">SHIPPING AVAILABLE</text>
-        </g>
-        <line x1="718" y1="978" x2="718" y2="1052" stroke="#334155" stroke-width="2"/>
-        <g transform="translate(748, 998)">
-          <rect x="0" y="13" width="26" height="20" rx="2" fill="none" stroke="#f97316" stroke-width="2.5"/>
-          <path d="M4 13 V8 C4 3 7 0 13 0 C19 0 22 3 22 8 V13" fill="none" stroke="#f97316" stroke-width="2.5"/>
-          <circle cx="13" cy="22" r="2.5" fill="#f97316"/>
-          <text x="36" y="20" fill="#ffffff" font-size="20" class="sm">SECURE BIDDING</text>
-        </g>
+      <rect x="20" y="20" width="1040" height="640" fill="#0A1727"/>
+      <image href="{$iE}" xlink:href="{$iE}" x="20" y="20" width="1040" height="640" preserveAspectRatio="xMidYMid slice"/>
+      <path d="M20 660 L840 620 L1060 660 L1060 960 L20 960Z" fill="#ffffff"/>
+      <image href="{$liveAuctionE}" xlink:href="{$liveAuctionE}" x="20" y="44" width="320" height="80" preserveAspectRatio="xMinYMid meet"/>
+      <text x="56" y="752" fill="#0A1727" font-size="66" class="ht">{$tE}</text>
+      <rect x="58" y="766" width="100" height="7" rx="3.5" fill="#f97316"/>
+      <text x="56" y="808" fill="#6b7280" font-size="20" class="sm">CURRENT BID</text>
+      <text x="56" y="884" fill="#0A1727" font-size="64" class="ht">{$pE}</text>
+      <line x1="348" y1="802" x2="348" y2="912" stroke="#d1d5db" stroke-width="2"/>
+      <circle cx="396" cy="856" r="26" fill="none" stroke="#f97316" stroke-width="4"/>
+      <polyline points="396,842 396,856 408,856" fill="none" stroke="#f97316" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="430" y="848" fill="#0A1727" font-size="24" class="ht">{$mE}</text>
+      <text x="430" y="872" fill="#6b7280" font-size="16" class="sm">{$sE}</text>
+      <path d="M668 821 Q662 821 664 829 L644 893 Q642 901 650 901 L962 901 Q970 901 972 893 L992 829 Q994 821 988 821 Z" fill="rgba(0,0,0,0.18)"/>
+      <path d="M662 813 Q656 813 658 821 L637 887 Q635 895 643 895 L964 895 Q972 895 995 821 Q997 813 991 813 Z" fill="#ffffff"/>
+      <path d="M664 817 Q658 817 660 825 L639 890 Q637 897 645 897 L962 897 Q970 897 972 890 L993 825 Q995 817 989 817 Z" fill="url(#og)"/>
+      <circle cx="700" cy="856" r="24" fill="#ffffff"/>
+      <g transform="translate(687,843) scale(1.1)"><g transform="rotate(-45 12 12)"><rect x="6" y="6" width="13" height="7" rx="1.5" fill="#ea580c"/><rect x="11" y="11" width="4" height="13" rx="1" fill="#ea580c"/></g><rect x="4" y="21" width="17" height="3" rx="1" fill="#ea580c"/></g>
+      <text x="734" y="863" fill="#ffffff" font-size="26" class="ht">BID NOW</text>
+      <path d="M940 844 L952 856 L940 868" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M20 960 L1060 960 L1060 1036 Q1060 1060 1036 1060 L44 1060 Q20 1060 20 1036 Z" fill="#0A1727"/>
+      <g transform="translate(68, 993)">
+        <path d="M16 0 L32 6 L32 20 C32 28 23 34 16 36 C9 34 0 28 0 20 L0 6Z" fill="none" stroke="#f97316" stroke-width="2.5"/>
+        <path d="M8 18 L14 24 L26 11" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+        <text x="42" y="26" fill="#ffffff" font-size="20" class="sm">INSPECT ON SITE</text>
+      </g>
+      <line x1="370" y1="978" x2="370" y2="1052" stroke="#334155" stroke-width="2"/>
+      <g transform="translate(400, 999)">
+        <rect x="0" y="0" width="26" height="22" rx="1" fill="none" stroke="#f97316" stroke-width="2.5"/>
+        <path d="M26 7 H36 L44 14 V22 H26Z" fill="none" stroke="#f97316" stroke-width="2.5"/>
+        <circle cx="8" cy="25" r="4" fill="#f97316"/>
+        <circle cx="36" cy="25" r="4" fill="#f97316"/>
+        <text x="56" y="19" fill="#ffffff" font-size="20" class="sm">SHIPPING AVAILABLE</text>
+      </g>
+      <line x1="718" y1="978" x2="718" y2="1052" stroke="#334155" stroke-width="2"/>
+      <g transform="translate(748, 998)">
+        <rect x="0" y="13" width="26" height="20" rx="2" fill="none" stroke="#f97316" stroke-width="2.5"/>
+        <path d="M4 13 V8 C4 3 7 0 13 0 C19 0 22 3 22 8 V13" fill="none" stroke="#f97316" stroke-width="2.5"/>
+        <circle cx="13" cy="22" r="2.5" fill="#f97316"/>
+        <text x="36" y="20" fill="#ffffff" font-size="20" class="sm">SECURE BIDDING</text>
       </g>
       </svg>
       SVG;
+
+    // 1. Primary: Try SVG to PNG conversion (Imagick) with clean SVG
+    $svgPng = $this->convertSvgToPng($svg, $machinery);
+    if (!empty($svgPng)) {
+      return Response::make($svgPng, 200, [
+        'Content-Type' => 'image/png',
+        'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.png"',
+        'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
+        'Pragma' => 'no-cache',
+        'Expires' => '0',
+      ]);
+    }
+
+    // 2. Fallback: Pure GD Renderer
+    if (extension_loaded('gd')) {
+      try {
+        $gdPng = $this->generateCatalogPngGd(
+          $machinery, $timeLeftMain, $timeLeftSub,
+          $formattedBidPrice, $title, $categoryName, $auctionId
+        );
+        if (!empty($gdPng)) {
+          return Response::make($gdPng, 200, [
+            'Content-Type' => 'image/png',
+            'Content-Disposition' => 'inline; filename="catalog-' . $auctionId . '.png"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+          ]);
+        }
+      } catch (\Throwable $e) {
+        Log::warning('CatalogImage GD fallback failed: ' . $e->getMessage());
+      }
+    }
 
     return Response::make($svg, 200, [
       'Content-Type' => 'image/svg+xml; charset=utf-8',
@@ -358,194 +362,144 @@ class FeedController extends Controller
 
   // ═══════════════════════════════════════════════════════════════════════════
   // GD RENDERER  (primary – pure PHP, no external dependencies)
-  // Canvas: 1080×1080  |  Card: 28px inset  |  matches reference design
-  // ═══════════════════════════════════════════════════════════════════════════
-  private function generateCatalogPngGd(
+    private function generateCatalogPngGd(
     $machinery, string $timeLeftMain, string $timeLeftSub,
     string $formattedBidPrice, string $title,
     string $categoryName, $auctionId
   ): ?string {
-    // ── canvas ───────────────────────────────────────────────────────────────
     $W = 1080;
     $H = 1080;
     $img = imagecreatetruecolor($W, $H);
     imagealphablending($img, true);
     imagesavealpha($img, true);
 
-    // palette
-    $cBg = imagecolorallocate($img, 240, 240, 240);  // outer canvas
+    $cBg = imagecolorallocate($img, 240, 240, 240);
     $cWhite = imagecolorallocate($img, 255, 255, 255);
-    $cDark = imagecolorallocate($img, 10, 23, 39);  // #0A1727
-    $cDark2 = imagecolorallocate($img, 10, 23, 39);
-    $cTitle = imagecolorallocate($img, 10, 23, 39);  // #0A1727
-    $cMuted = imagecolorallocate($img, 100, 116, 139);  // #64748b
+    $cDark = imagecolorallocate($img, 10, 23, 39);      // #0A1727
+    $cTitle = imagecolorallocate($img, 10, 23, 39);     // #0A1727
+    $cMuted = imagecolorallocate($img, 107, 114, 128);  // #6b7280
     $cOrange = imagecolorallocate($img, 249, 115, 22);  // #f97316
     $cOrangeD = imagecolorallocate($img, 234, 88, 12);  // #ea580c
-    $cDivider = imagecolorallocate($img, 209, 213, 219);  // #d1d5db
-    $cFootDiv = imagecolorallocate($img, 51, 65, 85);  // #334155
-    $cPhBg = imagecolorallocate($img, 15, 23, 42);  // photo placeholder
+    $cDivider = imagecolorallocate($img, 209, 213, 219); // #d1d5db
+    $cFootDiv = imagecolorallocate($img, 51, 65, 85);   // #334155
+    $cPhBg = imagecolorallocate($img, 10, 23, 39);      // #0A1727
 
     $font = file_exists(public_path('fonts/Montserrat-Bold.ttf'))
       ? public_path('fonts/Montserrat-Bold.ttf')
       : null;
 
-    // ── outer background ─────────────────────────────────────────────────────
+    // Outer background
     imagefill($img, 0, 0, $cBg);
 
-    // white card area (20px inset margin all sides)
-    $cx = 20;
-    $cy = 20;
-    $cw = $W - 40;
-    $ch = $H - 40;
+    // White card area (20px inset)
+    $cx = 20; $cy = 20; $cw = 1040; $ch = 1040;
     $this->gdFillRoundRect($img, $cx, $cy, $cw, $ch, 24, $cWhite);
 
-    // ── hero photo area (top 60% of card) ────────────────────────────────────
-    $photoX = $cx;
-    $photoY = $cy;
-    $photoW = $cw;
-    $photoH = 640;
-
-    // fill photo bg first
+    // Hero photo area
+    $photoX = 20; $photoY = 20; $photoW = 1040; $photoH = 640;
     imagefilledrectangle($img, $photoX, $photoY, $photoX + $photoW, $photoY + $photoH, $cPhBg);
-
-    // draw machinery photo (cover crop)
     $this->drawCoverImage($img, $machinery, $photoX, $photoY, $photoW, $photoH);
 
-    // ── diagonal white section separator ─────────────────────────────────────
-    $sepTop = $photoY + $photoH;  // ~660
-    $diagRise = 40;  // how many px the right side is higher
-    $cardBot = $cy + $ch;  // 1060
-    $whiteX = $cx;
-    $whiteXr = $cx + $cw;
-
+    // V-shaped diagonal white section (peak at x=840, y=620)
     imagefilledpolygon($img, [
-      $whiteX,
-      $sepTop,
-      $whiteXr,
-      $sepTop - $diagRise,
-      $whiteXr,
-      $cardBot,
-      $whiteX,
-      $cardBot,
-    ], 4, $cWhite);
+      20,   660,
+      840,  620,
+      1060, 660,
+      1060, 960,
+      20,   960,
+    ], 5, $cWhite);
 
-    // ── left + right border lines on the white section ───────────────────────
-    $footerTop = $cardBot - 100;
-
-    // ── LIVE AUCTION badge — PNG image ───────────────────────────────────────
+    // LIVE AUCTION badge
     $liveAuctionFile = public_path('settings/live-auction.png');
     if (file_exists($liveAuctionFile)) {
       $badgeImg = @imagecreatefrompng($liveAuctionFile);
       if ($badgeImg) {
         $bw2 = imagesx($badgeImg); $bh2 = imagesy($badgeImg);
-        $drawH = 78; $drawW = (int)round($bw2 * $drawH / $bh2);
-        imagecopyresampled($img, $badgeImg, $cx, $cy + 38, 0, 0, $drawW, $drawH, $bw2, $bh2);
+        $drawH = 80; $drawW = (int)round($bw2 * $drawH / $bh2);
+        imagecopyresampled($img, $badgeImg, 20, 44, 0, 0, $drawW, $drawH, $bw2, $bh2);
         imagedestroy($badgeImg);
       }
     }
 
-    // ── title block ───────────────────────────────────────────────────────────
-    $titleX = $cx + 56;
-    $titleY = $sepTop + 100;   // enough gap below diagonal edge
-
-    $maxTitleW = $cw - 112;
-    $titleSize = $this->fitTextSize($title, 68, 34, $maxTitleW, $font);
+    // Title
+    $titleX = 56;
+    $titleY = 752;
+    $maxTitleW = 960;
+    $titleSize = $this->fitTextSize($title, 66, 32, $maxTitleW, $font);
     $this->gdText($img, $title, $titleX, $titleY, $titleSize, $cTitle, $font);
 
-    $this->gdFillRoundRect($img, $titleX + 2, $titleY + 14, 100, 8, 4, $cOrange);
+    // Orange accent bar under title
+    $this->gdFillRoundRect($img, 58, 766, 100, 7, 3, $cOrange);
 
-    // ── 3-column info row ─────────────────────────────────────────────────────
-    $rowY = $titleY + 80;
+    // CURRENT BID label
+    $this->gdText($img, 'CURRENT BID', 56, 808, 20, $cMuted, $font);
 
-    // Col 1 — CURRENT BID + price
-    $col1X = $cx + 56;
-    $this->gdText($img, 'CURRENT BID', $col1X, $rowY + 26, 20, $cMuted, $font);
-    $priceSize = $this->fitTextSize($formattedBidPrice, 62, 38, 240, $font);
-    $this->gdText($img, $formattedBidPrice, $col1X, $rowY + 26 + $priceSize + 8, $priceSize, $cTitle, $font);
+    // Price text
+    $priceSize = $this->fitTextSize($formattedBidPrice, 64, 38, 270, $font);
+    $this->gdText($img, $formattedBidPrice, 56, 884, $priceSize, $cTitle, $font);
 
-    // vertical divider
-    $div1X = $col1X + 270;
-    imageline($img, $div1X, $rowY + 10, $div1X, $rowY + 108, $cDivider);
+    // Vertical divider
+    imagesetthickness($img, 2);
+    imageline($img, 348, 802, 348, 912, $cDivider);
 
-    // Col 2 — clock + time left
-    $col2X = $div1X + 22;
-    $clockCX = $col2X + 28; $clockCY = $rowY + 60;
-    imagesetthickness($img, 5);
-    imagearc($img, $clockCX, $clockCY, 54, 54, 0, 360, $cOrange);
-    imageline($img, $clockCX, $clockCY - 16, $clockCX, $clockCY, $cOrange);
-    imageline($img, $clockCX, $clockCY, $clockCX + 13, $clockCY, $cOrange);
-    imagesetthickness($img, 1);
-
-    $timeTextX = $col2X + 66;
-    $this->gdText($img, $timeLeftMain, $timeTextX, $rowY + 48, 24, $cTitle, $font);
-    $this->gdText($img, $timeLeftSub,  $timeTextX, $rowY + 78, 17, $cMuted,  $font);
-
-    // Col 3 — BID NOW button
-    $btnX  = $col2X + 66 + 170;
-    $btnY  = $rowY + 4;
-    $btnW  = ($cx + $cw - 30) - $btnX;
-    $btnH  = 84;
-    $btnR  = 16;
-
-    for ($sh = 6; $sh >= 1; $sh--) {
-      $shAlpha = 118 + (int)($sh * 1.4);
-      $shC = imagecolorallocatealpha($img, 0, 0, 0, $shAlpha);
-      $this->gdFillRoundRect($img, $btnX - (int)($sh / 2), $btnY + (int)($sh / 1.5), $btnW + $sh, $btnH + $sh, $btnR + 2, $shC);
-    }
-    $this->gdFillRoundRect($img, $btnX - 2, $btnY - 2, $btnW + 4, $btnH + 4, $btnR + 2, $cWhite);
-    $this->gdFillRoundRect($img, $btnX, $btnY + (int)($btnH * 0.45), $btnW, (int)($btnH * 0.55), $btnR, $cOrangeD);
-    $this->gdFillRoundRect($img, $btnX, $btnY, $btnW, $btnH, $btnR, $cOrange);
-
-    $iconCX = $btnX + 50;
-    $iconCY = $btnY + (int)($btnH / 2);
-    imagefilledellipse($img, $iconCX, $iconCY, 56, 56, $cWhite);
-    $this->drawGavelIcon($img, $iconCX - (int)(16 * 1.1), $iconCY - (int)(16 * 1.1), 1.1, $cOrangeD);
-    $this->gdText($img, 'BID NOW', $iconCX + 36, $btnY + 59, 34, $cWhite, $font);
-
-    $arrX = $btnX + $btnW - 34;
-    $arrY = $btnY + (int)($btnH / 2);
+    // Clock icon
     imagesetthickness($img, 4);
-    imageline($img, $arrX, $arrY - 13, $arrX + 14, $arrY, $cWhite);
-    imageline($img, $arrX + 14, $arrY, $arrX, $arrY + 13, $cWhite);
+    imagearc($img, 396, 856, 52, 52, 0, 360, $cOrange);
+    imagesetthickness($img, 3);
+    imageline($img, 396, 842, 396, 856, $cOrange);
+    imageline($img, 396, 856, 408, 856, $cOrange);
     imagesetthickness($img, 1);
 
-    // ── footer bar with bottom rounded corners (compact 68px height) ──────────
-    $footH = 68;
-    $footY = $cardBot - $footH;
-    $this->gdFillRoundRect($img, $cx, $footY, $cw, $footH, 24, $cDark);
-    imagefilledrectangle($img, $cx, $footY, $cx + $cw, $footY + 20, $cDark);
+    // Time text
+    $this->gdText($img, $timeLeftMain, 430, 848, 24, $cTitle, $font);
+    $this->gdText($img, $timeLeftSub, 430, 872, 16, $cMuted, $font);
 
-    // Total width = 1040. 3 Equal Columns: ~346px width each.
-    // Badge 1 – INSPECT ON SITE
-    $f1x = $cx + 54;
-    $fy = $footY + 16;
-    $this->drawFooterShield($img, $f1x, $fy, $cOrange);
-    $this->gdText($img, 'INSPECT ON SITE', $f1x + 48, $footY + 44, 19, $cWhite, $font);
+    // BID NOW skewed parallelogram button
+    $shC = imagecolorallocatealpha($img, 0, 0, 0, 104);
+    imagefilledpolygon($img, [668, 825, 992, 825, 966, 905, 642, 905], 4, $shC);
+    imagefilledpolygon($img, [662, 813, 995, 813, 970, 895, 637, 895], 4, $cWhite);
+    imagefilledpolygon($img, [664, 817, 993, 817, 968, 893, 639, 893], 4, $cOrange);
 
-    // divider 1
-    $fd1 = $cx + 346;
-    imageline($img, $fd1, $footY + 12, $fd1, $footY + 56, $cFootDiv);
+    // White circle inside button
+    imagefilledellipse($img, 700, 856, 48, 48, $cWhite);
+    $this->drawGavelIcon($img, 683, 839, 1.1, $cOrangeD);
 
-    // Badge 2 – SHIPPING AVAILABLE
-    $f2x = $fd1 + 30;
-    $fy2 = $footY + 18;
-    $this->drawFooterTruck($img, $f2x, $fy2, $cOrange);
-    $this->gdText($img, 'SHIPPING AVAILABLE', $f2x + 56, $footY + 44, 19, $cWhite, $font);
+    // BID NOW text
+    $this->gdText($img, 'BID NOW', 734, 863, 26, $cWhite, $font);
 
-    // divider 2
-    $fd2 = $cx + 692;
-    imageline($img, $fd2, $footY + 12, $fd2, $footY + 56, $cFootDiv);
+    // Arrow chevron >
+    imagesetthickness($img, 4);
+    imageline($img, 940, 844, 952, 856, $cWhite);
+    imageline($img, 952, 856, 940, 868, $cWhite);
+    imagesetthickness($img, 1);
 
-    // Badge 3 – SECURE BIDDING
-    $f3x = $fd2 + 30;
-    $fy3 = $footY + 14;
-    $this->drawFooterLock($img, $f3x, $fy3, $cOrange);
-    $this->gdText($img, 'SECURE BIDDING', $f3x + 48, $footY + 44, 19, $cWhite, $font);
+    // Footer bar (100px height, y: 960 to 1060)
+    $this->gdFillRoundRect($img, 20, 960, 1040, 100, 24, $cDark);
+    imagefilledrectangle($img, 20, 960, 1060, 980, $cDark);
 
-    // ── mask outer rounded corners ────────────────────────────────────────────
-    $this->maskRoundedOuterCorners($img, $W, $H, $cx, 24, $cBg);
+    // Badge 1: INSPECT ON SITE
+    $this->drawFooterShield($img, 68, 993, $cOrange);
+    $this->gdText($img, 'INSPECT ON SITE', 110, 1019, 20, $cWhite, $font);
 
-    // ── output ───────────────────────────────────────────────────────────────
+    // Divider 1
+    imagesetthickness($img, 2);
+    imageline($img, 370, 978, 370, 1052, $cFootDiv);
+
+    // Badge 2: SHIPPING AVAILABLE
+    $this->drawFooterTruck($img, 400, 999, $cOrange);
+    $this->gdText($img, 'SHIPPING AVAILABLE', 456, 1018, 20, $cWhite, $font);
+
+    // Divider 2
+    imageline($img, 718, 978, 718, 1052, $cFootDiv);
+
+    // Badge 3: SECURE BIDDING
+    $this->drawFooterLock($img, 748, 998, $cOrange);
+    $this->gdText($img, 'SECURE BIDDING', 784, 1018, 20, $cWhite, $font);
+    imagesetthickness($img, 1);
+
+    // Mask outer rounded corners
+    $this->maskRoundedOuterCorners($img, $W, $H, 20, 24, $cBg);
+
     ob_start();
     imagepng($img);
     $bytes = ob_get_clean();
@@ -744,18 +698,15 @@ class FeedController extends Controller
 
   private function drawGavelIcon($img, $x, $y, $scale, $color)
   {
-    // Clean upward-arrow / gavel icon
     $s  = (float)$scale;
     $cx = (int)($x + 16 * $s);
     $cy = (int)($y + 16 * $s);
     $r  = (int)(11 * $s);
 
-    // vertical shaft
     imagesetthickness($img, max(2, (int)(4 * $s)));
     imageline($img, $cx, $cy - $r + 2, $cx, $cy + (int)(4 * $s), $color);
     imagesetthickness($img, 1);
 
-    // filled arrowhead (upward triangle)
     $hw = (int)(8 * $s);
     $ht = (int)(9 * $s);
     imagefilledpolygon($img, [
@@ -764,7 +715,6 @@ class FeedController extends Controller
       $cx + $hw,  $cy - $r + $ht,
     ], 3, $color);
 
-    // base bar
     $bw2 = (int)(9 * $s);
     $bh2 = max(2, (int)(3 * $s));
     imagefilledrectangle($img,
@@ -778,30 +728,37 @@ class FeedController extends Controller
   private function drawFooterShield($img, $x, $y, $color)
   {
     imagesetthickness($img, 3);
-    imagepolygon($img, [$x + 20, $y, $x + 39, $y + 8, $x + 39, $y + 28, $x + 20, $y + 47, $x + 1, $y + 28, $x + 1, $y + 8], 6, $color);
-    imageline($img, $x + 11, $y + 23, $x + 18, $y + 31, $color);
-    imageline($img, $x + 18, $y + 31, $x + 31, $y + 15, $color);
+    imagepolygon($img, [
+      $x + 16, $y,
+      $x + 32, $y + 6,
+      $x + 32, $y + 20,
+      $x + 16, $y + 36,
+      $x + 0,  $y + 20,
+      $x + 0,  $y + 6,
+    ], 6, $color);
+    imageline($img, $x + 8, $y + 18, $x + 14, $y + 24, $color);
+    imageline($img, $x + 14, $y + 24, $x + 26, $y + 11, $color);
     imagesetthickness($img, 1);
   }
 
   private function drawFooterTruck($img, $x, $y, $color)
   {
     imagesetthickness($img, 3);
-    imagerectangle($img, $x, $y + 8, $x + 28, $y + 32, $color);
-    imagepolygon($img, [$x + 28, $y + 17, $x + 43, $y + 17, $x + 53, $y + 27, $x + 53, $y + 32, $x + 28, $y + 32], 5, $color);
-    imageellipse($img, $x + 12, $y + 37, 11, 11, $color);
-    imageellipse($img, $x + 43, $y + 37, 11, 11, $color);
+    imagerectangle($img, $x, $y, $x + 26, $y + 22, $color);
+    imagepolygon($img, [$x + 26, $y + 7, $x + 36, $y + 7, $x + 44, $y + 14, $x + 44, $y + 22, $x + 26, $y + 22], 5, $color);
+    imageellipse($img, $x + 8, $y + 25, 8, 8, $color);
+    imageellipse($img, $x + 36, $y + 25, 8, 8, $color);
     imagesetthickness($img, 1);
   }
 
   private function drawFooterLock($img, $x, $y, $color)
   {
     imagesetthickness($img, 3);
-    imagerectangle($img, $x, $y + 16, $x + 28, $y + 36, $color);
-    imagearc($img, $x + 14, $y + 16, 20, 24, 180, 360, $color);
-    imageline($img, $x + 4, $y + 16, $x + 4, $y + 9, $color);
-    imageline($img, $x + 24, $y + 16, $x + 24, $y + 9, $color);
-    imagefilledellipse($img, $x + 14, $y + 26, 4, 4, $color);
+    imagerectangle($img, $x, $y + 13, $x + 26, $y + 33, $color);
+    imagearc($img, $x + 13, $y + 13, 18, 22, 180, 360, $color);
+    imageline($img, $x + 4, $y + 13, $x + 4, $y + 8, $color);
+    imageline($img, $x + 22, $y + 13, $x + 22, $y + 8, $color);
+    imagefilledellipse($img, $x + 13, $y + 22, 5, 5, $color);
     imagesetthickness($img, 1);
   }
 
@@ -849,6 +806,7 @@ class FeedController extends Controller
   {
     $pngBytes = null;
     $renderSvg = preg_replace('/letter-spacing="[^"]*"/', '', $svgString);
+    $renderSvg = preg_replace('/@font-face\s*\{[^}]*\}/s', '', $renderSvg);
 
     if (extension_loaded('imagick')) {
       try {
