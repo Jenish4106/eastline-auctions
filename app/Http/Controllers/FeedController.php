@@ -246,7 +246,7 @@ class FeedController extends Controller
       $imageBase64 = $this->fetchCatalogImageDataUri($imageUrl) ?: $imageBase64;
     }
 
-    $photoSrc = $this->normalizeCatalogImageDataUri(!empty($imageBase64) ? $imageBase64 : $imageUrl);
+    $photoSrc = $this->getCropCatalogPhotoDataUri($imagePath, 1040, 640);
 
     $fontPath = public_path('fonts/Montserrat-Bold.ttf');
     $fontStyleSvg = file_exists($fontPath)
@@ -290,7 +290,9 @@ class FeedController extends Controller
       <path d="M662 813 Q656 813 658 821 L637 887 Q635 895 643 895 L964 895 Q972 895 995 821 Q997 813 991 813 Z" fill="#ffffff"/>
       <path d="M664 817 Q658 817 660 825 L639 890 Q637 897 645 897 L962 897 Q970 897 972 890 L993 825 Q995 817 989 817 Z" fill="#f97316"/>
       <circle cx="700" cy="856" r="24" fill="#ffffff"/>
-      <g transform="translate(687,843) scale(1.1)"><g transform="rotate(-45 12 12)"><rect x="6" y="6" width="13" height="7" rx="1.5" fill="#ea580c"/><rect x="11" y="11" width="4" height="13" rx="1" fill="#ea580c"/></g><rect x="4" y="21" width="17" height="3" rx="1" fill="#ea580c"/></g>
+      <path d="M691 846 L700 837 L707 844 L698 853 Z" fill="#ea580c"/>
+      <path d="M699 845 L708 854" stroke="#ea580c" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M690 862 L710 862" stroke="#ea580c" stroke-width="3" stroke-linecap="round"/>
       <text x="734" y="863" fill="#ffffff" font-size="26" class="ht">BID NOW</text>
       <path d="M940 844 L952 856 L940 868" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M20 960 L1060 960 L1060 1036 Q1060 1060 1036 1060 L44 1060 Q20 1060 20 1036 Z" fill="#0A1727"/>
@@ -693,6 +695,49 @@ class FeedController extends Controller
     }
 
     return $content;
+  }
+
+  private function getCropCatalogPhotoDataUri(?string $imagePath, int $targetW = 1040, int $targetH = 640): string
+  {
+    $photoBytes = $this->readMachineryImageBytes($imagePath);
+    if (!$photoBytes) {
+      $fallbackUrl = FileResolverService::resolveMachineryImageUrl($imagePath);
+      return $this->fetchCatalogImageDataUri($fallbackUrl) ?: $fallbackUrl;
+    }
+
+    $srcImg = @imagecreatefromstring($photoBytes);
+    if (!$srcImg) {
+      $fallbackUrl = FileResolverService::resolveMachineryImageUrl($imagePath);
+      return $this->fetchCatalogImageDataUri($fallbackUrl) ?: $fallbackUrl;
+    }
+
+    $pw = imagesx($srcImg);
+    $ph = imagesy($srcImg);
+    $targetRatio = $targetW / $targetH;
+    $sourceRatio = $pw / $ph;
+
+    if ($sourceRatio > $targetRatio) {
+      $srcH = $ph;
+      $srcW = (int) round($ph * $targetRatio);
+      $srcX = (int) round(($pw - $srcW) / 2);
+      $srcY = 0;
+    } else {
+      $srcW = $pw;
+      $srcH = (int) round($pw / $targetRatio);
+      $srcX = 0;
+      $srcY = (int) round(($ph - $srcH) / 2);
+    }
+
+    $dstImg = imagecreatetruecolor($targetW, $targetH);
+    imagecopyresampled($dstImg, $srcImg, 0, 0, $srcX, $srcY, $targetW, $targetH, $srcW, $srcH);
+    imagedestroy($srcImg);
+
+    ob_start();
+    imagejpeg($dstImg, null, 88);
+    $croppedBytes = ob_get_clean();
+    imagedestroy($dstImg);
+
+    return 'data:image/jpeg;base64,' . base64_encode($croppedBytes);
   }
 
   private function drawGavelIcon($img, $x, $y, $scale, $color)
