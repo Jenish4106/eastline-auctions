@@ -291,7 +291,7 @@ class FeedController extends Controller
       <polyline points="396,842 396,856 408,856" fill="none" stroke="#f97316" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
       <text x="430" y="848" fill="#0A1727" font-size="24" class="ht">{$mE}</text>
       <text x="430" y="872" fill="#6b7280" font-size="16" class="sm">{$sE}</text>
-      <image href="{$bidNowE}" xlink:href="{$bidNowE}" x="575" y="805" width="455" height="98" preserveAspectRatio="xMaxYMid meet"/>
+      <image href="{$bidNowE}" xlink:href="{$bidNowE}" x="785" y="810" width="255" height="91" preserveAspectRatio="none"/>
       <path d="M20 960 L1060 960 L1060 1036 Q1060 1060 1036 1060 L44 1060 Q20 1060 20 1036 Z" fill="#0A1727"/>
       <g transform="translate(68, 993)">
         <path d="M16 0 L32 6 L32 20 C32 28 23 34 16 36 C9 34 0 28 0 20 L0 6Z" fill="none" stroke="#f97316" stroke-width="2.5"/>
@@ -458,8 +458,8 @@ class FeedController extends Controller
       $btnImg = @imagecreatefrompng($bidNowFile);
       if ($btnImg) {
         $bw = imagesx($btnImg); $bh = imagesy($btnImg);
-        $drawH = 98; $drawW = (int)round($bw * $drawH / $bh);
-        imagecopyresampled($img, $btnImg, 1030 - $drawW, 805, 0, 0, $drawW, $drawH, $bw, $bh);
+        $drawH = 91; $drawW = (int)round($bw * $drawH / $bh);
+        imagecopyresampled($img, $btnImg, 1040 - $drawW - 20, 810, 0, 0, $drawW, $drawH, $bw, $bh);
         imagedestroy($btnImg);
       }
     }
