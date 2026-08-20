@@ -263,9 +263,10 @@ class FeedController extends Controller
     $pE = htmlspecialchars($formattedBidPrice, ENT_XML1, 'UTF-8');
     $mE = htmlspecialchars($timeLeftMain, ENT_XML1, 'UTF-8');
     $sE = htmlspecialchars($timeLeftSub, ENT_XML1, 'UTF-8');
-    $iE = htmlspecialchars($photoSrc, ENT_XML1, 'UTF-8');
+    // Use URL for photo (not base64) to avoid Imagick memory overflow
+    $iE = htmlspecialchars($imageUrl, ENT_XML1, 'UTF-8');
 
-    // Load LIVE AUCTION badge PNG as base64
+    // Load LIVE AUCTION badge PNG as base64 (small file, safe)
     $liveAuctionPath = public_path('settings/live-auction.png');
     $liveAuctionB64  = file_exists($liveAuctionPath)
       ? 'data:image/png;base64,' . base64_encode(file_get_contents($liveAuctionPath)) : '';
@@ -888,6 +889,8 @@ class FeedController extends Controller
     if (extension_loaded('imagick')) {
       try {
         $im = new \Imagick();
+        $im->setResourceLimit(\Imagick::RESOURCETYPE_MEMORY, 512 * 1024 * 1024);
+        $im->setResourceLimit(\Imagick::RESOURCETYPE_MAP, 512 * 1024 * 1024);
         $fontPath = public_path('fonts/Montserrat-Bold.ttf');
         if (file_exists($fontPath)) {
           $im->setFont($fontPath);
