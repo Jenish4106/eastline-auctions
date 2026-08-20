@@ -260,13 +260,15 @@ class FeedController extends Controller
     $iE = htmlspecialchars($photoSrc, ENT_XML1, 'UTF-8');
 
     $liveAuctionPath = public_path('settings/live-auction.png');
-    $liveAuctionB64  = file_exists($liveAuctionPath)
-      ? 'data:image/png;base64,' . base64_encode(file_get_contents($liveAuctionPath)) : '';
+    $liveAuctionB64 = file_exists($liveAuctionPath)
+      ? 'data:image/png;base64,' . base64_encode(file_get_contents($liveAuctionPath))
+      : '';
     $liveAuctionE = htmlspecialchars($liveAuctionB64, ENT_XML1, 'UTF-8');
 
     $bidNowPath = public_path('settings/bid-now.png');
-    $bidNowB64  = file_exists($bidNowPath)
-      ? 'data:image/png;base64,' . base64_encode(file_get_contents($bidNowPath)) : '';
+    $bidNowB64 = file_exists($bidNowPath)
+      ? 'data:image/png;base64,' . base64_encode(file_get_contents($bidNowPath))
+      : '';
     $bidNowE = htmlspecialchars($bidNowB64, ENT_XML1, 'UTF-8');
 
     $svg = <<<SVG
@@ -276,10 +278,10 @@ class FeedController extends Controller
       </defs>
       <rect width="1080" height="1080" fill="#f0f0f0"/>
       <rect x="20" y="20" width="1040" height="1040" rx="24" fill="#ffffff"/>
-      <rect x="20" y="20" width="1040" height="640" fill="#0A1727"/>
+      <rect x="20" y="20" width="1040" height="640" fill="#ffffff"/>
       <image href="{$iE}" xlink:href="{$iE}" x="20" y="20" width="1040" height="640" preserveAspectRatio="xMidYMid slice"/>
-      <path d="M20 20 L20 44 A24 24 0 0 1 44 20 Z" fill="#f0f0f0"/>
-      <path d="M1060 20 L1060 44 A24 24 0 0 0 1036 20 Z" fill="#f0f0f0"/>
+      <path d="M 20 20 L 44 20 A 24 24 0 0 0 20 44 Z" fill="#f0f0f0"/>
+      <path d="M 1060 20 L 1036 20 A 24 24 0 0 1 1060 44 Z" fill="#f0f0f0"/>
       <path d="M20 660 L840 620 L1060 660 L1060 960 L20 960Z" fill="#ffffff"/>
       <image href="{$liveAuctionE}" xlink:href="{$liveAuctionE}" x="20" y="44" width="320" height="80" preserveAspectRatio="xMinYMid meet"/>
       <text x="56" y="752" fill="#0A1727" font-size="66" class="ht">{$tE}</text>
@@ -360,7 +362,7 @@ class FeedController extends Controller
 
   // ═══════════════════════════════════════════════════════════════════════════
   // GD RENDERER  (primary – pure PHP, no external dependencies)
-    private function generateCatalogPngGd(
+  private function generateCatalogPngGd(
     $machinery, string $timeLeftMain, string $timeLeftSub,
     string $formattedBidPrice, string $title,
     string $categoryName, $auctionId
@@ -373,14 +375,14 @@ class FeedController extends Controller
 
     $cBg = imagecolorallocate($img, 240, 240, 240);
     $cWhite = imagecolorallocate($img, 255, 255, 255);
-    $cDark = imagecolorallocate($img, 10, 23, 39);      // #0A1727
-    $cTitle = imagecolorallocate($img, 10, 23, 39);     // #0A1727
+    $cDark = imagecolorallocate($img, 10, 23, 39);  // #0A1727
+    $cTitle = imagecolorallocate($img, 10, 23, 39);  // #0A1727
     $cMuted = imagecolorallocate($img, 107, 114, 128);  // #6b7280
     $cOrange = imagecolorallocate($img, 249, 115, 22);  // #f97316
     $cOrangeD = imagecolorallocate($img, 234, 88, 12);  // #ea580c
-    $cDivider = imagecolorallocate($img, 209, 213, 219); // #d1d5db
-    $cFootDiv = imagecolorallocate($img, 51, 65, 85);   // #334155
-    $cPhBg = imagecolorallocate($img, 10, 23, 39);      // #0A1727
+    $cDivider = imagecolorallocate($img, 209, 213, 219);  // #d1d5db
+    $cFootDiv = imagecolorallocate($img, 51, 65, 85);  // #334155
+    $cPhBg = imagecolorallocate($img, 10, 23, 39);  // #0A1727
 
     $font = file_exists(public_path('fonts/Montserrat-Bold.ttf'))
       ? public_path('fonts/Montserrat-Bold.ttf')
@@ -390,21 +392,32 @@ class FeedController extends Controller
     imagefill($img, 0, 0, $cBg);
 
     // White card area (20px inset)
-    $cx = 20; $cy = 20; $cw = 1040; $ch = 1040;
+    $cx = 20;
+    $cy = 20;
+    $cw = 1040;
+    $ch = 1040;
     $this->gdFillRoundRect($img, $cx, $cy, $cw, $ch, 24, $cWhite);
 
     // Hero photo area
-    $photoX = 20; $photoY = 20; $photoW = 1040; $photoH = 640;
+    $photoX = 20;
+    $photoY = 20;
+    $photoW = 1040;
+    $photoH = 640;
     imagefilledrectangle($img, $photoX, $photoY, $photoX + $photoW, $photoY + $photoH, $cPhBg);
     $this->drawCoverImage($img, $machinery, $photoX, $photoY, $photoW, $photoH);
 
     // V-shaped diagonal white section (peak at x=840, y=620)
     imagefilledpolygon($img, [
-      20,   660,
-      840,  620,
-      1060, 660,
-      1060, 960,
-      20,   960,
+      20,
+      660,
+      840,
+      620,
+      1060,
+      660,
+      1060,
+      960,
+      20,
+      960,
     ], 5, $cWhite);
 
     // LIVE AUCTION badge
@@ -412,8 +425,10 @@ class FeedController extends Controller
     if (file_exists($liveAuctionFile)) {
       $badgeImg = @imagecreatefrompng($liveAuctionFile);
       if ($badgeImg) {
-        $bw2 = imagesx($badgeImg); $bh2 = imagesy($badgeImg);
-        $drawH = 80; $drawW = (int)round($bw2 * $drawH / $bh2);
+        $bw2 = imagesx($badgeImg);
+        $bh2 = imagesy($badgeImg);
+        $drawH = 80;
+        $drawW = (int) round($bw2 * $drawH / $bh2);
         imagecopyresampled($img, $badgeImg, 20, 44, 0, 0, $drawW, $drawH, $bw2, $bh2);
         imagedestroy($badgeImg);
       }
@@ -457,8 +472,10 @@ class FeedController extends Controller
     if (file_exists($bidNowFile)) {
       $btnImg = @imagecreatefrompng($bidNowFile);
       if ($btnImg) {
-        $bw = imagesx($btnImg); $bh = imagesy($btnImg);
-        $drawH = 91; $drawW = (int)round($bw * $drawH / $bh);
+        $bw = imagesx($btnImg);
+        $bh = imagesy($btnImg);
+        $drawH = 91;
+        $drawW = (int) round($bw * $drawH / $bh);
         imagecopyresampled($img, $btnImg, 1040 - $drawW - 20, 810, 0, 0, $drawW, $drawH, $bw, $bh);
         imagedestroy($btnImg);
       }
@@ -701,61 +718,86 @@ class FeedController extends Controller
       return $this->fetchCatalogImageDataUri($fallbackUrl) ?: $fallbackUrl;
     }
 
-    $pw = imagesx($srcImg);
-    $ph = imagesy($srcImg);
+    $inset = 3;
+    $origW = imagesx($srcImg);
+    $origH = imagesy($srcImg);
+    $pw = max(1, $origW - ($inset * 2));
+    $ph = max(1, $origH - ($inset * 2));
+    $srcXOff = ($origW > $inset * 2) ? $inset : 0;
+    $srcYOff = ($origH > $inset * 2) ? $inset : 0;
+
     $targetRatio = $targetW / $targetH;
     $sourceRatio = $pw / $ph;
 
     if ($sourceRatio > $targetRatio) {
       $srcH = $ph;
       $srcW = (int) round($ph * $targetRatio);
-      $srcX = (int) round(($pw - $srcW) / 2);
-      $srcY = 0;
+      $srcX = $srcXOff + (int) round(($pw - $srcW) / 2);
+      $srcY = $srcYOff;
     } else {
       $srcW = $pw;
       $srcH = (int) round($pw / $targetRatio);
-      $srcX = 0;
-      $srcY = (int) round(($ph - $srcH) / 2);
+      $srcX = $srcXOff;
+      $srcY = $srcYOff + (int) round(($ph - $srcH) / 2);
     }
 
     $dstImg = imagecreatetruecolor($targetW, $targetH);
+    imagealphablending($dstImg, false);
+    imagesavealpha($dstImg, true);
+
     imagecopyresampled($dstImg, $srcImg, 0, 0, $srcX, $srcY, $targetW, $targetH, $srcW, $srcH);
     imagedestroy($srcImg);
 
+    // Apply transparent 24px top-left and top-right corner mask
+    $radius = 24;
+    $cTrans = imagecolorallocatealpha($dstImg, 0, 0, 0, 127);
+    for ($y = 0; $y < $radius; $y++) {
+      for ($x = 0; $x < $radius; $x++) {
+        $dx = $radius - $x;
+        $dy = $radius - $y;
+        if (($dx * $dx + $dy * $dy) > ($radius * $radius)) {
+          imagesetpixel($dstImg, $x, $y, $cTrans);
+          imagesetpixel($dstImg, $targetW - 1 - $x, $y, $cTrans);
+        }
+      }
+    }
+
     ob_start();
-    imagejpeg($dstImg, null, 88);
+    imagepng($dstImg);
     $croppedBytes = ob_get_clean();
     imagedestroy($dstImg);
 
-    return 'data:image/jpeg;base64,' . base64_encode($croppedBytes);
+    return 'data:image/png;base64,' . base64_encode($croppedBytes);
   }
 
   private function drawGavelIcon($img, $x, $y, $scale, $color)
   {
-    $s  = (float)$scale;
-    $cx = (int)($x + 16 * $s);
-    $cy = (int)($y + 16 * $s);
-    $r  = (int)(11 * $s);
+    $s = (float) $scale;
+    $cx = (int) ($x + 16 * $s);
+    $cy = (int) ($y + 16 * $s);
+    $r = (int) (11 * $s);
 
-    imagesetthickness($img, max(2, (int)(4 * $s)));
-    imageline($img, $cx, $cy - $r + 2, $cx, $cy + (int)(4 * $s), $color);
+    imagesetthickness($img, max(2, (int) (4 * $s)));
+    imageline($img, $cx, $cy - $r + 2, $cx, $cy + (int) (4 * $s), $color);
     imagesetthickness($img, 1);
 
-    $hw = (int)(8 * $s);
-    $ht = (int)(9 * $s);
+    $hw = (int) (8 * $s);
+    $ht = (int) (9 * $s);
     imagefilledpolygon($img, [
-      $cx,        $cy - $r,
-      $cx - $hw,  $cy - $r + $ht,
-      $cx + $hw,  $cy - $r + $ht,
+      $cx,
+      $cy - $r,
+      $cx - $hw,
+      $cy - $r + $ht,
+      $cx + $hw,
+      $cy - $r + $ht,
     ], 3, $color);
 
-    $bw2 = (int)(9 * $s);
-    $bh2 = max(2, (int)(3 * $s));
+    $bw2 = (int) (9 * $s);
+    $bh2 = max(2, (int) (3 * $s));
     imagefilledrectangle($img,
-      $cx - $bw2, $cy + (int)(5 * $s),
-      $cx + $bw2, $cy + (int)(5 * $s) + $bh2,
-      $color
-    );
+      $cx - $bw2, $cy + (int) (5 * $s),
+      $cx + $bw2, $cy + (int) (5 * $s) + $bh2,
+      $color);
     imagesetthickness($img, 1);
   }
 
@@ -763,12 +805,18 @@ class FeedController extends Controller
   {
     imagesetthickness($img, 3);
     imagepolygon($img, [
-      $x + 16, $y,
-      $x + 32, $y + 6,
-      $x + 32, $y + 20,
-      $x + 16, $y + 36,
-      $x + 0,  $y + 20,
-      $x + 0,  $y + 6,
+      $x + 16,
+      $y,
+      $x + 32,
+      $y + 6,
+      $x + 32,
+      $y + 20,
+      $x + 16,
+      $y + 36,
+      $x + 0,
+      $y + 20,
+      $x + 0,
+      $y + 6,
     ], 6, $color);
     imageline($img, $x + 8, $y + 18, $x + 14, $y + 24, $color);
     imageline($img, $x + 14, $y + 24, $x + 26, $y + 11, $color);
