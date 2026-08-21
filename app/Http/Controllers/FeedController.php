@@ -295,10 +295,10 @@ class FeedController extends Controller
       <text x="56" y="808" fill="#6b7280" font-size="22" font-weight="700" class="sm">CURRENT BID</text>
       <text x="56" y="888" fill="#0A1727" stroke="#0A1727" stroke-width="2" font-size="76" font-weight="900" class="ht">{$pE}</text>
       <line x1="366" y1="800" x2="366" y2="904" stroke="#d1d5db" stroke-width="2"/>
-      <circle cx="415" cy="852" r="28" fill="none" stroke="#f97316" stroke-width="4.5"/>
-      <polyline points="415,836 415,852 426,852" fill="none" stroke="#f97316" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-      <text x="458" y="844" fill="#0A1727" stroke="#0A1727" stroke-width="1.2" font-size="34" font-weight="900" class="ht">{$mE}</text>
-      <text x="458" y="874" fill="#6b7280" font-size="20" font-weight="700" class="sm">{$sE}</text>
+      <circle cx="415" cy="852" r="32" fill="none" stroke="#f97316" stroke-width="5"/>
+      <polyline points="415,824 415,852 430,852" fill="none" stroke="#f97316" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="464" y="844" fill="#0A1727" stroke="#0A1727" stroke-width="1.2" font-size="34" font-weight="900" class="ht">{$mE}</text>
+      <text x="464" y="874" fill="#6b7280" font-size="20" font-weight="700" class="sm">{$sE}</text>
       <image href="{$bidNowE}" xlink:href="{$bidNowE}" x="680" y="782" width="350" height="138" preserveAspectRatio="none"/>
       <path d="M20 960 L1060 960 L1060 1036 Q1060 1060 1036 1060 L44 1060 Q20 1060 20 1036 Z" fill="#0A1727"/>
       <g transform="translate(55, 992)">
@@ -465,16 +465,16 @@ class FeedController extends Controller
     imageline($img, 366, 800, 366, 904, $cDivider);
 
     // Clock icon
+    imagesetthickness($img, 5);
+    imagearc($img, 415, 852, 64, 64, 0, 360, $cOrange);
     imagesetthickness($img, 4);
-    imagearc($img, 415, 852, 56, 56, 0, 360, $cOrange);
-    imagesetthickness($img, 3);
-    imageline($img, 415, 836, 415, 852, $cOrange);
-    imageline($img, 415, 852, 426, 852, $cOrange);
+    imageline($img, 415, 824, 415, 852, $cOrange);
+    imageline($img, 415, 852, 430, 852, $cOrange);
     imagesetthickness($img, 1);
 
     // Time text
-    $this->gdText($img, $timeLeftMain, 458, 844, 34, $cTitle, $font);
-    $this->gdText($img, $timeLeftSub, 458, 874, 20, $cMuted, $font);
+    $this->gdText($img, $timeLeftMain, 464, 844, 34, $cTitle, $font);
+    $this->gdText($img, $timeLeftSub, 464, 874, 20, $cMuted, $font);
 
     // BID NOW PNG image
     $bidNowFile = public_path('settings/bid-now.png');
