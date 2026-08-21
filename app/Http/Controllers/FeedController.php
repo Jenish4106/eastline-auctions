@@ -248,7 +248,16 @@ class FeedController extends Controller
 
     $photoSrc = $this->getCropCatalogPhotoDataUri($imagePath, 1040, 640);
 
-    $fontStyleSvg = "@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;600;700;800;900&amp;display=swap'); text{font-family:'Roboto Condensed','Arial Narrow',sans-serif}";
+    $fontPath = public_path('fonts/RobotoCondensed-Bold.ttf');
+    if (!file_exists($fontPath)) {
+      $fontPath = public_path('fonts/Montserrat-Bold.ttf');
+    }
+
+    $fontBase64 = file_exists($fontPath) ? base64_encode(file_get_contents($fontPath)) : '';
+
+    $fontStyleSvg = !empty($fontBase64)
+      ? "@font-face{font-family:'Roboto Condensed';src:url('data:font/truetype;base64,{$fontBase64}') format('truetype');} text{font-family:'Roboto Condensed','Arial Narrow',sans-serif}"
+      : "@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;600;700;800;900&amp;display=swap'); text{font-family:'Roboto Condensed','Arial Narrow',sans-serif}";
 
     $tE = htmlspecialchars($title, ENT_XML1, 'UTF-8');
     $pE = htmlspecialchars($formattedBidPrice, ENT_XML1, 'UTF-8');
@@ -382,9 +391,11 @@ class FeedController extends Controller
     $cFootDiv = imagecolorallocate($img, 51, 65, 85);  // #334155
     $cPhBg = imagecolorallocate($img, 10, 23, 39);  // #0A1727
 
-    $font = file_exists(public_path('fonts/Montserrat-Bold.ttf'))
-      ? public_path('fonts/Montserrat-Bold.ttf')
-      : null;
+    $font = file_exists(public_path('fonts/RobotoCondensed-Bold.ttf'))
+      ? public_path('fonts/RobotoCondensed-Bold.ttf')
+      : (file_exists(public_path('fonts/Montserrat-Bold.ttf'))
+        ? public_path('fonts/Montserrat-Bold.ttf')
+        : null);
 
     // Outer background
     imagefill($img, 0, 0, $cBg);
@@ -886,14 +897,16 @@ class FeedController extends Controller
   {
     $pngBytes = null;
     $renderSvg = preg_replace('/letter-spacing="[^"]*"/', '', $svgString);
-    $renderSvg = preg_replace('/@font-face\s*\{[^}]*\}/s', '', $renderSvg);
 
     if (extension_loaded('imagick')) {
       try {
         $im = new \Imagick();
         $im->setResourceLimit(\Imagick::RESOURCETYPE_MEMORY, 512 * 1024 * 1024);
         $im->setResourceLimit(\Imagick::RESOURCETYPE_MAP, 512 * 1024 * 1024);
-        $fontPath = public_path('fonts/Montserrat-Bold.ttf');
+        $fontPath = public_path('fonts/RobotoCondensed-Bold.ttf');
+        if (!file_exists($fontPath)) {
+          $fontPath = public_path('fonts/Montserrat-Bold.ttf');
+        }
         if (file_exists($fontPath)) {
           $im->setFont($fontPath);
         }
