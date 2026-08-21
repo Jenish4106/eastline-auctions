@@ -256,8 +256,8 @@ class FeedController extends Controller
     $fontBase64 = file_exists($fontPath) ? base64_encode(file_get_contents($fontPath)) : '';
 
     $fontStyleSvg = !empty($fontBase64)
-      ? "@font-face{font-family:'Roboto Condensed';src:url('data:font/truetype;base64,{$fontBase64}') format('truetype');} text{font-family:'Roboto Condensed','Arial Narrow',sans-serif}"
-      : "@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;600;700;800;900&amp;display=swap'); text{font-family:'Roboto Condensed','Arial Narrow',sans-serif}";
+      ? "@font-face{font-family:'Roboto Condensed';src:url('data:font/truetype;base64,{$fontBase64}') format('truetype');font-weight:100 900;} text{font-family:'Roboto Condensed','RobotoCondensed','Arial Narrow',sans-serif !important;}"
+      : "@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;600;700;800;900&amp;display=swap'); text{font-family:'Roboto Condensed','RobotoCondensed','Arial Narrow',sans-serif !important;}";
 
     $tE = htmlspecialchars($title, ENT_XML1, 'UTF-8');
     $pE = htmlspecialchars($formattedBidPrice, ENT_XML1, 'UTF-8');
@@ -280,7 +280,7 @@ class FeedController extends Controller
     $svg = <<<SVG
       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1080 1080" width="1080" height="1080">
       <defs>
-        <style>{$fontStyleSvg} .ht{font-weight:800} .sm{font-weight:600} .ft{font-weight:500;letter-spacing:0.5px}</style>
+        <style>{$fontStyleSvg} .ht{font-weight:900} .sm{font-weight:700} .ft{font-weight:600;letter-spacing:0.5px}</style>
       </defs>
       <rect width="1080" height="1080" fill="#f0f0f0"/>
       <rect x="20" y="20" width="1040" height="1040" rx="24" fill="#ffffff"/>
@@ -290,16 +290,16 @@ class FeedController extends Controller
       <path d="M 1060 20 L 1036 20 A 24 24 0 0 1 1060 44 Z" fill="#f0f0f0"/>
       <path d="M20 660 L840 620 L1060 660 L1060 960 L20 960Z" fill="#ffffff"/>
       <image href="{$liveAuctionE}" xlink:href="{$liveAuctionE}" x="20" y="44" width="320" height="80" preserveAspectRatio="xMinYMid meet"/>
-      <text x="56" y="752" fill="#0A1727" font-size="64" class="ht">{$tE}</text>
-      <rect x="58" y="766" width="100" height="7" rx="3.5" fill="#f97316"/>
-      <text x="56" y="808" fill="#6b7280" font-size="20" class="sm">CURRENT BID</text>
-      <text x="56" y="884" fill="#0A1727" font-size="64" class="ht">{$pE}</text>
-      <line x1="380" y1="800" x2="380" y2="904" stroke="#d1d5db" stroke-width="2"/>
-      <circle cx="435" cy="852" r="26" fill="none" stroke="#f97316" stroke-width="4.5"/>
-      <polyline points="435,836 435,852 446,852" fill="none" stroke="#f97316" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-      <text x="472" y="844" fill="#0A1727" font-size="26" class="ht">{$mE}</text>
-      <text x="472" y="870" fill="#6b7280" font-size="16" class="sm">{$sE}</text>
-      <image href="{$bidNowE}" xlink:href="{$bidNowE}" x="665" y="792" width="360" height="120" preserveAspectRatio="none"/>
+      <text x="56" y="748" fill="#0A1727" font-size="72" font-weight="900" class="ht">{$tE}</text>
+      <rect x="58" y="764" width="100" height="7" rx="3.5" fill="#f97316"/>
+      <text x="56" y="806" fill="#6b7280" font-size="22" font-weight="700" class="sm">CURRENT BID</text>
+      <text x="56" y="886" fill="#0A1727" font-size="72" font-weight="900" class="ht">{$pE}</text>
+      <line x1="366" y1="800" x2="366" y2="904" stroke="#d1d5db" stroke-width="2"/>
+      <circle cx="415" cy="852" r="28" fill="none" stroke="#f97316" stroke-width="4.5"/>
+      <polyline points="415,836 415,852 426,852" fill="none" stroke="#f97316" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="458" y="844" fill="#0A1727" font-size="34" font-weight="900" class="ht">{$mE}</text>
+      <text x="458" y="874" fill="#6b7280" font-size="20" font-weight="700" class="sm">{$sE}</text>
+      <image href="{$bidNowE}" xlink:href="{$bidNowE}" x="680" y="782" width="350" height="138" preserveAspectRatio="none"/>
       <path d="M20 960 L1060 960 L1060 1036 Q1060 1060 1036 1060 L44 1060 Q20 1060 20 1036 Z" fill="#0A1727"/>
       <g transform="translate(68, 992)">
         <path d="M16 2 L32 8 L32 20 C32 29 23 35 16 38 C9 35 0 29 0 20 L0 8 Z" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linejoin="round"/>
@@ -445,36 +445,36 @@ class FeedController extends Controller
 
     // Title
     $titleX = 56;
-    $titleY = 752;
+    $titleY = 748;
     $maxTitleW = 960;
-    $titleSize = $this->fitTextSize($title, 66, 32, $maxTitleW, $font);
+    $titleSize = $this->fitTextSize($title, 72, 36, $maxTitleW, $font);
     $this->gdText($img, $title, $titleX, $titleY, $titleSize, $cTitle, $font);
 
     // Orange accent bar under title
-    $this->gdFillRoundRect($img, 58, 766, 100, 7, 3, $cOrange);
+    $this->gdFillRoundRect($img, 58, 764, 100, 7, 3, $cOrange);
 
     // CURRENT BID label
-    $this->gdText($img, 'CURRENT BID', 56, 808, 20, $cMuted, $font);
+    $this->gdText($img, 'CURRENT BID', 56, 806, 22, $cMuted, $font);
 
     // Price text
-    $priceSize = $this->fitTextSize($formattedBidPrice, 64, 38, 300, $font);
-    $this->gdText($img, $formattedBidPrice, 56, 884, $priceSize, $cTitle, $font);
+    $priceSize = $this->fitTextSize($formattedBidPrice, 72, 40, 270, $font);
+    $this->gdText($img, $formattedBidPrice, 56, 886, $priceSize, $cTitle, $font);
 
     // Vertical divider
     imagesetthickness($img, 2);
-    imageline($img, 380, 800, 380, 904, $cDivider);
+    imageline($img, 366, 800, 366, 904, $cDivider);
 
     // Clock icon
     imagesetthickness($img, 4);
-    imagearc($img, 435, 852, 52, 52, 0, 360, $cOrange);
+    imagearc($img, 415, 852, 56, 56, 0, 360, $cOrange);
     imagesetthickness($img, 3);
-    imageline($img, 435, 836, 435, 852, $cOrange);
-    imageline($img, 435, 852, 446, 852, $cOrange);
+    imageline($img, 415, 836, 415, 852, $cOrange);
+    imageline($img, 415, 852, 426, 852, $cOrange);
     imagesetthickness($img, 1);
 
     // Time text
-    $this->gdText($img, $timeLeftMain, 472, 844, 26, $cTitle, $font);
-    $this->gdText($img, $timeLeftSub, 472, 870, 16, $cMuted, $font);
+    $this->gdText($img, $timeLeftMain, 458, 844, 34, $cTitle, $font);
+    $this->gdText($img, $timeLeftSub, 458, 874, 20, $cMuted, $font);
 
     // BID NOW PNG image
     $bidNowFile = public_path('settings/bid-now.png');
@@ -483,9 +483,9 @@ class FeedController extends Controller
       if ($btnImg) {
         $bw = imagesx($btnImg);
         $bh = imagesy($btnImg);
-        $drawH = 120;
-        $drawW = 360;
-        imagecopyresampled($img, $btnImg, 665, 792, 0, 0, $drawW, $drawH, $bw, $bh);
+        $drawH = 138;
+        $drawW = 350;
+        imagecopyresampled($img, $btnImg, 680, 782, 0, 0, $drawW, $drawH, $bw, $bh);
         imagedestroy($btnImg);
       }
     }
@@ -973,9 +973,15 @@ class FeedController extends Controller
 
       file_put_contents($tempSvg, $renderSvg);
 
+      $fontPath = public_path('fonts/RobotoCondensed-Bold.ttf');
+      if (!file_exists($fontPath)) {
+        $fontPath = public_path('fonts/Montserrat-Bold.ttf');
+      }
+      $fontOpt = file_exists($fontPath) ? ' -font "' . $fontPath . '" ' : ' ';
+
       $cliCommands = [
-        'convert -density 150 "' . $tempSvg . '" "' . $tempPng . '" 2>&1',
-        'magick convert -density 150 "' . $tempSvg . '" "' . $tempPng . '" 2>&1',
+        'convert' . $fontOpt . '-density 150 "' . $tempSvg . '" "' . $tempPng . '" 2>&1',
+        'magick convert' . $fontOpt . '-density 150 "' . $tempSvg . '" "' . $tempPng . '" 2>&1',
         'rsvg-convert -w 2250 -h 2250 "' . $tempSvg . '" -o "' . $tempPng . '" 2>&1'
       ];
 
