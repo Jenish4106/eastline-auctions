@@ -294,7 +294,7 @@ class FeedController extends Controller
       <rect x="58" y="768" width="100" height="7" rx="3.5" fill="#f97316"/>
       <text x="56" y="808" fill="#6b7280" font-size="22" font-weight="700" class="sm">CURRENT BID</text>
       <text x="56" y="888" fill="#0A1727" stroke="#0A1727" stroke-width="2" font-size="76" font-weight="900" class="ht">{$pE}</text>
-      <line x1="345" y1="800" x2="345" y2="904" stroke="#d1d5db" stroke-width="2"/>
+      <line x1="325" y1="800" x2="325" y2="904" stroke="#d1d5db" stroke-width="2"/>
       <circle cx="395" cy="852" r="32" fill="none" stroke="#f97316" stroke-width="5"/>
       <polyline points="395,832 395,852 405,862" fill="none" stroke="#f97316" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
       <text x="442" y="844" fill="#0A1727" stroke="#0A1727" stroke-width="1.2" font-size="34" font-weight="900" class="ht">{$mE}</text>
@@ -462,7 +462,7 @@ class FeedController extends Controller
 
     // Vertical divider
     imagesetthickness($img, 2);
-    imageline($img, 345, 800, 345, 904, $cDivider);
+    imageline($img, 325, 800, 325, 904, $cDivider);
 
     // Clock icon
     imagesetthickness($img, 5);
