@@ -290,10 +290,10 @@ class FeedController extends Controller
       <path d="M 1060 20 L 1036 20 A 24 24 0 0 1 1060 44 Z" fill="#f0f0f0"/>
       <path d="M20 660 L840 620 L1060 660 L1060 960 L20 960Z" fill="#ffffff"/>
       <image href="{$liveAuctionE}" xlink:href="{$liveAuctionE}" x="20" y="44" width="320" height="80" preserveAspectRatio="xMinYMid meet"/>
-      <text x="56" y="748" fill="#0A1727" font-size="64" class="ht">{$tE}</text>
-      <rect x="58" y="764" width="100" height="7" rx="3.5" fill="#f97316"/>
-      <text x="56" y="806" fill="#6b7280" font-size="20" class="sm">CURRENT BID</text>
-      <text x="56" y="884" fill="#0A1727" font-size="64" class="ht">{$pE}</text>
+      <text x="56" y="752" fill="#0A1727" stroke="#0A1727" stroke-width="1.8" font-size="72" font-weight="900" class="ht">{$tE}</text>
+      <rect x="58" y="768" width="100" height="7" rx="3.5" fill="#f97316"/>
+      <text x="56" y="808" fill="#6b7280" font-size="22" font-weight="700" class="sm">CURRENT BID</text>
+      <text x="56" y="888" fill="#0A1727" stroke="#0A1727" stroke-width="2" font-size="76" font-weight="900" class="ht">{$pE}</text>
       <line x1="366" y1="800" x2="366" y2="904" stroke="#d1d5db" stroke-width="2"/>
       <circle cx="415" cy="852" r="28" fill="none" stroke="#f97316" stroke-width="4.5"/>
       <polyline points="415,836 415,852 426,852" fill="none" stroke="#f97316" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -445,20 +445,20 @@ class FeedController extends Controller
 
     // Title
     $titleX = 56;
-    $titleY = 748;
+    $titleY = 752;
     $maxTitleW = 960;
     $titleSize = $this->fitTextSize($title, 72, 36, $maxTitleW, $font);
     $this->gdText($img, $title, $titleX, $titleY, $titleSize, $cTitle, $font);
 
     // Orange accent bar under title
-    $this->gdFillRoundRect($img, 58, 764, 100, 7, 3, $cOrange);
+    $this->gdFillRoundRect($img, 58, 768, 100, 7, 3, $cOrange);
 
     // CURRENT BID label
-    $this->gdText($img, 'CURRENT BID', 56, 806, 22, $cMuted, $font);
+    $this->gdText($img, 'CURRENT BID', 56, 808, 22, $cMuted, $font);
 
     // Price text
-    $priceSize = $this->fitTextSize($formattedBidPrice, 72, 40, 270, $font);
-    $this->gdText($img, $formattedBidPrice, 56, 886, $priceSize, $cTitle, $font);
+    $priceSize = $this->fitTextSize($formattedBidPrice, 76, 40, 270, $font);
+    $this->gdText($img, $formattedBidPrice, 56, 888, $priceSize, $cTitle, $font);
 
     // Vertical divider
     imagesetthickness($img, 2);
