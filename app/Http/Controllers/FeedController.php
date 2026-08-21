@@ -296,7 +296,7 @@ class FeedController extends Controller
       <text x="56" y="888" fill="#0A1727" stroke="#0A1727" stroke-width="2" font-size="76" font-weight="900" class="ht">{$pE}</text>
       <line x1="345" y1="800" x2="345" y2="904" stroke="#d1d5db" stroke-width="2"/>
       <circle cx="395" cy="852" r="32" fill="none" stroke="#f97316" stroke-width="5"/>
-      <polyline points="395,834 395,852 413,868" fill="none" stroke="#f97316" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="395,832 395,852 405,862" fill="none" stroke="#f97316" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
       <text x="442" y="844" fill="#0A1727" stroke="#0A1727" stroke-width="1.2" font-size="34" font-weight="900" class="ht">{$mE}</text>
       <text x="442" y="874" fill="#6b7280" font-size="20" font-weight="700" class="sm">{$sE}</text>
       <image href="{$bidNowE}" xlink:href="{$bidNowE}" x="610" y="782" width="435" height="138" preserveAspectRatio="none"/>
@@ -468,8 +468,8 @@ class FeedController extends Controller
     imagesetthickness($img, 5);
     imagearc($img, 395, 852, 64, 64, 0, 360, $cOrange);
     imagesetthickness($img, 5);
-    imageline($img, 395, 834, 395, 852, $cOrange);
-    imageline($img, 395, 852, 413, 868, $cOrange);
+    imageline($img, 395, 832, 395, 852, $cOrange);
+    imageline($img, 395, 852, 405, 862, $cOrange);
     imagesetthickness($img, 1);
 
     // Time text
