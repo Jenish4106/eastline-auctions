@@ -288,32 +288,32 @@ class FeedController extends Controller
       <rect x="58" y="766" width="100" height="7" rx="3.5" fill="#f97316"/>
       <text x="56" y="808" fill="#6b7280" font-size="20" class="sm">CURRENT BID</text>
       <text x="56" y="884" fill="#0A1727" font-size="64" class="ht">{$pE}</text>
-      <line x1="348" y1="802" x2="348" y2="912" stroke="#d1d5db" stroke-width="2"/>
-      <circle cx="396" cy="856" r="26" fill="none" stroke="#f97316" stroke-width="4"/>
-      <polyline points="396,842 396,856 408,856" fill="none" stroke="#f97316" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <text x="430" y="848" fill="#0A1727" font-size="24" class="ht">{$mE}</text>
-      <text x="430" y="872" fill="#6b7280" font-size="16" class="sm">{$sE}</text>
-      <image href="{$bidNowE}" xlink:href="{$bidNowE}" x="785" y="810" width="255" height="91" preserveAspectRatio="none"/>
+      <line x1="366" y1="802" x2="366" y2="912" stroke="#d1d5db" stroke-width="2"/>
+      <circle cx="450" cy="856" r="28" fill="none" stroke="#f97316" stroke-width="4.5"/>
+      <polyline points="450,840 450,856 463,856" fill="none" stroke="#f97316" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="490" y="846" fill="#0A1727" font-size="34" class="ht">{$mE}</text>
+      <text x="490" y="876" fill="#6b7280" font-size="20" class="sm">{$sE}</text>
+      <image href="{$bidNowE}" xlink:href="{$bidNowE}" x="715" y="806" width="295" height="96" preserveAspectRatio="none"/>
       <path d="M20 960 L1060 960 L1060 1036 Q1060 1060 1036 1060 L44 1060 Q20 1060 20 1036 Z" fill="#0A1727"/>
-      <g transform="translate(68, 993)">
+      <g transform="translate(44, 993)">
         <path d="M16 0 L32 6 L32 20 C32 28 23 34 16 36 C9 34 0 28 0 20 L0 6Z" fill="none" stroke="#f97316" stroke-width="2.5"/>
         <path d="M8 18 L14 24 L26 11" fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
-        <text x="42" y="26" fill="#ffffff" font-size="20" class="sm">INSPECT ON SITE</text>
+        <text x="40" y="26" fill="#ffffff" font-size="18" class="sm">WARRANTY &amp; RETURN POLICY</text>
       </g>
-      <line x1="370" y1="978" x2="370" y2="1052" stroke="#334155" stroke-width="2"/>
-      <g transform="translate(400, 999)">
+      <line x1="375" y1="978" x2="375" y2="1052" stroke="#334155" stroke-width="2"/>
+      <g transform="translate(395, 999)">
         <rect x="0" y="0" width="26" height="22" rx="1" fill="none" stroke="#f97316" stroke-width="2.5"/>
         <path d="M26 7 H36 L44 14 V22 H26Z" fill="none" stroke="#f97316" stroke-width="2.5"/>
         <circle cx="8" cy="25" r="4" fill="#f97316"/>
         <circle cx="36" cy="25" r="4" fill="#f97316"/>
-        <text x="56" y="19" fill="#ffffff" font-size="20" class="sm">SHIPPING AVAILABLE</text>
+        <text x="52" y="19" fill="#ffffff" font-size="18" class="sm">SHIPPING AVAILABLE</text>
       </g>
-      <line x1="718" y1="978" x2="718" y2="1052" stroke="#334155" stroke-width="2"/>
-      <g transform="translate(748, 998)">
+      <line x1="715" y1="978" x2="715" y2="1052" stroke="#334155" stroke-width="2"/>
+      <g transform="translate(735, 998)">
         <rect x="0" y="13" width="26" height="20" rx="2" fill="none" stroke="#f97316" stroke-width="2.5"/>
         <path d="M4 13 V8 C4 3 7 0 13 0 C19 0 22 3 22 8 V13" fill="none" stroke="#f97316" stroke-width="2.5"/>
         <circle cx="13" cy="22" r="2.5" fill="#f97316"/>
-        <text x="36" y="20" fill="#ffffff" font-size="20" class="sm">SECURE BIDDING</text>
+        <text x="36" y="20" fill="#ffffff" font-size="18" class="sm">SECURE BIDDING</text>
       </g>
       </svg>
       SVG;
@@ -453,19 +453,19 @@ class FeedController extends Controller
 
     // Vertical divider
     imagesetthickness($img, 2);
-    imageline($img, 348, 802, 348, 912, $cDivider);
+    imageline($img, 366, 802, 366, 912, $cDivider);
 
     // Clock icon
     imagesetthickness($img, 4);
-    imagearc($img, 396, 856, 52, 52, 0, 360, $cOrange);
+    imagearc($img, 450, 856, 56, 56, 0, 360, $cOrange);
     imagesetthickness($img, 3);
-    imageline($img, 396, 842, 396, 856, $cOrange);
-    imageline($img, 396, 856, 408, 856, $cOrange);
+    imageline($img, 450, 840, 450, 856, $cOrange);
+    imageline($img, 450, 856, 463, 856, $cOrange);
     imagesetthickness($img, 1);
 
     // Time text
-    $this->gdText($img, $timeLeftMain, 430, 848, 24, $cTitle, $font);
-    $this->gdText($img, $timeLeftSub, 430, 872, 16, $cMuted, $font);
+    $this->gdText($img, $timeLeftMain, 490, 846, 34, $cTitle, $font);
+    $this->gdText($img, $timeLeftSub, 490, 876, 20, $cMuted, $font);
 
     // BID NOW PNG image
     $bidNowFile = public_path('settings/bid-now.png');
@@ -474,9 +474,9 @@ class FeedController extends Controller
       if ($btnImg) {
         $bw = imagesx($btnImg);
         $bh = imagesy($btnImg);
-        $drawH = 91;
-        $drawW = (int) round($bw * $drawH / $bh);
-        imagecopyresampled($img, $btnImg, 1040 - $drawW - 20, 810, 0, 0, $drawW, $drawH, $bw, $bh);
+        $drawH = 96;
+        $drawW = 295;
+        imagecopyresampled($img, $btnImg, 715, 806, 0, 0, $drawW, $drawH, $bw, $bh);
         imagedestroy($btnImg);
       }
     }
@@ -485,24 +485,24 @@ class FeedController extends Controller
     $this->gdFillRoundRect($img, 20, 960, 1040, 100, 24, $cDark);
     imagefilledrectangle($img, 20, 960, 1060, 980, $cDark);
 
-    // Badge 1: INSPECT ON SITE
-    $this->drawFooterShield($img, 68, 993, $cOrange);
-    $this->gdText($img, 'INSPECT ON SITE', 110, 1019, 20, $cWhite, $font);
+    // Badge 1: WARRANTY & RETURN POLICY
+    $this->drawFooterShield($img, 44, 993, $cOrange);
+    $this->gdText($img, 'WARRANTY & RETURN POLICY', 84, 1018, 17, $cWhite, $font);
 
     // Divider 1
     imagesetthickness($img, 2);
-    imageline($img, 370, 978, 370, 1052, $cFootDiv);
+    imageline($img, 375, 978, 375, 1052, $cFootDiv);
 
     // Badge 2: SHIPPING AVAILABLE
-    $this->drawFooterTruck($img, 400, 999, $cOrange);
-    $this->gdText($img, 'SHIPPING AVAILABLE', 456, 1018, 20, $cWhite, $font);
+    $this->drawFooterTruck($img, 395, 999, $cOrange);
+    $this->gdText($img, 'SHIPPING AVAILABLE', 447, 1018, 18, $cWhite, $font);
 
     // Divider 2
-    imageline($img, 718, 978, 718, 1052, $cFootDiv);
+    imageline($img, 715, 978, 715, 1052, $cFootDiv);
 
     // Badge 3: SECURE BIDDING
-    $this->drawFooterLock($img, 748, 998, $cOrange);
-    $this->gdText($img, 'SECURE BIDDING', 784, 1018, 20, $cWhite, $font);
+    $this->drawFooterLock($img, 735, 998, $cOrange);
+    $this->gdText($img, 'SECURE BIDDING', 771, 1018, 18, $cWhite, $font);
     imagesetthickness($img, 1);
 
     // Mask outer rounded corners
