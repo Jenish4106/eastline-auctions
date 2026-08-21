@@ -256,8 +256,8 @@ class FeedController extends Controller
     $fontBase64 = file_exists($fontPath) ? base64_encode(file_get_contents($fontPath)) : '';
 
     $fontStyleSvg = !empty($fontBase64)
-      ? "@font-face{font-family:'Roboto Condensed';src:url('data:font/truetype;base64,{$fontBase64}') format('truetype');font-weight:100 900;} text{font-family:'Roboto Condensed','RobotoCondensed','Arial Narrow',sans-serif !important;}"
-      : "@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;600;700;800;900&amp;display=swap'); text{font-family:'Roboto Condensed','RobotoCondensed','Arial Narrow',sans-serif !important;}";
+      ? "@font-face{font-family:'Roboto Condensed';src:url('data:font/truetype;base64,{$fontBase64}') format('truetype');font-weight:bold;} @font-face{font-family:'Roboto Condensed';src:url('data:font/truetype;base64,{$fontBase64}') format('truetype');font-weight:900;} text{font-family:'Roboto Condensed','Arial Narrow',sans-serif !important;}"
+      : "@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;600;700;800;900&amp;display=swap'); text{font-family:'Roboto Condensed','Arial Narrow',sans-serif !important;}";
 
     $tE = htmlspecialchars($title, ENT_XML1, 'UTF-8');
     $pE = htmlspecialchars($formattedBidPrice, ENT_XML1, 'UTF-8');
@@ -290,14 +290,14 @@ class FeedController extends Controller
       <path d="M 1060 20 L 1036 20 A 24 24 0 0 1 1060 44 Z" fill="#f0f0f0"/>
       <path d="M20 660 L840 620 L1060 660 L1060 960 L20 960Z" fill="#ffffff"/>
       <image href="{$liveAuctionE}" xlink:href="{$liveAuctionE}" x="20" y="44" width="320" height="80" preserveAspectRatio="xMinYMid meet"/>
-      <text x="56" y="748" fill="#0A1727" font-size="72" font-weight="900" class="ht">{$tE}</text>
+      <text x="56" y="748" fill="#0A1727" stroke="#0A1727" stroke-width="1.5" font-size="72" font-weight="900" class="ht">{$tE}</text>
       <rect x="58" y="764" width="100" height="7" rx="3.5" fill="#f97316"/>
       <text x="56" y="806" fill="#6b7280" font-size="22" font-weight="700" class="sm">CURRENT BID</text>
-      <text x="56" y="886" fill="#0A1727" font-size="72" font-weight="900" class="ht">{$pE}</text>
+      <text x="56" y="886" fill="#0A1727" stroke="#0A1727" stroke-width="1.8" font-size="72" font-weight="900" class="ht">{$pE}</text>
       <line x1="366" y1="800" x2="366" y2="904" stroke="#d1d5db" stroke-width="2"/>
       <circle cx="415" cy="852" r="28" fill="none" stroke="#f97316" stroke-width="4.5"/>
       <polyline points="415,836 415,852 426,852" fill="none" stroke="#f97316" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-      <text x="458" y="844" fill="#0A1727" font-size="34" font-weight="900" class="ht">{$mE}</text>
+      <text x="458" y="844" fill="#0A1727" stroke="#0A1727" stroke-width="1.2" font-size="34" font-weight="900" class="ht">{$mE}</text>
       <text x="458" y="874" fill="#6b7280" font-size="20" font-weight="700" class="sm">{$sE}</text>
       <image href="{$bidNowE}" xlink:href="{$bidNowE}" x="680" y="782" width="350" height="138" preserveAspectRatio="none"/>
       <path d="M20 960 L1060 960 L1060 1036 Q1060 1060 1036 1060 L44 1060 Q20 1060 20 1036 Z" fill="#0A1727"/>
