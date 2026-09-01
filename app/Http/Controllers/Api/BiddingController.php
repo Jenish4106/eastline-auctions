@@ -604,6 +604,7 @@ class BiddingController extends Controller
             'billing_details.state_province' => 'nullable|string|max:255',
             'billing_details.zip_postal_code' => 'required|string|max:20',
             'billing_details.country' => 'required|string|max:255',
+            'bank_name' => 'required|string|max:255',
             'shipping_details.is_different' => 'required|boolean',
             'shipping_details.shipping_street' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
             'shipping_details.shipping_city' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
@@ -698,8 +699,10 @@ class BiddingController extends Controller
 
             $order = Order::where('machinery_id', $machineryId)->where('user_id', $user->id)->latest()->first();
 
+            $bankName = $request->input('bank_name');
+
             if ($order) {
-                $order->update([
+                $orderDataToUpdate = [
                     'price' => $highestBid,
                     'shipping_cost' => $shippingCost,
                     'billing_company' => $billing['legal_company_name'] ?? null,
@@ -714,7 +717,13 @@ class BiddingController extends Controller
                     'shipping_state' => $isShippingDifferent ? ($shipping['shipping_state'] ?? null) : null,
                     'shipping_zip' => $isShippingDifferent ? ($shipping['shipping_zip'] ?? null) : null,
                     'shipping_country' => $isShippingDifferent ? ($shipping['shipping_country'] ?? null) : null,
-                ]);
+                ];
+
+                if (!empty($bankName)) {
+                    $orderDataToUpdate['bank_name'] = $bankName;
+                }
+
+                $order->update($orderDataToUpdate);
             } else {
                 do {
                     $orderId = 'ORD-' . strtoupper(Str::random(10));
@@ -742,6 +751,7 @@ class BiddingController extends Controller
                     'shipping_state' => $isShippingDifferent ? ($shipping['shipping_state'] ?? null) : null,
                     'shipping_zip' => $isShippingDifferent ? ($shipping['shipping_zip'] ?? null) : null,
                     'shipping_country' => $isShippingDifferent ? ($shipping['shipping_country'] ?? null) : null,
+                    'bank_name' => $bankName,
                 ]);
             }
 
@@ -777,6 +787,7 @@ class BiddingController extends Controller
                 'highestBid' => $highestBidModel,
                 'user' => $winningUser,
                 'order' => $order,
+                'bank_name' => $order->bank_name ?? $bankName,
                 'sellerAddress' => $sellerAddress,
                 'buyerAddress' => $buyerAddress,
                 'shippingAddress' => $shippingAddress,

@@ -47,6 +47,7 @@ class Order extends Model
         'shipping_state',
         'shipping_zip',
         'shipping_country',
+        'bank_name',
         'payment_slip_path',
         'payment_slip_status',
         'is_deleted',

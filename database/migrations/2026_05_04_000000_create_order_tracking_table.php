@@ -11,22 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('order_tracking', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('order_id');
-            $table->dateTime('tracking_date');
-            $table->string('city', 150);
-            $table->string('status', 100);
-            $table->timestamps();
+        if (!Schema::hasTable('order_tracking')) {
+            Schema::create('order_tracking', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('order_id');
+                $table->dateTime('tracking_date');
+                $table->string('city', 150);
+                $table->string('status', 100);
+                $table->timestamps();
 
-            $table->foreign('order_id')
-                  ->references('id')
-                  ->on('orders')
-                  ->onDelete('cascade');
+                $table->foreign('order_id')
+                    ->references('id')
+                    ->on('orders')
+                    ->onDelete('cascade');
 
-            // Index for fast lookup by order
-            $table->index('order_id');
-        });
+                // Index for fast lookup by order
+                $table->index('order_id');
+            });
+        }
     }
 
     /**
