@@ -43,7 +43,7 @@ class CheckoutController extends Controller
             'billing_details.state_province' => 'nullable|string|max:255',
             'billing_details.zip_postal_code' => 'required|string|max:20',
             'billing_details.country' => 'required|string|max:255',
-            'bank_name' => 'required|string|max:255',
+            'bank_name' => 'nullable|string|max:255',
             'shipping_details.is_different' => 'required|boolean',
             'shipping_details.shipping_street' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
             'shipping_details.shipping_city' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
@@ -381,7 +381,7 @@ class CheckoutController extends Controller
             'shipping_details.shipping_state' => 'nullable|string|max:255',
             'shipping_details.shipping_zip' => 'required_if:shipping_details.is_different,true|nullable|string|max:20',
             'shipping_details.shipping_country' => 'required_if:shipping_details.is_different,true|nullable|string|max:255',
-            'bank_name' => 'required|string|max:255',
+            'bank_name' => 'nullable|string|max:255',
             'is_bid' => 'required|boolean',
         ]);
 

@@ -262,15 +262,17 @@
     <div class="content">
         The Buyer commits to paying for the Goods in accordance with the terms of this Agreement.
     </div>
-    <div class="content" style="margin-top: 8px; line-height: 1.4;">
-        <span class="bold" style="vertical-align: bottom;">Pay From (Bank Account Name):</span> 
-        @php
-            $displayBankName = $bank_name ?? ($order->bank_name ?? null);
-        @endphp
-        <span style="border-bottom: 1px dashed #000; display: inline-block; vertical-align: bottom; padding-bottom: 2px; margin-left: 5px; min-width: 250px; font-weight: bold; color: {{ !empty($displayBankName) ? '#000' : '#555' }}; font-style: {{ !empty($displayBankName) ? 'normal' : 'italic' }};">
-            {{ !empty($displayBankName) ? $displayBankName : '[ Write your bank name ]' }}
-        </span>
-    </div>
+    @php
+        $displayBankName = $bank_name ?? ($order->bank_name ?? null);
+    @endphp
+    @if(!empty($displayBankName))
+        <div class="content" style="margin-top: 8px; line-height: 1.4;">
+            <span class="bold" style="vertical-align: bottom;">Pay From (Bank Account Name):</span> 
+            <span style="border-bottom: 1px dashed #000; display: inline-block; vertical-align: bottom; padding-bottom: 2px; margin-left: 5px; min-width: 250px; font-weight: bold; color: #000;">
+                {{ $displayBankName }}
+            </span>
+        </div>
+    @endif
 
     <div class="page-break"></div>
 
