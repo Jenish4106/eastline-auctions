@@ -101,8 +101,13 @@ class UsersController extends Controller
             
             $userData = $user->toArray();
             $userData['license_status'] = $licenseStatusText;
-            $userData['front_side'] = asset($latestLicense->front_side);
-            $userData['back_side'] = asset($latestLicense->back_side);
+            $userData['front_side'] = ($latestLicense && $latestLicense->front_side)
+                ? asset($latestLicense->front_side)
+                : '';
+
+            $userData['back_side'] = ($latestLicense && $latestLicense->back_side)
+                ? asset($latestLicense->back_side)
+                : '';
 
             return response()->json([
                 'status' => true,
