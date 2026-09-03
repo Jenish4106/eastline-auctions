@@ -30,7 +30,7 @@ class UsersController extends Controller
                 'email' => 'required|email|max:255|unique:users,email,' . $user->id,
                 'phone' => 'required|string|max:20',
                 'address' => 'required|string|max:500',
-                'company_name' => 'required|string|max:255',
+                'company_name' => 'nullable|string|max:255',
                 'city' => 'required|string|max:100',
                 'state' => 'required|string|max:100',
                 'zip_code' => 'required|string|max:20',
@@ -101,6 +101,8 @@ class UsersController extends Controller
             
             $userData = $user->toArray();
             $userData['license_status'] = $licenseStatusText;
+            $userData['front_side'] = asset($latestLicense->front_side);
+            $userData['back_side'] = asset($latestLicense->back_side);
 
             return response()->json([
                 'status' => true,
